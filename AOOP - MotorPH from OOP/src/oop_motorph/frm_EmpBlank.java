@@ -7,6 +7,7 @@ public class frm_EmpBlank extends javax.swing.JFrame {
    
     public frm_EmpBlank() {
         initComponents();
+        AppTheme.finish(this);
         
         //JBF: Sets the windown to center and disable resizable
         setLocationRelativeTo(null);
@@ -335,8 +336,7 @@ public class frm_EmpBlank extends javax.swing.JFrame {
 
     private void btn_LogoutActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_LogoutActionPerformed
         
-        new frm_Login().setVisible(true);
-        this.dispose();
+        CSVHandler.handleLogout(this);
         
     }//GEN-LAST:event_btn_LogoutActionPerformed
 

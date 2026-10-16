@@ -10,6 +10,7 @@ public class frm_EmployeesSalary extends javax.swing.JFrame {
 
     public frm_EmployeesSalary() {
         initComponents();
+        AppTheme.finish(this);
         
         // Set window properties - larger size to show all content
         setResizable(true);

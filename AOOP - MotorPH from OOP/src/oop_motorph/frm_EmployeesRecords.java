@@ -10,6 +10,7 @@ public class frm_EmployeesRecords extends javax.swing.JFrame {
 
     public frm_EmployeesRecords() {
         initComponents();
+        AppTheme.finish(this);
         
         // Set window properties - larger size to show all content
         setResizable(true);

@@ -19,6 +19,7 @@ public class frm_EmpAddAttLeave extends javax.swing.JFrame {
 
     public frm_EmpAddAttLeave() {
         initComponents();
+        AppTheme.finish(this);
         setLocationRelativeTo(null);
         setResizable(false);
         setTitle("Add Leave/Attendance");

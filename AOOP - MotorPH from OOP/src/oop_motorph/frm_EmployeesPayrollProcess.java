@@ -20,6 +20,7 @@ public class frm_EmployeesPayrollProcess extends javax.swing.JFrame {
 
     public frm_EmployeesPayrollProcess() {
         initComponents();
+        AppTheme.finish(this);
         
         // Set window properties - larger size to show all content
         setResizable(true);
@@ -1773,76 +1774,38 @@ public class frm_EmployeesPayrollProcess extends javax.swing.JFrame {
 
     private void btn_AddEmpActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_AddEmpActionPerformed
         int selectedRow = tbl_Employees.getSelectedRow();
-        if (selectedRow >= 0) {
-            // Get payroll information
-            String payrollID = (String) tbl_Employees.getValueAt(selectedRow, 2);
-            String empName = (String) tbl_Employees.getValueAt(selectedRow, 4);
-            String netPay = (String) tbl_Employees.getValueAt(selectedRow, 26);
-            
-            // Process payroll for selected record
-            int confirm = JOptionPane.showConfirmDialog(this, 
-                "Process payroll payment?\n" +
-                "Payroll ID: " + payrollID + "\n" +
-                "Employee: " + empName + "\n" +
-                "Net Pay: ₱" + netPay, 
-                "Confirm Process", 
-                JOptionPane.YES_NO_OPTION,
-                JOptionPane.QUESTION_MESSAGE);
-            
-            if (confirm == JOptionPane.YES_OPTION) {
-                JOptionPane.showMessageDialog(this, 
-                    "Payroll processed successfully!\n" +
-                    "Payment of ₱" + netPay + " for " + empName + " has been approved.", 
-                    "Process Success", 
-                    JOptionPane.INFORMATION_MESSAGE);
-                
-                // Refresh the table
-                displayEmployeeData();
-            }
-        } else {
-            JOptionPane.showMessageDialog(this, "Please select a payroll record to process.", 
-                                        "No Selection", JOptionPane.WARNING_MESSAGE);
+        if (selectedRow < 0) {
+            JOptionPane.showMessageDialog(this, "Select a payroll record first.",
+                    "No selection", JOptionPane.WARNING_MESSAGE);
+            return;
         }
+        String record = payrollSelectionSummary(tbl_Employees, selectedRow);
+        JOptionPane.showMessageDialog(this,
+                "Payroll processing is unavailable in this version. No changes were saved.\n\n" + record,
+                "Action unavailable", JOptionPane.INFORMATION_MESSAGE);
     }//GEN-LAST:event_btn_AddEmpActionPerformed
 
     private void btn_DelEmpActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_DelEmpActionPerformed
         int selectedRow = tbl_Employees.getSelectedRow();
-        if (selectedRow >= 0) {
-            // Get payroll information
-            String payrollID = (String) tbl_Employees.getValueAt(selectedRow, 2);
-            String empName = (String) tbl_Employees.getValueAt(selectedRow, 4);
-            String currentNetPay = (String) tbl_Employees.getValueAt(selectedRow, 26);
-            
-            // Edit adjustments for selected payroll record
-            String adjustment = JOptionPane.showInputDialog(this, 
-                "Current Net Pay: ₱" + currentNetPay + "\n" +
-                "Enter adjustment amount for " + empName + "\n" +
-                "(Payroll ID: " + payrollID + "):", 
-                "Edit Adjustments", 
-                JOptionPane.QUESTION_MESSAGE);
-            
-            if (adjustment != null && !adjustment.trim().isEmpty()) {
-                try {
-                    double adjAmount = Double.parseDouble(adjustment.trim());
-                    JOptionPane.showMessageDialog(this, 
-                        "Adjustment saved successfully!\n" +
-                        "Payroll ID: " + payrollID + "\n" +
-                        "Employee: " + empName + "\n" +
-                        "Adjustment: ₱" + String.format("%.2f", adjAmount), 
-                        "Adjustment Success", 
-                        JOptionPane.INFORMATION_MESSAGE);
-                } catch (NumberFormatException e) {
-                    JOptionPane.showMessageDialog(this, 
-                        "Invalid adjustment amount. Please enter a valid number.", 
-                        "Invalid Input", 
-                        JOptionPane.ERROR_MESSAGE);
-                }
-            }
-        } else {
-            JOptionPane.showMessageDialog(this, "Please select a payroll record to edit adjustments.", 
-                                        "No Selection", JOptionPane.WARNING_MESSAGE);
+        if (selectedRow < 0) {
+            JOptionPane.showMessageDialog(this, "Select a payroll record first.",
+                    "No selection", JOptionPane.WARNING_MESSAGE);
+            return;
         }
+        String record = payrollSelectionSummary(tbl_Employees, selectedRow);
+        JOptionPane.showMessageDialog(this,
+                "Payroll adjustments are unavailable in this version. No changes were saved.\n\n" + record,
+                "Action unavailable", JOptionPane.INFORMATION_MESSAGE);
     }//GEN-LAST:event_btn_DelEmpActionPerformed
+
+    // Model indexes match DatabaseHandler.getPayrollColumnNames(), including sorted views.
+    static String payrollSelectionSummary(javax.swing.JTable table, int viewRow) {
+        int row = table.convertRowIndexToModel(viewRow);
+        javax.swing.table.TableModel model = table.getModel();
+        return "Employee ID: " + String.valueOf(model.getValueAt(row, 0))
+                + "\nEmployee: " + String.valueOf(model.getValueAt(row, 1))
+                + "\nNet pay: PHP " + String.valueOf(model.getValueAt(row, 13));
+    }
 
     private void btn_refreshActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_refreshActionPerformed
         new frm_EmployeesPayrollPaid().setVisible(true);

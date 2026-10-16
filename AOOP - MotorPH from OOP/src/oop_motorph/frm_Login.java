@@ -1,124 +1,109 @@
 package oop_motorph;
 
 import java.awt.*;
-import java.awt.geom.RoundRectangle2D;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.Map;
-import java.util.HashMap;
-import java.util.List;
-import javax.swing.JOptionPane;
+import java.util.Arrays;
+import java.util.concurrent.ExecutionException;
+import java.util.function.BiFunction;
+import javax.swing.*;
 
 
 public class frm_Login extends javax.swing.JFrame {
 
-    private Map<String, String[]> credentials;
+    private final BiFunction<String, String, DatabaseHandler.AuthenticationResult> authenticator;
+    private final JLabel loginStatus = new JLabel("Enter your username and password.");
+    private boolean signingIn;
+    private char passwordEcho;
 
     public frm_Login() {
-        initComponents();
+        this(DatabaseHandler::authenticate);
+    }
 
-        //Sets the window to center and disable resizable
+    // Package-private injection keeps UI tests independent of any database.
+    frm_Login(BiFunction<String, String, DatabaseHandler.AuthenticationResult> authenticator) {
+        this.authenticator = authenticator;
+        AppTheme.install();
+        initComponents();
+        configureLogin();
         setLocationRelativeTo(null);
         setResizable(false);
         setTitle("Welcome to MotorPH");
+        AppTheme.finish(this);
+    }
 
-        // Enhanced styling for better visual appearance
-        addHoverEffects();
-        addFocusEffects();
-        
-        credentials = CSVHandler.loadCredentials();
-    }
-    
-    private void addModernStyling() {
-        // Add modern styling to components
-        
-        // Make input fields more modern with rounded corners
-        createRoundedTextField(txt_Login);
-        createRoundedTextField(jPasswordField);
-        createRoundedButton(btn_Login);
-        
-        // Add subtle shadow effect to the main panel
-        jPanel1.setBorder(javax.swing.BorderFactory.createCompoundBorder(
-            javax.swing.BorderFactory.createEmptyBorder(0, 0, 4, 4),
-            javax.swing.BorderFactory.createCompoundBorder(
-                javax.swing.BorderFactory.createLineBorder(new java.awt.Color(200, 200, 200), 1),
-                javax.swing.BorderFactory.createEmptyBorder(20, 20, 20, 20)
-            )
-        ));
-    }
-    
-    private void createRoundedTextField(javax.swing.JComponent field) {
-        field.setOpaque(false);
-        field.setBorder(javax.swing.BorderFactory.createCompoundBorder(
-            javax.swing.BorderFactory.createEmptyBorder(2, 2, 2, 2),
-            javax.swing.BorderFactory.createCompoundBorder(
-                javax.swing.BorderFactory.createLineBorder(new java.awt.Color(220, 220, 220), 1, true),
-                javax.swing.BorderFactory.createEmptyBorder(12, 16, 12, 16)
-            )
-        ));
-    }
-    
-    private void createRoundedButton(javax.swing.JButton button) {
-        button.setOpaque(true);
-        button.setContentAreaFilled(true);
-        button.setBorderPainted(false);
-        button.setFocusPainted(false);
-        button.setBorder(javax.swing.BorderFactory.createEmptyBorder(14, 28, 14, 28));
-    }
-    
-    private void addHoverEffects() {
-        // Add hover effect to login button
-        btn_Login.addMouseListener(new java.awt.event.MouseAdapter() {
-            @Override
-            public void mouseEntered(java.awt.event.MouseEvent evt) {
-                btn_Login.setBackground(new java.awt.Color(22, 163, 74));
-            }
-            
-            @Override
-            public void mouseExited(java.awt.event.MouseEvent evt) {
-                btn_Login.setBackground(new java.awt.Color(34, 197, 94));
-            }
-        });
-    }
-    
-    private void addFocusEffects() {
-        // Add focus effects to text fields
-        txt_Login.addFocusListener(new java.awt.event.FocusAdapter() {
-            @Override
-            public void focusGained(java.awt.event.FocusEvent evt) {
-                txt_Login.setBorder(javax.swing.BorderFactory.createCompoundBorder(
-                    javax.swing.BorderFactory.createLineBorder(new java.awt.Color(34, 197, 94), 2),
-                    javax.swing.BorderFactory.createEmptyBorder(11, 15, 11, 15)
-                ));
-            }
-            
-            @Override
-            public void focusLost(java.awt.event.FocusEvent evt) {
-                txt_Login.setBorder(javax.swing.BorderFactory.createCompoundBorder(
-                    javax.swing.BorderFactory.createLineBorder(new java.awt.Color(200, 200, 200), 1),
-                    javax.swing.BorderFactory.createEmptyBorder(12, 16, 12, 16)
-                ));
-            }
-        });
-        
-        jPasswordField.addFocusListener(new java.awt.event.FocusAdapter() {
-            @Override
-            public void focusGained(java.awt.event.FocusEvent evt) {
-                jPasswordField.setBorder(javax.swing.BorderFactory.createCompoundBorder(
-                    javax.swing.BorderFactory.createLineBorder(new java.awt.Color(34, 197, 94), 2),
-                    javax.swing.BorderFactory.createEmptyBorder(11, 15, 11, 15)
-                ));
-            }
-            
-            @Override
-            public void focusLost(java.awt.event.FocusEvent evt) {
-                jPasswordField.setBorder(javax.swing.BorderFactory.createCompoundBorder(
-                    javax.swing.BorderFactory.createLineBorder(new java.awt.Color(200, 200, 200), 1),
-                    javax.swing.BorderFactory.createEmptyBorder(12, 16, 12, 16)
-                ));
-            }
-        });
+    private void configureLogin() {
+        passwordEcho = jPasswordField.getEchoChar();
+        jLabel1.setFont(new Font("Arial Rounded MT Bold", Font.BOLD, 40));
+        jLabel3.setForeground(AppTheme.MUTED);
+        jLabel3.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        jLabel1.setAlignmentX(Component.LEFT_ALIGNMENT);
+        jLabel3.setAlignmentX(Component.LEFT_ALIGNMENT);
+        jLabel3.setName("companyName");
+        Dimension companySize = jLabel3.getPreferredSize();
+        companySize.width = jLabel3.getFontMetrics(jLabel3.getFont()).stringWidth(jLabel3.getText()) + 4;
+        jLabel3.setMinimumSize(companySize);
+        jLabel3.setPreferredSize(companySize);
+        jLabel3.setMaximumSize(companySize);
+        jLabel2.setText("");
+        jLabel2.getAccessibleContext().setAccessibleName("MotorPH brand artwork");
+        jLabel6.getAccessibleContext().setAccessibleName("MotorPH motorcycle logo");
+        ImageIcon logo = (ImageIcon) jLabel6.getIcon();
+        jLabel6.setIcon(new ImageIcon(logo.getImage().getScaledInstance(112, 112, Image.SCALE_SMOOTH)));
+        jLabel6.setPreferredSize(new Dimension(112, 112));
+        jLabel4.setLabelFor(txt_Login);
+        jLabel5.setLabelFor(jPasswordField);
+        jLabel4.setDisplayedMnemonic('U');
+        jLabel5.setDisplayedMnemonic('P');
+        txt_Login.setName("username");
+        jPasswordField.setName("password");
+        btn_Login.setName("signIn");
+        loginStatus.setName("loginStatus");
+        loginStatus.setForeground(AppTheme.MUTED);
+        loginStatus.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        loginStatus.getAccessibleContext().setAccessibleName("Sign in status");
+        btn_Login.setText("Sign in");
+        btn_Login.setBackground(AppTheme.GREEN);
+        btn_Login.setMnemonic('S');
+        jCheckBox1.setText("Show password");
+        jCheckBox1.setMnemonic('H');
+        JPanel header = new JPanel(new BorderLayout(12, 0));
+        header.setOpaque(false);
+        JPanel brand = new JPanel();
+        brand.setOpaque(false);
+        brand.setLayout(new BoxLayout(brand, BoxLayout.Y_AXIS));
+        brand.add(Box.createVerticalStrut(20));
+        brand.add(jLabel1);
+        brand.add(Box.createVerticalStrut(5));
+        brand.add(jLabel3);
+        header.add(brand, BorderLayout.CENTER);
+        header.add(jLabel6, BorderLayout.EAST);
+        JPanel fields = new JPanel(new GridBagLayout());
+        fields.setOpaque(false);
+        GridBagConstraints c = new GridBagConstraints();
+        c.gridx = 0; c.gridy = 0; c.fill = GridBagConstraints.HORIZONTAL;
+        c.weightx = 1; c.insets = new Insets(0, 0, 7, 0);
+        fields.add(jLabel4, c);
+        c.gridy++; c.insets = new Insets(0, 0, 18, 0); fields.add(txt_Login, c);
+        c.gridy++; c.insets = new Insets(0, 0, 7, 0); fields.add(jLabel5, c);
+        c.gridy++; c.insets = new Insets(0, 0, 10, 0); fields.add(jPasswordField, c);
+        c.gridy++; c.insets = new Insets(0, 0, 16, 0); fields.add(jCheckBox1, c);
+        c.gridy++; c.insets = new Insets(0, 0, 12, 0); fields.add(btn_Login, c);
+        c.gridy++; c.insets = new Insets(0, 0, 0, 0); fields.add(loginStatus, c);
+        JPanel body = new JPanel(new BorderLayout(0, 20));
+        body.setOpaque(false);
+        body.setBorder(BorderFactory.createEmptyBorder(20, 32, 16, 32));
+        body.add(header, BorderLayout.NORTH);
+        body.add(fields, BorderLayout.CENTER);
+        jPanel1.removeAll();
+        jPanel1.setLayout(new BorderLayout());
+        jPanel1.add(body, BorderLayout.CENTER);
+        jPanel1.add(jLabel2, BorderLayout.SOUTH);
+        getContentPane().setLayout(new BorderLayout());
+        getContentPane().add(jPanel1, BorderLayout.CENTER);
+        getRootPane().setDefaultButton(btn_Login);
+        setSize(480, 700);
     }
 
     /**
@@ -294,41 +279,74 @@ public class frm_Login extends javax.swing.JFrame {
 
     //mikko start
     private void btn_LoginActionPerformed(java.awt.event.ActionEvent evt) {
-        String username = txt_Login.getText().trim();
-        String rawPassword = new String(jPasswordField.getPassword()).trim();
-
-        // Load user credentials from CSV_Users.csv
-        Map<String, String[]> credentials = CSVHandler.loadCredentials();
-
-        if (credentials.containsKey(username)) {
-            String[] userDetails = credentials.get(username);
-            String storedHashedPassword = userDetails[0];
-            String inputHashedPassword = hashPassword(rawPassword); // Hash input password
-
-            if (storedHashedPassword.equals(inputHashedPassword)) {
-                String role = userDetails[1];
-
-                // Load employee data from CSV_Employees.csv
-                List<EmpDetails> employees = CSVHandler.getEmployeeData();
-                EmpDetails loggedInEmployee = employees.stream()
-                        .filter(emp -> emp.getEmpID().equals(username))
-                        .findFirst()
-                        .orElse(null);
-
-                if (loggedInEmployee != null) {
-                    EmpUserSession.getInstance().setCurrentUser(loggedInEmployee, role);
-                    new frm_EmpProfile().setVisible(true);
-                    this.dispose();
-                } else {
-                    JOptionPane.showMessageDialog(this, "Employee data not found!", "Error", JOptionPane.ERROR_MESSAGE);
-                }
-            } else {
-                JOptionPane.showMessageDialog(this, "Invalid password!", "Error", JOptionPane.ERROR_MESSAGE);
-            }
-        } else {
-            JOptionPane.showMessageDialog(this, "Invalid username!", "Error", JOptionPane.ERROR_MESSAGE);
+        if (signingIn) return;
+        final String username = txt_Login.getText().trim();
+        char[] password = jPasswordField.getPassword();
+        if (username.isEmpty() || password.length == 0) {
+            Arrays.fill(password, '\0');
+            setStatus("Enter both your username and password.", true);
+            if (username.isEmpty()) txt_Login.requestFocusInWindow();
+            else jPasswordField.requestFocusInWindow();
+            return;
         }
+        final String passwordHash;
+        try {
+            // Preserve password whitespace and the existing SHA-256 storage format.
+            passwordHash = hashPassword(new String(password));
+        } finally {
+            Arrays.fill(password, '\0');
+        }
+        setSigningIn(true);
+        setStatus("Signing in\u2026", false);
+        new SwingWorker<DatabaseHandler.AuthenticationResult, Void>() {
+            @Override protected DatabaseHandler.AuthenticationResult doInBackground() {
+                return authenticator.apply(username, passwordHash);
+            }
+            @Override protected void done() {
+                setSigningIn(false);
+                if (!isDisplayable()) return;
+                try {
+                    DatabaseHandler.AuthenticationResult result = get();
+                    if (result == null) {
+                        jPasswordField.setText("");
+                        setStatus("Username or password is incorrect. Try again.", true);
+                        jPasswordField.requestFocusInWindow();
+                        return;
+                    }
+                    EmpUserSession.getInstance().setCurrentUser(result.getEmployee(), result.getRole());
+                    try {
+                        frm_EmpProfile profile = new frm_EmpProfile();
+                        profile.setVisible(true);
+                        dispose();
+                    } catch (PersistenceException ex) {
+                        EmpUserSession.getInstance().clearSession();
+                        setStatus("Profile unavailable. Check the connection and retry.", true);
+                    }
+                } catch (InterruptedException ex) {
+                    Thread.currentThread().interrupt();
+                    setStatus("Sign in was interrupted. Please try again.", true);
+                } catch (ExecutionException ex) {
+                    setStatus("Sign in unavailable. Check the connection and retry.", true);
+                }
+            }
+        }.execute();
     }//GEN-LAST:event_btn_LoginActionPerformed
+
+    private void setSigningIn(boolean busy) {
+        signingIn = busy;
+        txt_Login.setEnabled(!busy);
+        jPasswordField.setEnabled(!busy);
+        jCheckBox1.setEnabled(!busy);
+        btn_Login.setEnabled(!busy);
+        btn_Login.setText(busy ? "Signing in\u2026" : "Sign in");
+        setCursor(Cursor.getPredefinedCursor(busy ? Cursor.WAIT_CURSOR : Cursor.DEFAULT_CURSOR));
+    }
+
+    private void setStatus(String text, boolean error) {
+        loginStatus.setForeground(error ? new Color(185, 28, 28) : AppTheme.MUTED);
+        loginStatus.setText(text);
+        loginStatus.getAccessibleContext().setAccessibleDescription(text);
+    }
 
     public static String hashPassword(String password) {
         try {
@@ -346,11 +364,11 @@ public class frm_Login extends javax.swing.JFrame {
 
     //Mikko end
     private void txt_LoginActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txt_LoginActionPerformed
-        // TODO add your handling code here:
+        btn_Login.doClick();
     }//GEN-LAST:event_txt_LoginActionPerformed
 
     private void jPasswordFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jPasswordFieldActionPerformed
-        // TODO add your handling code here:
+        btn_Login.doClick();
     }//GEN-LAST:event_jPasswordFieldActionPerformed
 
     private void jCheckBox1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jCheckBox1ActionPerformed
@@ -358,7 +376,7 @@ public class frm_Login extends javax.swing.JFrame {
         if (jCheckBox1.isSelected()) {
             jPasswordField.setEchoChar((char) 0);
         } else {
-            jPasswordField.setEchoChar('*');
+            jPasswordField.setEchoChar(passwordEcho);
         }
     }//GEN-LAST:event_jCheckBox1ActionPerformed
 

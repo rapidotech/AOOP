@@ -29,6 +29,7 @@ public class frm_EmployeesRecords2 extends javax.swing.JFrame {
         }
 
         initComponents();
+        AppTheme.finish(this);
         this.empDetails = empDetails;
         this.isEditMode = isEditMode;
         // Set supervisor dropdown model

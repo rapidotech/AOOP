@@ -3,7 +3,6 @@ package oop_motorph;
 import java.awt.print.PageFormat;
 import java.awt.print.PrinterException;
 import java.awt.print.PrinterJob;
-import java.io.*;
 import java.math.BigDecimal;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -13,7 +12,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JTable;
@@ -30,112 +28,16 @@ public class CSVHandler {
     public static final String CSV_SalaryPath = "oop_motorph/resources/CSV_Salary.csv";
 
     // private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("MM/dd/yyyy");
-    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd-MMM-yy");
+    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd-MMM-yy", Locale.ENGLISH);
     private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("H:mm:ss");
 
     // User Credentials
-    // Replace the existing loadCredentials() method in CSVHandler.java with this database version
     public static Map<String, String[]> loadCredentials() {
         return DatabaseHandler.loadCredentials();
     }
 
-
-    // Read CSV and return data as a list of String arrays
-    private static List<String[]> readCSV(String filePath) {
-        List<String[]> data = new ArrayList<>();
-        InputStream in = CSVHandler.class.getResourceAsStream("/" + filePath);
-        if (in == null) {
-            System.err.println("Could not find resource: " + filePath);
-            return data;
-        }
-
-        try (BufferedReader br = new BufferedReader(new InputStreamReader(in))) {
-            String line;
-            boolean isFirstRow = true;
-            while ((line = br.readLine()) != null) {
-                if (isFirstRow) {
-                    isFirstRow = false;
-                    continue;
-                }
-                if (!line.trim().isEmpty()) {
-                    data.add(line.split(",", -1));
-                }
-            }
-        } catch (IOException e) {
-            System.err.println("Error reading file: " + filePath);
-            e.printStackTrace();
-        }
-        return data;
-    }
-
     public static boolean employeeExists(String empID, String existingEmpID) {
-        List<EmpDetails> employees = getEmployeeData();
-
-        for (EmpDetails emp : employees) {
-            if (existingEmpID != null && emp.getEmpID().equals(existingEmpID)) {
-                continue;
-            }
-            if (emp.getEmpID().equals(empID)) {
-                return true;  // Found another employee with the same ID
-            }
-        }
-        return false;  // No duplicates found
-    }
-
-    private static void saveCSV(String filePath, List<String[]> data) {
-        try (BufferedWriter bw = new BufferedWriter(new FileWriter(filePath, false))) {
-            File file = new File(filePath);
-            if (!file.exists()) {
-                System.out.println("File does not exist. A new file will be created: " + filePath);
-            }
-
-            String header = "";
-            if (filePath.equals(CSV_EmployeesPath)) {
-                header = "EmpID,First Name,Last Name,Birthday,Address,Phone Number,Status,Position,Immediate Supervisor";
-            } else if (filePath.equals(CSV_AttendancePath)) {
-                //      header = "EmpID,First Name,Last Name,Date,TimeIn,TimeOut,HoursWorked,Duration,AttendanceType,AttendanceStat,VLCount,VLUsed,VLBal,SLCount,SLUsed,SLBal";
-                header = "EmpID,First Name,Last Name,Status,Position,ImmediateSup,DateFrom,DateTo,TimeIn,TimeOut,HoursWorked,Duration,AttendanceType,AttendanceStat,VLCount,VLUsed,VLBal,SLCount,SLUsed,SLBal";
-
-            } else if (filePath.equals(CSV_SalaryPath)) {
-                header = "EmpID,First Name,Last Name,SSS No,PhilHealth No,TIN No,PAGIBIG No,BasicSalary,RiceAllow,PhoneAllow,ClothingAllow,GrossSemi,HourlyRate";
-            } else {
-                System.err.println("Unknown file path: " + filePath);
-                return;
-            }
-
-            // Write header
-            bw.write(header);
-            bw.newLine();
-
-            // Check if data is empty
-            if (data.isEmpty()) {
-                System.out.println("No data to save.");
-            } else {
-                // Write each row with proper formatting
-                for (String[] row : data) {
-                    String formattedRow = formatCSVRow(row);
-                    bw.write(formattedRow);
-                    bw.newLine();
-                }
-            }
-
-            bw.flush();
-
-
-            // Debug: Verify saved data
-            List<String[]> savedData = readCSV(filePath);
-            for (String[] row : savedData) {
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    // Helper method to format CSV rows properly
-    private static String formatCSVRow(String[] row) {
-        return Arrays.stream(row)
-                .map(field -> field.contains(",") ? "\"" + field + "\"" : field) // Handle commas in data
-                .collect(Collectors.joining(","));
+        return DatabaseHandler.employeeExists(empID, existingEmpID);
     }
 
     // Read employee data and return a list of EmpDetails objects
@@ -152,48 +54,28 @@ public class CSVHandler {
         DatabaseHandler.updateEmployee(updatedEmp);
     }
 
-
     public static void addEmployee(EmpDetails newEmp) {
         DatabaseHandler.addEmployee(newEmp);
     }
-
 
     public static void deleteEmployee(String empID) {
         DatabaseHandler.deleteEmployee(empID);
     }
 
-
     // Reads attendance data and returns a list of EmpAttLeave objects
-    // Replace the existing getAttendanceData() method in CSVHandler.java with this database version
     public static List<EmpAttLeave> getAttendanceData() {
-        return DatabaseHandler.getAttendanceData();
+        List<EmpAttLeave> attendance = new ArrayList<>(DatabaseHandler.getAttendanceData());
+        attendance.addAll(loadAttendanceRequests());
+        return attendance;
     }
 
     // Reads salary data and returns a list of EmpSalaryDetails objects
-    // Replace the existing getSalaryData() method in CSVHandler.java with this database version
     public static List<EmpSalaryDetails> getSalaryData() {
         return DatabaseHandler.getSalaryData();
     }
 
     public static void addEmployeeSalary(EmpSalaryDetails newEmpSalary) {
-        // Add new employee to the database with basic info and salary details
-        EmpDetails newEmployee = new EmpDetails(
-            newEmpSalary.getEmpID(), 
-            newEmpSalary.getFirstName(), 
-            newEmpSalary.getLastName(), 
-            "", // birthdate
-            "", // address
-            "", // phone
-            "Active", // default status
-            "General", // default position
-            "" // supervisor
-        );
-        
-        // Add the employee first (this will create basic employee, compensation, and government ID records)
-        DatabaseHandler.addEmployee(newEmployee);
-        
-        // Then update the salary details
-        DatabaseHandler.updateEmployeeSalary(newEmpSalary);
+        DatabaseHandler.addEmployeeSalary(newEmpSalary);
     }
 
     public static void updateEmployeeSalary(EmpSalaryDetails updatedSalary) {
@@ -214,134 +96,94 @@ public class CSVHandler {
     }
 
     public static void saveAttendanceRequest(EmpAttLeave empAttLeave) {
-        List<String[]> attendanceData = readCSV(CSV_AttendancePath);
-
-
-        // Ensure time-in and time-out are not null
-        String timeInStr = (empAttLeave.getTimeIn() != null) ? empAttLeave.getTimeIn().format(TIME_FORMATTER) : "08:00";
-        String timeOutStr = (empAttLeave.getTimeOut() != null) ? empAttLeave.getTimeOut().format(TIME_FORMATTER) : "17:00";
-
-
-        // Prepare new row
-        String[] newRow = {
-                empAttLeave.getEmpID(),
-                empAttLeave.getFirstName(),
-                empAttLeave.getLastName(),
-                empAttLeave.getEmployeeStatus(),
-                empAttLeave.getPosition(),
-                empAttLeave.getImmediateSupervisor(),
-                empAttLeave.getAttDateFrom().format(DATE_FORMATTER),
-                empAttLeave.getAttDateTo().format(DATE_FORMATTER),
-                empAttLeave.getTimeIn() != null ? empAttLeave.getTimeIn().format(TIME_FORMATTER) : "",
-                empAttLeave.getTimeOut() != null ? empAttLeave.getTimeOut().format(TIME_FORMATTER) : "",
-                String.valueOf(empAttLeave.getHoursWorked()),
-                String.valueOf(empAttLeave.getDuration()),
-                empAttLeave.getAttendanceType(),
-                empAttLeave.getAttendanceStatus(),
-                String.valueOf(empAttLeave.getVlCount()),
-                String.valueOf(empAttLeave.getVlUsed()),
-                String.valueOf(empAttLeave.getVlBalance()),
-                String.valueOf(empAttLeave.getSlCount()),
-                String.valueOf(empAttLeave.getSlUsed()),
-                String.valueOf(empAttLeave.getSlBalance())
-        };
-
-        // Add the new row
-        attendanceData.add(newRow);
-
-        // Save back to CSV
-        saveCSV(CSV_AttendancePath, attendanceData);
+        Objects.requireNonNull(empAttLeave, "Attendance request is required.");
+        String[] row = attendanceRow(empAttLeave);
+        LocalRecordStore.update(LocalRecordStore.ATTENDANCE, rows -> {
+            for (String[] existing : rows) {
+                if (Objects.equals(existing[0], row[0]) && sameDate(existing[6], row[6]) && sameDate(existing[7], row[7])) {
+                    throw new PersistenceException("An attendance request already exists for this employee and date range. Edit that request instead.");
+                }
+            }
+            rows.add(row);
+        });
     }
-
 
     public static void saveEditAttendanceRequest(EmpAttLeave empAttLeave, String oldDateFrom, String oldDateTo) {
-        List<String[]> attendanceData = readCSV(CSV_AttendancePath);
-        boolean updated = false;
-
-        for (int i = 0; i < attendanceData.size(); i++) {
-            String[] row = attendanceData.get(i);
-
-            // Find the row using EmpID and the OLD date values
-            if (row[0].equals(empAttLeave.getEmpID()) &&
-                    row[6].equals(oldDateFrom) &&
-                    row[7].equals(oldDateTo)) {
-
-
-                // Update the row with new values
-                row[1] = empAttLeave.getFirstName();
-                row[2] = empAttLeave.getLastName();
-                row[3] = empAttLeave.getEmployeeStatus();
-                row[4] = empAttLeave.getPosition();
-                row[5] = empAttLeave.getImmediateSupervisor();
-                row[6] = empAttLeave.getAttDateFrom().format(DATE_FORMATTER); // New date from
-                row[7] = empAttLeave.getAttDateTo().format(DATE_FORMATTER);   // New date to
-                row[8] = empAttLeave.getTimeIn() != null ? empAttLeave.getTimeIn().format(TIME_FORMATTER) : "";
-                row[9] = empAttLeave.getTimeOut() != null ? empAttLeave.getTimeOut().format(TIME_FORMATTER) : "";
-                row[10] = String.valueOf(empAttLeave.getHoursWorked());
-                row[11] = String.valueOf(empAttLeave.getDuration());
-                row[12] = empAttLeave.getAttendanceType();
-                row[13] = empAttLeave.getAttendanceStatus();
-                row[14] = String.valueOf(empAttLeave.getVlCount());
-                row[15] = String.valueOf(empAttLeave.getVlUsed());
-                row[16] = String.valueOf(empAttLeave.getVlBalance());
-                row[17] = String.valueOf(empAttLeave.getSlCount());
-                row[18] = String.valueOf(empAttLeave.getSlUsed());
-                row[19] = String.valueOf(empAttLeave.getSlBalance());
-
-                updated = true;
-                break; // Stop after updating the first matching row
+        Objects.requireNonNull(empAttLeave, "Attendance request is required.");
+        String[] replacement = attendanceRow(empAttLeave);
+        LocalRecordStore.update(LocalRecordStore.ATTENDANCE, rows -> {
+            int selected = attendanceIndex(rows, empAttLeave.getEmpID(), oldDateFrom, oldDateTo);
+            for (int i = 0; i < rows.size(); i++) {
+                String[] row = rows.get(i);
+                if (i != selected && Objects.equals(row[0], replacement[0])
+                        && sameDate(row[6], replacement[6]) && sameDate(row[7], replacement[7])) {
+                    throw new PersistenceException("Another attendance request already uses that date range. No changes were saved.");
+                }
             }
-        }
-
-        // Save back to CSV only if an update was made
-        if (updated) {
-            saveCSV(CSV_AttendancePath, attendanceData);
-            System.out.println("Attendance record updated successfully.");
-        } else {
-            System.out.println("Matching attendance record not found. No update was made.");
-        }
+            rows.set(selected, replacement);
+        });
     }
 
+    /** Local requests are explicit: normalized database time logs keep their existing API. */
+    public static List<EmpAttLeave> loadAttendanceRequests() {
+        List<EmpAttLeave> requests = new ArrayList<>();
+        for (String[] row : LocalRecordStore.read(LocalRecordStore.ATTENDANCE)) {
+            requests.add(new EmpAttLeave(row[0], row[1], row[2], row[3], row[4], row[5],
+                    parseDate(row[6]), parseDate(row[7]), row[8].isEmpty() ? null : parseTime(row[8]),
+                    row[9].isEmpty() ? null : parseTime(row[9]), parseDouble(row[10]), parseDouble(row[11]),
+                    row[12], row[13], parseDouble(row[14]), parseDouble(row[15]), parseDouble(row[16]),
+                    parseDouble(row[17]), parseDouble(row[18]), parseDouble(row[19])));
+        }
+        return requests;
+    }
+
+    public static List<String[]> loadPayrollLedger() {
+        return LocalRecordStore.read(LocalRecordStore.PAYROLL);
+    }
+
+    private static String[] attendanceRow(EmpAttLeave request) {
+        if (request.getAttDateFrom() == null || request.getAttDateTo() == null) {
+            throw new IllegalArgumentException("Attendance dates are required.");
+        }
+        return new String[]{request.getEmpID(), request.getFirstName(), request.getLastName(),
+                request.getEmployeeStatus(), request.getPosition(), request.getImmediateSupervisor(),
+                request.getAttDateFrom().format(DATE_FORMATTER), request.getAttDateTo().format(DATE_FORMATTER),
+                request.getTimeIn() == null ? "" : request.getTimeIn().format(TIME_FORMATTER),
+                request.getTimeOut() == null ? "" : request.getTimeOut().format(TIME_FORMATTER),
+                String.valueOf(request.getHoursWorked()), String.valueOf(request.getDuration()),
+                request.getAttendanceType(), request.getAttendanceStatus(), String.valueOf(request.getVlCount()),
+                String.valueOf(request.getVlUsed()), String.valueOf(request.getVlBalance()),
+                String.valueOf(request.getSlCount()), String.valueOf(request.getSlUsed()), String.valueOf(request.getSlBalance())};
+    }
 
     // Attendance Approval
     public static void updateAttendanceStatus(String empID, String newStatus, String message) {
-        String filePath = CSV_AttendancePath; // Update this with your actual file path
-        List<String[]> data = new ArrayList<>();
-
-        try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
-            String line;
-            while ((line = br.readLine()) != null) {
-                String[] values = line.split(","); // Assuming CSV is comma-separated
-                if (values.length > 13 && values[0].equals(empID)) {
-                    values[13] = newStatus; // Updating the AttendanceStatus column
-                    //revised due to approval issue
-                    //    if (values.length > 13 && values[0].equals(empID)) {
-                    //    values[13] = newStatus; // Updating the AttendanceStatus column  //revised due to approval issue
-
-                }
-                data.add(values);
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-            JOptionPane.showMessageDialog(null, "Error reading the attendance file.", "Error", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-
-        // Writing the updated data back to the CSV file
-        try (BufferedWriter bw = new BufferedWriter(new FileWriter(filePath))) {
-            for (String[] row : data) {
-                bw.write(String.join(",", row));
-                bw.newLine();
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-            JOptionPane.showMessageDialog(null, "Error updating the attendance file.", "Error", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-
-        JOptionPane.showMessageDialog(null, message, "Success", JOptionPane.INFORMATION_MESSAGE);
+        updateAttendanceStatus(empID, null, null, newStatus, message);
     }
 
+    public static void updateAttendanceStatus(String empID, String dateFrom, String dateTo, String newStatus, String message) {
+        LocalRecordStore.update(LocalRecordStore.ATTENDANCE, rows -> {
+            rows.get(attendanceIndex(rows, empID, dateFrom, dateTo))[13] = newStatus;
+        });
+    }
+
+    private static int attendanceIndex(List<String[]> rows, String empID, String dateFrom, String dateTo) {
+        int found = -1;
+        for (int i = 0; i < rows.size(); i++) {
+            String[] row = rows.get(i);
+            if (Objects.equals(row[0], empID) && (dateFrom == null || sameDate(row[6], dateFrom))
+                    && (dateTo == null || sameDate(row[7], dateTo))) {
+                if (found >= 0) { throw new PersistenceException("Multiple local attendance requests match. Select a specific employee and date range."); }
+                found = i;
+            }
+        }
+        if (found < 0) { throw new PersistenceException("No local attendance request matches this employee and date range. Database time logs do not contain approval status."); }
+        return found;
+    }
+
+    private static boolean sameDate(String first, String second) {
+        return parseDate(first).equals(parseDate(second));
+    }
 
     public static void savePayrollData(
 
@@ -351,54 +193,21 @@ public class CSVHandler {
             String totalEarnings, String tardinessAbsences, String eeTax,
             String eeSSS, String eePagibig, String eePhilhealth, String adjDeductions,
             String totalDeductions, String netPay, String payStatus) {
-
-        String transacID = generateTransactionID();
-        List<String[]> allRows = new ArrayList<>();
-        boolean updated = false;
-
-        // Read existing CSV file
-        try (BufferedReader br = new BufferedReader(new FileReader(CSV_PayrollPath))) {
-            String line;
-            while ((line = br.readLine()) != null) {
-                String[] row = line.split(",");
-                // Check if the row matches the employee ID and payDateFrom
-                if (row.length > 1 && row[1].equals(empID) && row[4].equals(payDateFrom)) {
-                    // Update existing entry
-                    row = new String[]{
-                            transacID, empID, firstName, lastName, payDateFrom, payDateTo,
-                            basicSalary, hourlyRate, totalAllowances, hrsPerMonth, totalHrsWorked, adjEarnings,
-                            totalEarnings, tardinessAbsences, eeTax, eeSSS, eePagibig, eePhilhealth, adjDeductions,
-                            totalDeductions, netPay, payStatus
-                    };
-                    updated = true;
+        String[] replacement = {generateTransactionID(), empID, firstName, lastName, payDateFrom, payDateTo,
+                basicSalary, hourlyRate, totalAllowances, hrsPerMonth, totalHrsWorked, adjEarnings,
+                totalEarnings, tardinessAbsences, eeTax, eeSSS, eePagibig, eePhilhealth, adjDeductions,
+                totalDeductions, netPay, payStatus};
+        LocalRecordStore.update(LocalRecordStore.PAYROLL, rows -> {
+            for (int i = 0; i < rows.size(); i++) {
+                String[] row = rows.get(i);
+                if (Objects.equals(row[1], empID) && Objects.equals(row[4], payDateFrom)) {
+                    replacement[0] = row[0];
+                    rows.set(i, replacement);
+                    return;
                 }
-                allRows.add(row);
             }
-        } catch (IOException e) {
-            System.err.println("Error reading file: " + CSV_PayrollPath);
-            e.printStackTrace();
-        }
-
-        // If no update happened, append a new entry
-        if (!updated) {
-            allRows.add(new String[]{
-                    transacID, empID, firstName, lastName, payDateFrom, payDateTo,
-                    basicSalary, hourlyRate, totalAllowances, hrsPerMonth, totalHrsWorked, adjEarnings,
-                    totalEarnings, tardinessAbsences, eeTax, eeSSS, eePagibig, eePhilhealth, adjDeductions,
-                    totalDeductions, netPay, payStatus
-            });
-        }
-
-        // Rewrite CSV with updated data
-        try (BufferedWriter bw = new BufferedWriter(new FileWriter(CSV_PayrollPath))) {
-            for (String[] row : allRows) {
-                bw.write(String.join(",", row));
-                bw.newLine();
-            }
-        } catch (IOException e) {
-            System.err.println("Error writing to file: " + CSV_PayrollPath);
-            e.printStackTrace();
-        }
+            rows.add(replacement);
+        });
     }
 
     // Method to generate a 7-character alphanumeric transaction ID in Payroll
@@ -414,24 +223,11 @@ public class CSVHandler {
         return sb.toString();
     }
 
-    // Method to append a new row to a CSV file
-    private static void appendToCSV(String filePath, String[] data) {
-        try (BufferedWriter bw = new BufferedWriter(new FileWriter(filePath, true))) {
-            String row = String.join(",", data);
-            bw.write(row);
-            bw.newLine();
-        } catch (IOException e) {
-            System.err.println("Error writing to file: " + filePath);
-            e.printStackTrace();
-        }
-    }
-
     // Read the payroll CSV file
     public static List<String[]> readPayrollCSV() {
         // Delegate to DatabaseHandler instead of reading CSV
         return DatabaseHandler.readPayrollFromDatabase();
     }
-
 
     // Display Payroll Data (Debugging)
     public static void displayPayrollData() {
@@ -447,17 +243,8 @@ public class CSVHandler {
     }
 
     public static void saveUpdatedPayrollData(List<String[]> payrollData) {
-        try (BufferedWriter bw = new BufferedWriter(new FileWriter(CSV_PayrollPath, false))) {
-            for (String[] row : payrollData) {
-                bw.write(String.join(",", row));
-                bw.newLine();
-            }
-        } catch (IOException e) {
-            System.err.println("Error writing updated payroll data: " + e.getMessage());
-            e.printStackTrace();
-        }
+        LocalRecordStore.write(LocalRecordStore.PAYROLL, payrollData);
     }
-
 
     public static void updatePayrollCSV(String empID, String firstName, String lastName, String payDateFrom,
                                         String payDateTo, String basicSalary, String hourlyRate,
@@ -466,59 +253,29 @@ public class CSVHandler {
                                         String eeTax, String eeSSS, String eePagibig, String eePhilhealth,
                                         String adjDeductions, String totalDeductions, String netPay,
                                         String payStatus) {
-        String csvFile = "payroll.csv";
-        List<String[]> payrollData = readPayrollCSV();
-
-        try (BufferedWriter bw = new BufferedWriter(new FileWriter(csvFile))) {
-            for (String[] row : payrollData) {
-                if (row.length >= 21 && row[1].equals(empID)) {
-                    // Update only the PayStatus column
-                    row[20] = payStatus;
-                }
-                bw.write(String.join(",", row));
-                bw.newLine();
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        updatePayrollStatus(null, empID, payDateFrom, payDateTo, payStatus, "");
     }
 
     public static void updatePayrollStatus(String employeeID, String newStatus, String successMessage) {
-        String filePath = CSV_PayrollPath;
-        List<String[]> payrollData = new ArrayList<>();
-        boolean updated = false;
-
-        try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
-            String line;
-            while ((line = br.readLine()) != null) {
-                String[] row = line.split(",");
-                if (row.length > 21 && row[1].equals(employeeID)) {  // Assuming Employee ID is column 1
-                    row[21] = newStatus;  // Update Pay Status column
-                    updated = true;
-                }
-                payrollData.add(row);
-            }
-        } catch (IOException e) {
-            JOptionPane.showMessageDialog(null, "Error reading payroll file: " + e.getMessage());
-            return;
-        }
-
-        if (updated) {
-            // Write the modified data back to CSV
-            try (BufferedWriter bw = new BufferedWriter(new FileWriter(filePath))) {
-                for (String[] row : payrollData) {
-                    bw.write(String.join(",", row));
-                    bw.newLine();
-                }
-                JOptionPane.showMessageDialog(null, successMessage);
-            } catch (IOException e) {
-                JOptionPane.showMessageDialog(null, "Error saving payroll file: " + e.getMessage());
-            }
-        } else {
-            JOptionPane.showMessageDialog(null, "Employee ID not found in payroll.");
-        }
+        updatePayrollStatus(null, employeeID, null, null, newStatus, successMessage);
     }
 
+    public static void updatePayrollStatus(String transactionID, String employeeID, String dateFrom, String dateTo,
+            String newStatus, String successMessage) {
+        LocalRecordStore.update(LocalRecordStore.PAYROLL, rows -> {
+            String[] selected = null;
+            for (String[] row : rows) {
+                if (Objects.equals(row[1], employeeID) && (transactionID == null || Objects.equals(row[0], transactionID))
+                        && (dateFrom == null || sameDate(row[4], dateFrom))
+                        && (dateTo == null || sameDate(row[5], dateTo))) {
+                    if (selected != null) { throw new PersistenceException("Multiple local payroll periods match. Select a specific transaction and payroll period."); }
+                    selected = row;
+                }
+            }
+            if (selected == null) { throw new PersistenceException("No local payroll record matches this transaction and payroll period. Database payroll rows do not contain payment approval status."); }
+            selected[21] = newStatus;
+        });
+    }
 
     // To print only "Approved" payrolls
     public static void printApprovedPayroll(JTable tbl_Payroll, String dateFrom, String dateTo) {
@@ -615,7 +372,6 @@ public class CSVHandler {
         }
     }
 
-
     // For Logout
     public static void handleLogout(JFrame currentFrame) {
         int confirmLogout = JOptionPane.showConfirmDialog(currentFrame,
@@ -632,7 +388,6 @@ public class CSVHandler {
             currentFrame.dispose();
         }
     }
-
 
     // Validate First Name & Last Name in Employee Records (Auto-Capitalize, Max 50 characters)
     public static String capitalizeWords(String input, int maxLength) {
@@ -658,7 +413,6 @@ public class CSVHandler {
         return capitalizeWords(address, 100);
     }
 
-
     // Validate Phone Number (Only numeric and hyphen, Max 11 characters)
     public static boolean isValidPhone(String phoneNo) {
         return phoneNo.matches("^(\\d+-?)+\\d$") && phoneNo.length() <= 11;
@@ -681,37 +435,34 @@ public class CSVHandler {
         return parts[0] + "-" + formattedMonth + "-" + parts[2]; // Return formatted birthdate
     }
 
-
     // Helper method to safely parse LocalDate values in Attendance
     private static LocalDate parseDate(String value) {
-        if (value.trim().isEmpty()) return LocalDate.of(2000, 1, 1); // Default fallback date
+        if (value == null || value.isBlank()) { throw new PersistenceException("A local attendance record has no date."); }
 
         List<String> patterns = Arrays.asList("M/d/yyyy", "MM/dd/yyyy", "d/M/yyyy", "dd/MM/yyyy", "yyyy-MM-dd", "dd-MMM-yy"); //JOYCE--- added "dd-MMM-yy"
         for (String pattern : patterns) {
             try {
-                return LocalDate.parse(value.trim(), DateTimeFormatter.ofPattern(pattern));
+                return LocalDate.parse(value.trim(), DateTimeFormatter.ofPattern(pattern, Locale.ENGLISH));
             } catch (Exception ignored) {
             }
         }
 
-        System.err.println("Invalid date format: " + value);
-        return LocalDate.of(2000, 1, 1); // Return default if parsing fails
+        throw new PersistenceException("A local attendance record has an invalid date.");
     }
 
     // Helper method to safely parse LocalTime values
     private static LocalTime parseTime(String value) {
-        if (value.trim().isEmpty()) return LocalTime.of(9, 0); // Default fallback
+        if (value == null || value.isBlank()) { throw new PersistenceException("A local attendance record has no time."); }
 
         List<String> patterns = Arrays.asList("H:mm:ss", "HH:mm");
         for (String pattern : patterns) {
             try {
-                return LocalTime.parse(value.trim(), DateTimeFormatter.ofPattern(pattern));
+                return LocalTime.parse(value.trim(), DateTimeFormatter.ofPattern(pattern, Locale.ENGLISH));
             } catch (Exception ignored) {
             }
         }
 
-        System.err.println("Invalid time format: " + value);
-        return LocalTime.of(9, 0); // Return default if parsing fails
+        throw new PersistenceException("A local attendance record has an invalid time.");
     }
 
     // Helper method to safely parse double values
@@ -719,11 +470,8 @@ public class CSVHandler {
         try {
             return new BigDecimal(value.trim()).doubleValue();
         } catch (NumberFormatException e) {
-            System.err.println("Invalid number format: " + value);
-            return 0.0;
+            throw new PersistenceException("A local attendance record has an invalid number.");
         }
     }
 }
-
-
 

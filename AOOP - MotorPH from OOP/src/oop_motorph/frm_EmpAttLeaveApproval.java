@@ -16,6 +16,7 @@ public class frm_EmpAttLeaveApproval extends javax.swing.JFrame {
    
     public frm_EmpAttLeaveApproval() {
         initComponents();
+        AppTheme.finish(this);
         displayAttendanceData();
         
         //JBF: Sets the windown to center and disable resizable
@@ -26,8 +27,9 @@ public class frm_EmpAttLeaveApproval extends javax.swing.JFrame {
         // Retrieve current employee details
         EmpDetails employee = EmpUserSession.getInstance().getCurrentUser();
         
-        // Get role from CSVHandler
-        String role = CSVHandler.loadCredentials().get(employee.getEmpID())[1];
+        // Reuse the authenticated session without loading every user's credentials.
+        String role = EmpUserSession.getInstance().getRole();
+        if (employee == null || role == null) role = "EMPLOYEE";
         
         // Set role-based access
         setRoleBasedAccess(role);
@@ -90,6 +92,7 @@ public class frm_EmpAttLeaveApproval extends javax.swing.JFrame {
 
         if (employee == null) {
             JOptionPane.showMessageDialog(this, "No employee data found!", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
         }
         
          List<EmpAttLeave> attendanceList = CSVHandler.getAttendanceData();
@@ -313,10 +316,11 @@ public class frm_EmpAttLeaveApproval extends javax.swing.JFrame {
         if ("Pending".equalsIgnoreCase(currentAttendanceStatus)) {
             // Update attendance status to "Approved"
             String newStatus = "Approved";
+            CSVHandler.updateAttendanceStatus(empID,
+                    String.valueOf(tbl_Attendance.getValueAt(selectedRow, 6)),
+                    String.valueOf(tbl_Attendance.getValueAt(selectedRow, 7)),
+                    newStatus, "Attendance approved successfully!");
             tbl_Attendance.setValueAt(newStatus, selectedRow, 13);
-
-            // Update the CSV file
-            CSVHandler.updateAttendanceStatus(empID, newStatus, "Attendance approved successfully!");
 
             JOptionPane.showMessageDialog(null, "Attendance approved successfully!");
              this.dispose();
@@ -346,10 +350,11 @@ public class frm_EmpAttLeaveApproval extends javax.swing.JFrame {
         if ("Pending".equalsIgnoreCase(currentAttendanceStatus)) {
             // Update attendance status to "Rejected"
             String newStatus = "Rejected";
+            CSVHandler.updateAttendanceStatus(empID,
+                    String.valueOf(tbl_Attendance.getValueAt(selectedRow, 6)),
+                    String.valueOf(tbl_Attendance.getValueAt(selectedRow, 7)),
+                    newStatus, "Attendance rejected successfully!");
             tbl_Attendance.setValueAt(newStatus, selectedRow, 13);
-
-            // Update the CSV file
-            CSVHandler.updateAttendanceStatus(empID, newStatus, "Attendance rejected successfully!");
 
             JOptionPane.showMessageDialog(null, "Attendance rejected successfully!");
             this.dispose();

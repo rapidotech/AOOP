@@ -17,6 +17,7 @@ public class frm_EmpAttLeaveRequest extends javax.swing.JFrame {
 
     public frm_EmpAttLeaveRequest() {
         initComponents();
+        AppTheme.finish(this);
         setLocationRelativeTo(null);
         setResizable(false);
         setTitle("Leave / Attendance Request");

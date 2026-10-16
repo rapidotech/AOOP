@@ -16,6 +16,7 @@ public class frm_EmployeesSalary2 extends javax.swing.JFrame {
                                 String pagibigNo, String tinNo, String basicSalary, String riceSubsidy,
                                 String phoneAllowance, String clothingAllowance, String grossSemi, String hourlyRate) {
         initComponents();
+        AppTheme.finish(this);
         setLocationRelativeTo(null); // Center window
         setResizable(false);         // Disable resizing
         setTitle("Profile");
@@ -31,6 +32,7 @@ public class frm_EmployeesSalary2 extends javax.swing.JFrame {
     // Constructor for Add Mode (with empty fields)
     public frm_EmployeesSalary2() {
         initComponents();
+        AppTheme.finish(this);
         setLocationRelativeTo(null); // Center window
         setResizable(false);         // Disable resizing
         setTitle("Profile");

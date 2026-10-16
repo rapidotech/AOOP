@@ -14,6 +14,7 @@ public class frm_EmpPayroll extends javax.swing.JFrame {
 
     public frm_EmpPayroll() {
         initComponents();
+        AppTheme.finish(this);
         
         // Set window properties - larger size to show all content
         setResizable(true);

@@ -10,6 +10,7 @@ public class frm_EmpProfile extends javax.swing.JFrame {
     
     public frm_EmpProfile() {
         initComponents();
+        AppTheme.finish(this);
         
         // Set window properties - larger size to show all content
         setResizable(true);
@@ -403,16 +404,13 @@ public class frm_EmpProfile extends javax.swing.JFrame {
     // Load supervisors dynamically from database
     private void loadSupervisors() {
         try {
-            // Debug supervisor data
-            DatabaseHandler.debugSupervisorData();
-            
             List<String> supervisors = DatabaseHandler.getAllSupervisors();
             String[] supervisorArray = supervisors.toArray(new String[0]);
             cmb_Supervisor.setModel(new javax.swing.DefaultComboBoxModel<>(supervisorArray));
-        } catch (Exception e) {
-            System.err.println("Error loading supervisors: " + e.getMessage());
-            // Fallback to default list if database loading fails
-            cmb_Supervisor.setModel(new javax.swing.DefaultComboBoxModel<>(new String[]{"N/A", "No supervisors available"}));
+        } catch (PersistenceException e) {
+            cmb_Supervisor.setModel(new javax.swing.DefaultComboBoxModel<>(new String[]{"Supervisors unavailable"}));
+            cmb_Supervisor.setEnabled(false);
+            AppTheme.showDataError(this, e);
         }
     }
 

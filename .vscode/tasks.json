@@ -4,7 +4,8 @@
     {
       "type": "shell",
       "label": "javac build AOOP",
-      "command": "javac -d build/classes -cp \"lib/*\" src/oop_motorph/*.java",
+      "command": "powershell",
+      "args": ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "${workspaceFolder}/scripts/build.ps1"],
       "group": "build",
       "problemMatcher": [
         "$javac"

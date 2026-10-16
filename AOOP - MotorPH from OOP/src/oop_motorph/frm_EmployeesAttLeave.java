@@ -14,6 +14,7 @@ public class frm_EmployeesAttLeave extends javax.swing.JFrame {
 
     public frm_EmployeesAttLeave() {
         initComponents();
+        AppTheme.finish(this);
         
         // Set window properties - larger size to show all content
         setResizable(true);

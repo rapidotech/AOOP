@@ -12,6 +12,7 @@ public class frm_EmployeesPayrollPaid extends javax.swing.JFrame {
    
     public frm_EmployeesPayrollPaid() {
         initComponents();
+        AppTheme.finish(this);
 
         // Set the window to center and disable resizable
         setLocationRelativeTo(null);
@@ -35,8 +36,8 @@ public class frm_EmployeesPayrollPaid extends javax.swing.JFrame {
     }
 
     private void loadPayrollData() {
-        // Get payroll data from CSVHandler
-        List<String[]> payrollData = CSVHandler.readPayrollCSV();
+        // Approval states belong to the explicit local ledger, not calculated database rows.
+        List<String[]> payrollData = CSVHandler.loadPayrollLedger();
 
         // Define column headers
         String[] columns = {
@@ -536,139 +537,44 @@ public class frm_EmployeesPayrollPaid extends javax.swing.JFrame {
     }//GEN-LAST:event_btn_LogoutActionPerformed
 
     private void btn_AppPayActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_AppPayActionPerformed
- 
-  // Get the selected row index
-    int selectedRow = tbl_Payroll.getSelectedRow();
-    
-    if (selectedRow != -1) { // Ensure a row is selected
-        // Get the Employee ID (assuming Employee ID is in column 1)
-        String empID = (String) tbl_Payroll.getValueAt(selectedRow, 1);
-
-        // Get the current pay status (assuming pay status is in column 21)
-        String currentPayStatus = (String) tbl_Payroll.getValueAt(selectedRow, 21);
-
-        // Check if the current pay status is "Verified" before approving
-        if ("Verified".equalsIgnoreCase(currentPayStatus)) {
-            // Update pay status to "Approved"
-            String payStatus = "Approved";
-            tbl_Payroll.setValueAt(payStatus, selectedRow, 21);
-
-            // Update the CSV file
-            CSVHandler.updatePayrollStatus(empID, payStatus, "Payroll approved successfully!");
-        } else {
-            JOptionPane.showMessageDialog(null, "Approval denied: Payment status must be 'Verified'.");
-        }
-    } else {
-        JOptionPane.showMessageDialog(null, "Please select a payroll entry to approve.");
-    }        
-      
+        changePayrollStatus("Verified", "Approved");
     }//GEN-LAST:event_btn_AppPayActionPerformed
 
     private void btn_undoAppActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_undoAppActionPerformed
-    /*      // Get the selected row index
-    int selectedRow = tbl_Payroll.getSelectedRow();
-    
-    if (selectedRow != -1) { // Ensure a row is selected
-        // Get the Employee ID (assuming Employee ID is in column 1)
-        String empID = (String) tbl_Payroll.getValueAt(selectedRow, 1);
-
-        // Update pay status to "Approved" in JTable
-        String payStatus = "Pending";
-        tbl_Payroll.setValueAt(payStatus, selectedRow, 21);
-
-        // Update the CSV file
-        CSVHandler.updatePayrollStatus(empID, payStatus, "Undo Approval!");
-
-    } else {
-        JOptionPane.showMessageDialog(null, "Please select a payroll entry to undo verification.");
-    }*/
-     
-    // Get the selected row index
-    int selectedRow = tbl_Payroll.getSelectedRow();
-    
-    if (selectedRow != -1) { // Ensure a row is selected
-        // Get the Employee ID (assuming Employee ID is in column 1)
-        String empID = (String) tbl_Payroll.getValueAt(selectedRow, 1);
-
-        // Get the current pay status (assuming pay status is in column 21)
-        String currentPayStatus = (String) tbl_Payroll.getValueAt(selectedRow, 21);
-
-        // Check if the current pay status is "Approved" before undoing approval
-        if ("Approved".equalsIgnoreCase(currentPayStatus)) {
-            // Update pay status to "Pending"
-            String payStatus = "Pending";
-            tbl_Payroll.setValueAt(payStatus, selectedRow, 21);
-
-            // Update the CSV file
-            CSVHandler.updatePayrollStatus(empID, payStatus, "Undo Approval!");
-        } else {
-            JOptionPane.showMessageDialog(null, "Undo approval denied: Only entries with 'Approved' status can be undone.");
-        }
-    } else {
-        JOptionPane.showMessageDialog(null, "Please select a payroll entry to undo approval.");
-    }
-
-
+        changePayrollStatus("Approved", "Pending");
     }//GEN-LAST:event_btn_undoAppActionPerformed
 
     private void btn_werifyPayActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_werifyPayActionPerformed
-    
-   // Get the selected row index
-    int selectedRow = tbl_Payroll.getSelectedRow();
-    
-    if (selectedRow != -1) { // Ensure a row is selected
-        // Get the Employee ID (assuming Employee ID is in column 1)
-        String empID = (String) tbl_Payroll.getValueAt(selectedRow, 1);
-
-        // Get the current pay status (assuming pay status is in column 21)
-        String currentPayStatus = (String) tbl_Payroll.getValueAt(selectedRow, 21);
-
-        // Check if the current pay status is "Pending" before verifying
-        if ("Pending".equalsIgnoreCase(currentPayStatus)) {
-            // Update pay status to "Verified"
-            String payStatus = "Verified";
-            tbl_Payroll.setValueAt(payStatus, selectedRow, 21);
- 
-            // Update the CSV file
-            CSVHandler.updatePayrollStatus(empID, payStatus, "Payroll verified successfully!");
-        } else {
-            JOptionPane.showMessageDialog(null, "Verification denied: Only entries with 'Pending' status can be verified.");
-        }
-    } else {
-        JOptionPane.showMessageDialog(null, "Please select a payroll entry to verify.");
-    }
-
+        changePayrollStatus("Pending", "Verified");
     }//GEN-LAST:event_btn_werifyPayActionPerformed
 
     private void btn_undoVerifyActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_undoVerifyActionPerformed
-   
-   // Get the selected row index
-    int selectedRow = tbl_Payroll.getSelectedRow();
-     
-    if (selectedRow != -1) { // Ensure a row is selected
-        // Get the Employee ID (assuming Employee ID is in column 1)
-        String empID = (String) tbl_Payroll.getValueAt(selectedRow, 1);
- 
-        // Get the current pay status (assuming pay status is in column 21)
-        String currentPayStatus = (String) tbl_Payroll.getValueAt(selectedRow, 21);
-
-        // Check if the current pay status is "Verified" before undoing verification
-        if ("Verified".equalsIgnoreCase(currentPayStatus)) {
-            // Update pay status to "Pending"
-            String payStatus = "Pending";
-            tbl_Payroll.setValueAt(payStatus, selectedRow, 21);
-
-            // Update the CSV file
-            CSVHandler.updatePayrollStatus(empID, payStatus, "Undo Verification!");
-
-        } else {
-            JOptionPane.showMessageDialog(null, "Undo verification denied: Payment status must be 'Verified'.");
-        }
-    } else {
-        JOptionPane.showMessageDialog(null, "Please select a payroll entry to undo verification.");
-    }
-
+        changePayrollStatus("Verified", "Pending");
     }//GEN-LAST:event_btn_undoVerifyActionPerformed
+
+    private void changePayrollStatus(String expectedStatus, String newStatus) {
+        int selectedRow = tbl_Payroll.getSelectedRow();
+        if (selectedRow < 0) {
+            JOptionPane.showMessageDialog(this, "Select a payroll entry first.", "No selection", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        String currentStatus = String.valueOf(tbl_Payroll.getValueAt(selectedRow, 21));
+        if (!expectedStatus.equalsIgnoreCase(currentStatus)) {
+            JOptionPane.showMessageDialog(this, "This action requires a payroll entry with status '" + expectedStatus + "'.",
+                    "Status unchanged", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        String transactionID = String.valueOf(tbl_Payroll.getValueAt(selectedRow, 0));
+        String employeeID = String.valueOf(tbl_Payroll.getValueAt(selectedRow, 1));
+        String dateFrom = String.valueOf(tbl_Payroll.getValueAt(selectedRow, 4));
+        String dateTo = String.valueOf(tbl_Payroll.getValueAt(selectedRow, 5));
+        CSVHandler.updatePayrollStatus(transactionID, employeeID, dateFrom, dateTo, newStatus,
+                "Payroll status saved successfully.");
+        // A failed write leaves the displayed state unchanged.
+        tbl_Payroll.setValueAt(newStatus, selectedRow, 21);
+        JOptionPane.showMessageDialog(this, "Payroll status saved as " + newStatus + ".",
+                "Status saved", JOptionPane.INFORMATION_MESSAGE);
+    }
 
     private void btn_EmpRecordsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_EmpRecordsActionPerformed
         new frm_EmployeesRecords().setVisible(true);

@@ -15,6 +15,7 @@ public class frm_EmpAttLeave extends javax.swing.JFrame {
     
     public frm_EmpAttLeave() {
         initComponents();
+        AppTheme.finish(this);
         
         // Set window properties - larger size to show all content
         setResizable(true);
@@ -33,7 +34,8 @@ public class frm_EmpAttLeave extends javax.swing.JFrame {
     
         EmpDetails employee = EmpUserSession.getInstance().getCurrentUser();
         if (employee != null) {
-            String role = CSVHandler.loadCredentials().get(employee.getEmpID())[1];
+            String role = EmpUserSession.getInstance().getRole();
+            if (role == null) role = "EMPLOYEE";
             setRoleBasedAccess(role);
         } else {
             JOptionPane.showMessageDialog(this, "User not logged in!", "Error", JOptionPane.ERROR_MESSAGE);
