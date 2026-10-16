@@ -97,37 +97,18 @@ public class CSVHandler {
 
     public static void saveAttendanceRequest(EmpAttLeave empAttLeave) {
         Objects.requireNonNull(empAttLeave, "Attendance request is required.");
-        String[] row = attendanceRow(empAttLeave);
-        LocalRecordStore.update(LocalRecordStore.ATTENDANCE, rows -> {
-            for (String[] existing : rows) {
-                if (Objects.equals(existing[0], row[0]) && sameDate(existing[6], row[6]) && sameDate(existing[7], row[7])) {
-                    throw new PersistenceException("An attendance request already exists for this employee and date range. Edit that request instead.");
-                }
-            }
-            rows.add(row);
-        });
+        DatabaseLedger.addAttendance(attendanceRow(empAttLeave));
     }
 
     public static void saveEditAttendanceRequest(EmpAttLeave empAttLeave, String oldDateFrom, String oldDateTo) {
         Objects.requireNonNull(empAttLeave, "Attendance request is required.");
-        String[] replacement = attendanceRow(empAttLeave);
-        LocalRecordStore.update(LocalRecordStore.ATTENDANCE, rows -> {
-            int selected = attendanceIndex(rows, empAttLeave.getEmpID(), oldDateFrom, oldDateTo);
-            for (int i = 0; i < rows.size(); i++) {
-                String[] row = rows.get(i);
-                if (i != selected && Objects.equals(row[0], replacement[0])
-                        && sameDate(row[6], replacement[6]) && sameDate(row[7], replacement[7])) {
-                    throw new PersistenceException("Another attendance request already uses that date range. No changes were saved.");
-                }
-            }
-            rows.set(selected, replacement);
-        });
+        DatabaseLedger.editAttendance(attendanceRow(empAttLeave), oldDateFrom, oldDateTo);
     }
 
-    /** Local requests are explicit: normalized database time logs keep their existing API. */
+    /** Audited database requests are appended to normalized time logs by the compatibility API. */
     public static List<EmpAttLeave> loadAttendanceRequests() {
         List<EmpAttLeave> requests = new ArrayList<>();
-        for (String[] row : LocalRecordStore.read(LocalRecordStore.ATTENDANCE)) {
+        for (String[] row : DatabaseLedger.attendanceRows()) {
             requests.add(new EmpAttLeave(row[0], row[1], row[2], row[3], row[4], row[5],
                     parseDate(row[6]), parseDate(row[7]), row[8].isEmpty() ? null : parseTime(row[8]),
                     row[9].isEmpty() ? null : parseTime(row[9]), parseDouble(row[10]), parseDouble(row[11]),
@@ -138,7 +119,7 @@ public class CSVHandler {
     }
 
     public static List<String[]> loadPayrollLedger() {
-        return LocalRecordStore.read(LocalRecordStore.PAYROLL);
+        return DatabaseLedger.payrollRows();
     }
 
     private static String[] attendanceRow(EmpAttLeave request) {
@@ -162,27 +143,7 @@ public class CSVHandler {
     }
 
     public static void updateAttendanceStatus(String empID, String dateFrom, String dateTo, String newStatus, String message) {
-        LocalRecordStore.update(LocalRecordStore.ATTENDANCE, rows -> {
-            rows.get(attendanceIndex(rows, empID, dateFrom, dateTo))[13] = newStatus;
-        });
-    }
-
-    private static int attendanceIndex(List<String[]> rows, String empID, String dateFrom, String dateTo) {
-        int found = -1;
-        for (int i = 0; i < rows.size(); i++) {
-            String[] row = rows.get(i);
-            if (Objects.equals(row[0], empID) && (dateFrom == null || sameDate(row[6], dateFrom))
-                    && (dateTo == null || sameDate(row[7], dateTo))) {
-                if (found >= 0) { throw new PersistenceException("Multiple local attendance requests match. Select a specific employee and date range."); }
-                found = i;
-            }
-        }
-        if (found < 0) { throw new PersistenceException("No local attendance request matches this employee and date range. Database time logs do not contain approval status."); }
-        return found;
-    }
-
-    private static boolean sameDate(String first, String second) {
-        return parseDate(first).equals(parseDate(second));
+        DatabaseLedger.attendanceStatus(empID, dateFrom, dateTo, newStatus);
     }
 
     public static void savePayrollData(
@@ -197,30 +158,12 @@ public class CSVHandler {
                 basicSalary, hourlyRate, totalAllowances, hrsPerMonth, totalHrsWorked, adjEarnings,
                 totalEarnings, tardinessAbsences, eeTax, eeSSS, eePagibig, eePhilhealth, adjDeductions,
                 totalDeductions, netPay, payStatus};
-        LocalRecordStore.update(LocalRecordStore.PAYROLL, rows -> {
-            for (int i = 0; i < rows.size(); i++) {
-                String[] row = rows.get(i);
-                if (Objects.equals(row[1], empID) && Objects.equals(row[4], payDateFrom)) {
-                    replacement[0] = row[0];
-                    rows.set(i, replacement);
-                    return;
-                }
-            }
-            rows.add(replacement);
-        });
+        DatabaseLedger.savePayroll(replacement);
     }
 
     // Method to generate a 7-character alphanumeric transaction ID in Payroll
     private static String generateTransactionID() {
-        String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-        StringBuilder sb = new StringBuilder();
-        Random random = new Random();
-
-        for (int i = 0; i < 7; i++) {
-            sb.append(chars.charAt(random.nextInt(chars.length())));
-        }
-
-        return sb.toString();
+        return UUID.randomUUID().toString();
     }
 
     // Read the payroll CSV file
@@ -243,7 +186,7 @@ public class CSVHandler {
     }
 
     public static void saveUpdatedPayrollData(List<String[]> payrollData) {
-        LocalRecordStore.write(LocalRecordStore.PAYROLL, payrollData);
+        DatabaseLedger.replacePayroll(payrollData);
     }
 
     public static void updatePayrollCSV(String empID, String firstName, String lastName, String payDateFrom,
@@ -262,19 +205,7 @@ public class CSVHandler {
 
     public static void updatePayrollStatus(String transactionID, String employeeID, String dateFrom, String dateTo,
             String newStatus, String successMessage) {
-        LocalRecordStore.update(LocalRecordStore.PAYROLL, rows -> {
-            String[] selected = null;
-            for (String[] row : rows) {
-                if (Objects.equals(row[1], employeeID) && (transactionID == null || Objects.equals(row[0], transactionID))
-                        && (dateFrom == null || sameDate(row[4], dateFrom))
-                        && (dateTo == null || sameDate(row[5], dateTo))) {
-                    if (selected != null) { throw new PersistenceException("Multiple local payroll periods match. Select a specific transaction and payroll period."); }
-                    selected = row;
-                }
-            }
-            if (selected == null) { throw new PersistenceException("No local payroll record matches this transaction and payroll period. Database payroll rows do not contain payment approval status."); }
-            selected[21] = newStatus;
-        });
+        DatabaseLedger.payrollStatus(transactionID, employeeID, dateFrom, dateTo, newStatus);
     }
 
     // To print only "Approved" payrolls

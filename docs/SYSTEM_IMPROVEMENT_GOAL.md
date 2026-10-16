@@ -74,3 +74,26 @@ See `security/README.md` for launching, temporary credentials, reproduction,
 rollback and the explicit limits of the assurance claims.
 
 Run state: `C:/Users/JAYCEE/.codex/tmp/astra-runs/aoop-20261017-system-improvements/checkpoint.json`.
+
+## Expanded goal: all proposed controls
+
+The user expanded the goal after the initial delivery: reassess every proposal
+in the SIP and audit worksheet, implement worthwhile feasible controls, and
+update all code, tests, documentation, diagram and portfolio deliverables.
+The initial completion above remains historical evidence for baseline9ba48e6.
+
+The new decision record is `security/EXPANDED_CONTROL_PLAN.md`. It includes C3
+persisted lockout/throttling and HR notification, C4 data-layer/object authorization,
+and C5 transactional hash-chained audit logging with database workflow ledgers.
+Repository, build, dependency and release checks are expanded too. Preserve the
+original database and documents; keep environment-specific limitations explicit.
+
+Active run: `C:/Users/JAYCEE/.codex/tmp/astra-runs/aoop-20261017-all-controls`.
+
+Expanded implementation completed on 17 October 2026: C3 persisted lockout and
+HR activity, C4 scoped authorization, C5 transactional chain/workflow storage and
+read-only HR audit viewer, dependency/repository/release guards. Final gate passed
+331 offline assertions, 76 real application checks and 15 SQL/chain checks.
+The revised workbook, 21-page editable log/PDF and expanded diagram are delivered
+in the portfolio. Off-host custody and coordinated original-root/history rollout
+remain explicitly partial/deferred; originals were preserved.

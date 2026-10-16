@@ -19,6 +19,7 @@ import java.text.ParseException;
 public class frm_EmployeesPayrollProcess extends javax.swing.JFrame {
 
     public frm_EmployeesPayrollProcess() {
+        AuthorizationService.requireHr();
         initComponents();
         AppTheme.finish(this);
         

@@ -9,6 +9,7 @@ public class frm_EmpProfile extends javax.swing.JFrame {
 
     
     public frm_EmpProfile() {
+        AuthorizationService.requireAuthenticated();
         initComponents();
         AppTheme.finish(this);
         
@@ -23,7 +24,7 @@ public class frm_EmpProfile extends javax.swing.JFrame {
         cmb_empStatus.setModel(new javax.swing.DefaultComboBoxModel<>(new String[]{"Regular", "Probationary"}));
         cbox_position.setModel(new javax.swing.DefaultComboBoxModel<>(new String[]{"HR Manager", "Account Team Leader", "Payroll Manager", "HR Rank and File", "Payroll Rank and File", "Account Rank and File"}));
         
-        // Load supervisors dynamically from database
+        // Show only this employee's supervisor in the read-only profile.
         loadSupervisors();
 
         // Apply modern styling after components are initialized
@@ -37,6 +38,7 @@ public class frm_EmpProfile extends javax.swing.JFrame {
         // Load employee data and set role-based access
         loadEmployeeData(employee);
         setRoleBasedAccess(role);
+        if ("HR".equalsIgnoreCase(role)) SecurityActivityPanel.attach(this);
     } else {
         JOptionPane.showMessageDialog(this, "No employee data or role found!", "Error", JOptionPane.ERROR_MESSAGE);
     }
@@ -401,17 +403,14 @@ public class frm_EmpProfile extends javax.swing.JFrame {
         }
     }
 
-    // Load supervisors dynamically from database
+    // The profile needs no list of other employees or supervisors.
     private void loadSupervisors() {
-        try {
-            List<String> supervisors = DatabaseHandler.getAllSupervisors();
-            String[] supervisorArray = supervisors.toArray(new String[0]);
-            cmb_Supervisor.setModel(new javax.swing.DefaultComboBoxModel<>(supervisorArray));
-        } catch (PersistenceException e) {
-            cmb_Supervisor.setModel(new javax.swing.DefaultComboBoxModel<>(new String[]{"Supervisors unavailable"}));
-            cmb_Supervisor.setEnabled(false);
-            AppTheme.showDataError(this, e);
-        }
+        EmpDetails employee = EmpUserSession.getInstance().getCurrentUser();
+        String supervisor = employee.getImmediateSupervisor();
+        cmb_Supervisor.setModel(new javax.swing.DefaultComboBoxModel<>(new String[]{
+            supervisor == null || supervisor.isBlank() ? "No supervisor" : supervisor
+        }));
+        cmb_Supervisor.setEnabled(false);
     }
 
     /**

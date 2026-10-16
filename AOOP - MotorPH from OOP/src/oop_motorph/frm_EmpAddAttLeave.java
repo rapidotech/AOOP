@@ -18,15 +18,17 @@ public class frm_EmpAddAttLeave extends javax.swing.JFrame {
     private boolean isEditMode;
 
     public frm_EmpAddAttLeave() {
+        this(null, false);
+    }
+
+    public frm_EmpAddAttLeave(EmpAttLeave empAttLeave, boolean isEditMode) {
+        AuthorizationService.requireAuthenticated();
+        if (empAttLeave != null) AuthorizationService.requireEmployeeOrHr(empAttLeave.getEmpID());
         initComponents();
         AppTheme.finish(this);
         setLocationRelativeTo(null);
         setResizable(false);
         setTitle("Add Leave/Attendance");
-    }
-
-    public frm_EmpAddAttLeave(EmpAttLeave empAttLeave, boolean isEditMode) {
-        this(); // Call the default constructor to initialize components
         this.empAttLeave = empAttLeave;
         this.isEditMode = isEditMode;
         populateFields();

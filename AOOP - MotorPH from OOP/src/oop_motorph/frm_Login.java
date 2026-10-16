@@ -16,6 +16,8 @@ public class frm_Login extends javax.swing.JFrame {
     private final JLabel loginStatus = new JLabel("Enter your username and password.");
     private boolean signingIn;
     private char passwordEcho;
+    private Timer retryTimer;
+    private long retryDeadlineNanos;
 
     public frm_Login() {
         this(DatabaseHandler::authenticate);
@@ -71,6 +73,7 @@ public class frm_Login extends javax.swing.JFrame {
         loginStatus.setName("loginStatus");
         loginStatus.setForeground(AppTheme.MUTED);
         loginStatus.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        loginStatus.setPreferredSize(new Dimension(402, 34));
         loginStatus.getAccessibleContext().setAccessibleName("Sign in status");
         btn_Login.setText("Sign in");
         btn_Login.setBackground(AppTheme.GREEN);
@@ -288,7 +291,7 @@ public class frm_Login extends javax.swing.JFrame {
 
     //mikko start
     private void btn_LoginActionPerformed(java.awt.event.ActionEvent evt) {
-        if (signingIn) return;
+        if (signingIn || (retryTimer != null && retryTimer.isRunning())) return;
         final String username = txt_Login.getText().trim();
         final char[] password = jPasswordField.getPassword();
         if (username.isEmpty() || password.length == 0) {
@@ -337,7 +340,11 @@ public class frm_Login extends javax.swing.JFrame {
                     Thread.currentThread().interrupt();
                     setStatus("Sign in was interrupted. Please try again.", true);
                 } catch (ExecutionException ex) {
-                    setStatus("Sign in unavailable. Check the connection and retry.", true);
+                    if (ex.getCause() instanceof AuthenticationThrottledException) {
+                        startRetryDelay(((AuthenticationThrottledException) ex.getCause()).getRetryAfterSeconds());
+                    } else {
+                        setStatus("Sign in unavailable. Check the connection and retry.", true);
+                    }
                 }
             }
         }.execute();
@@ -349,15 +356,47 @@ public class frm_Login extends javax.swing.JFrame {
             setStatus("Sign in could not be completed. Please try again.", true);
             return;
         }
-        EmpUserSession.getInstance().setCurrentUser(result.getEmployee(), result.getRole());
         try {
+            EmpUserSession.getInstance().establish(result);
             if (authenticatedNavigation == null) new frm_EmpProfile().setVisible(true);
             else authenticatedNavigation.accept(result);
             dispose();
         } catch (PersistenceException ex) {
             EmpUserSession.getInstance().clearSession();
             setStatus("Profile unavailable. Check the connection and retry.", true);
+        } catch (AuthorizationException ex) {
+            EmpUserSession.getInstance().clearSession();
+            setStatus("Sign in could not be completed. Please try again.", true);
         }
+    }
+
+    private void startRetryDelay(long retryAfterSeconds) {
+        long seconds = Math.max(1, Math.min(retryAfterSeconds, 86400));
+        retryDeadlineNanos = System.nanoTime() + java.util.concurrent.TimeUnit.SECONDS.toNanos(seconds);
+        if (retryTimer != null) retryTimer.stop();
+        retryTimer = new Timer(250, event -> updateRetryDelay());
+        updateRetryDelay();
+        retryTimer.start();
+    }
+
+    private void updateRetryDelay() {
+        long remaining = retryDeadlineNanos - System.nanoTime();
+        if (remaining <= 0) {
+            if (retryTimer != null) retryTimer.stop();
+            btn_Login.setEnabled(true);
+            btn_Login.setText("Sign in");
+            setStatus("You can try signing in again.", false);
+            return;
+        }
+        long seconds = (remaining + 999999999L) / 1000000000L;
+        btn_Login.setEnabled(false);
+        btn_Login.setText("Try again (" + seconds + " s)");
+        setStatus("Sign in could not be completed. Try again in " + seconds + " seconds.", true);
+    }
+
+    @Override public void dispose() {
+        if (retryTimer != null) retryTimer.stop();
+        super.dispose();
     }
 
     private void setSigningIn(boolean busy) {
@@ -372,7 +411,7 @@ public class frm_Login extends javax.swing.JFrame {
 
     private void setStatus(String text, boolean error) {
         loginStatus.setForeground(error ? new Color(185, 28, 28) : AppTheme.MUTED);
-        loginStatus.setText(text);
+        loginStatus.setText("<html><div style='width: 280px'>" + text.replace("&", "&amp;").replace("<", "&lt;") + "</div></html>");
         loginStatus.getAccessibleContext().setAccessibleDescription(text);
     }
 

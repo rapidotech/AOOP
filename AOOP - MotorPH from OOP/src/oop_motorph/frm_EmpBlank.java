@@ -6,6 +6,7 @@ public class frm_EmpBlank extends javax.swing.JFrame {
 
    
     public frm_EmpBlank() {
+        AuthorizationService.requireAuthenticated();
         initComponents();
         AppTheme.finish(this);
         

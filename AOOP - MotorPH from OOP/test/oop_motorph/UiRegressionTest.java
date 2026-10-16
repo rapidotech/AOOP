@@ -3,9 +3,6 @@ package oop_motorph;
 import java.awt.*;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.Collections;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.*;
@@ -15,15 +12,20 @@ import javax.swing.table.*;
 /** Offline Swing regressions. Auth is injected; no JDBC driver or live service is used. */
 public final class UiRegressionTest {
     private static int assertions;
+    private static UiAuthFixture AUTH;
 
     public static void main(String[] args) throws Exception {
         try {
+            AUTH = new UiAuthFixture();
             for (UIManager.LookAndFeelInfo look : UIManager.getInstalledLookAndFeels()) {
                 if ("Nimbus".equals(look.getName())) { UIManager.setLookAndFeel(look.getClassName()); break; }
             }
+            guardedConstructors();
             lazyLoginAndKeyboard();
             asynchronousAuthentication();
             unavailableAndRetry();
+            nonblockingThrottleRetry();
+            resetThrottleRetry();
             resetGateAndCancel();
             resetValidationAndFailure();
             successfulResetAndNavigation();
@@ -31,13 +33,15 @@ public final class UiRegressionTest {
             resetPrimaryButtonContrast();
             sortedPayrollMapping();
             failedPayrollSavePreservesDisplay();
+            securityActivityLifecycle();
             readOnlyControlsStayReadable();
             check(contrast(Color.WHITE, AppTheme.GREEN) >= 4.5, "Primary button contrast must meet 4.5:1");
-            System.out.println("UI regression checks passed: " + assertions + " assertions; injected auth only.");
+            System.out.println("UI regression checks passed: " + assertions + " assertions; fake JDBC and genuine issued authentication results only.");
         } finally {
             SwingUtilities.invokeAndWait(() -> {
                 for (Window window : Window.getWindows()) window.dispose();
             });
+            if (AUTH != null) AUTH.close();
         }
     }
 
@@ -64,6 +68,48 @@ public final class UiRegressionTest {
             check(find(login, "loginStatus", JLabel.class).getText().contains("Enter both"), "Missing credentials need a recovery message");
             login.dispose();
         });
+    }
+
+    private static void guardedConstructors() throws Exception {
+        SwingUtilities.invokeAndWait(() -> {
+            EmpUserSession.getInstance().clearSession();
+            java.util.List<Runnable> employeeForms = java.util.List.of(
+                    () -> new frm_EmpProfile(), () -> new frm_EmpSalary(), () -> new frm_EmpPayroll(),
+                    () -> new frm_EmpAttLeave(), () -> new frm_EmpAttLeaveRequest(),
+                    () -> new frm_EmpAddAttLeave(), () -> new frm_EmpBlank());
+            java.util.List<Runnable> hrForms = java.util.List.of(
+                    () -> new frm_EmployeesRecords(), () -> new frm_EmployeesRecords2(null, false),
+                    () -> new frm_EmployeesSalary(), () -> new frm_EmployeesSalary2(),
+                    () -> new frm_EmployeesSalary2(null, null, null, null, null, null, null, null, null, null, null, null, null),
+                    () -> new frm_EmployeesAttLeave(), () -> new frm_EmployeesPayrollPaid(),
+                    () -> new frm_EmployeesPayrollProcess(), () -> new frm_EmpAttLeaveApproval(),
+                    () -> new frm_SecurityEvents());
+            int reads = AUTH.employeeQueries;
+            for (Runnable form : employeeForms) expectDenied(form);
+            for (Runnable form : hrForms) expectDenied(form);
+            check(AUTH.employeeQueries == reads, "Unauthenticated form constructors must deny before reading employee data");
+        });
+        AUTH.establish("EMPLOYEE");
+        SwingUtilities.invokeAndWait(() -> {
+            int reads = AUTH.employeeQueries;
+            expectDenied(() -> new frm_EmployeesRecords());
+            expectDenied(() -> new frm_EmployeesRecords2(null, false));
+            expectDenied(() -> new frm_EmployeesSalary());
+            expectDenied(() -> new frm_EmployeesSalary2());
+            expectDenied(() -> new frm_EmployeesAttLeave());
+            expectDenied(() -> new frm_EmployeesPayrollPaid());
+            expectDenied(() -> new frm_EmployeesPayrollProcess());
+            expectDenied(() -> new frm_EmpAttLeaveApproval());
+            expectDenied(() -> new frm_SecurityEvents());
+            check(AUTH.employeeQueries == reads, "Employee access to HR forms must deny before reading employee data");
+            EmpUserSession.getInstance().clearSession();
+        });
+    }
+
+    private static void expectDenied(Runnable action) {
+        boolean denied = false;
+        try { action.run(); } catch (AuthorizationException expected) { denied = true; }
+        check(denied, "A restricted constructor must enforce its authorization gate");
     }
 
     private static void asynchronousAuthentication() throws Exception {
@@ -131,7 +177,7 @@ public final class UiRegressionTest {
         AtomicInteger navigation = new AtomicInteger();
         AtomicInteger resetCalls = new AtomicInteger();
         SwingUtilities.invokeAndWait(() -> {
-            frame.set(new frm_Login((user, password) -> DatabaseHandler.AuthenticationResult.resetRequired(user),
+            frame.set(new frm_Login((user, password) -> AUTH.issue("EMPLOYEE", true),
                     (user, oldPassword, newPassword) -> { resetCalls.incrementAndGet(); return null; },
                     result -> navigation.incrementAndGet()));
             find(frame.get(), "username", JTextField.class).setText("90001");
@@ -154,10 +200,60 @@ public final class UiRegressionTest {
         });
     }
 
+    private static void nonblockingThrottleRetry() throws Exception {
+        AtomicReference<frm_Login> frame = new AtomicReference<>();
+        AtomicInteger calls = new AtomicInteger();
+        SwingUtilities.invokeAndWait(() -> {
+            frame.set(new frm_Login((user, password) -> {
+                calls.incrementAndGet();
+                throw new AuthenticationThrottledException(1);
+            }));
+            find(frame.get(), "username", JTextField.class).setText("90001");
+            find(frame.get(), "password", JPasswordField.class).setText("offline-proof");
+            find(frame.get(), "signIn", JButton.class).doClick();
+        });
+        awaitText(frame.get(), "Try again in");
+        SwingUtilities.invokeAndWait(() -> {
+            check(!find(frame.get(), "signIn", JButton.class).isEnabled(), "A retry-after response must disable resubmission without blocking the EDT");
+            check(find(frame.get(), "username", JTextField.class).isEnabled(), "Retry countdown must keep the rest of the form responsive");
+            String message = find(frame.get(), "loginStatus", JLabel.class).getText().toLowerCase(java.util.Locale.ROOT);
+            check(!message.contains("locked") && !message.contains("exists"), "Retry text must not reveal whether an account exists or is locked");
+            find(frame.get(), "password", JPasswordField.class).postActionEvent();
+            check(calls.get() == 1, "Enter during retry-after must not issue another authentication request");
+            check(EmpUserSession.getInstance().getCurrentUser() == null, "Throttled authentication must leave the session empty");
+        });
+        awaitText(frame.get(), "You can try");
+        SwingUtilities.invokeAndWait(() -> {
+            check(find(frame.get(), "signIn", JButton.class).isEnabled(), "The Swing timer must restore submission after the retry delay");
+            frame.get().dispose();
+        });
+    }
+
+    private static void resetThrottleRetry() throws Exception {
+        AtomicReference<PasswordResetDialog> dialog = new AtomicReference<>();
+        SwingUtilities.invokeAndWait(() -> {
+            dialog.set(new PasswordResetDialog(null, "90001", (user, current, replacement) -> {
+                throw new AuthenticationThrottledException(1);
+            }, result -> { throw new AssertionError("A throttled reset must not authenticate"); }));
+            fillReset(dialog.get(), "offline-temporary-proof", "a unique replacement", "a unique replacement");
+            find(dialog.get(), "savePassword", JButton.class).doClick();
+        });
+        awaitResetText(dialog.get(), "Try again in");
+        SwingUtilities.invokeAndWait(() -> {
+            check(!find(dialog.get(), "savePassword", JButton.class).isEnabled(), "Reset retry-after must prevent duplicate submissions");
+            check(find(dialog.get(), "cancelReset", JButton.class).isEnabled(), "A throttled reset may return to sign in without waiting on the EDT");
+            check(EmpUserSession.getInstance().getCurrentUser() == null, "Throttled reset must leave the employee session empty");
+        });
+        awaitResetText(dialog.get(), "You can try");
+        SwingUtilities.invokeAndWait(() -> {
+            check(find(dialog.get(), "savePassword", JButton.class).isEnabled(), "Reset retry timer must restore submission");
+            dialog.get().dispose();
+        });
+    }
+
     private static void resetValidationAndFailure() throws Exception {
         AtomicReference<PasswordResetDialog> dialog = new AtomicReference<>();
         AtomicInteger calls = new AtomicInteger();
-        AtomicBoolean flag = new AtomicBoolean(true);
         SwingUtilities.invokeAndWait(() -> {
             dialog.set(new PasswordResetDialog(null, "90001", (user, oldPassword, newPassword) -> {
                 calls.incrementAndGet();
@@ -181,7 +277,6 @@ public final class UiRegressionTest {
         });
         awaitResetText(dialog.get(), "not changed");
         SwingUtilities.invokeAndWait(() -> {
-            check(flag.get(), "Rejected reset must leave the simulated mandatory-reset flag intact");
             check(EmpUserSession.getInstance().getCurrentUser() == null, "Rejected reset must leave the session empty");
             check(find(dialog.get(), "savePassword", JButton.class).isEnabled(), "Rejected reset must restore retry controls");
             dialog.get().dispose();
@@ -194,7 +289,6 @@ public final class UiRegressionTest {
         awaitResetText(dialog.get(), "connection");
         SwingUtilities.invokeAndWait(() -> {
             check(EmpUserSession.getInstance().getCurrentUser() == null, "Persistence failure must leave the session empty");
-            check(flag.get(), "Persistence failure must not claim reset completion");
             dialog.get().dispose();
         });
     }
@@ -202,21 +296,21 @@ public final class UiRegressionTest {
     private static void successfulResetAndNavigation() throws Exception {
         AtomicReference<frm_Login> frame = new AtomicReference<>();
         AtomicInteger navigation = new AtomicInteger();
-        AtomicBoolean flag = new AtomicBoolean(true);
+        AtomicBoolean persistenceAcknowledged = new AtomicBoolean();
         AtomicReference<char[]> oldWorking = new AtomicReference<>();
         AtomicReference<char[]> newWorking = new AtomicReference<>();
         AtomicReference<String> savedPassword = new AtomicReference<>();
         CountDownLatch started = new CountDownLatch(1), release = new CountDownLatch(1);
         SwingUtilities.invokeAndWait(() -> {
-            frame.set(new frm_Login((user, password) -> DatabaseHandler.AuthenticationResult.resetRequired(user),
+            frame.set(new frm_Login((user, password) -> AUTH.issue("EMPLOYEE", true),
                     (user, oldPassword, newPassword) -> {
                         oldWorking.set(oldPassword); newWorking.set(newPassword);
                         savedPassword.set(new String(newPassword));
                         started.countDown();
                         try { release.await(5, TimeUnit.SECONDS); }
                         catch (InterruptedException ex) { Thread.currentThread().interrupt(); }
-                        flag.set(false);
-                        return new DatabaseHandler.AuthenticationResult(new EmpDetails("90001", "Sample", "Employee"), "EMPLOYEE");
+                        persistenceAcknowledged.set(true);
+                        return AUTH.issue("EMPLOYEE", false);
                     }, result -> navigation.incrementAndGet()));
             find(frame.get(), "username", JTextField.class).setText("90001");
             find(frame.get(), "password", JPasswordField.class).setText("unique-temporary-fixture");
@@ -240,7 +334,7 @@ public final class UiRegressionTest {
         while (navigation.get() == 0 && System.nanoTime() < deadline) Thread.sleep(20);
         SwingUtilities.invokeAndWait(() -> {
             check(navigation.get() == 1, "Successful reset must open the existing authenticated workflow exactly once");
-            check(!flag.get(), "Successful reset must reflect committed mandatory-reset remediation");
+            check(persistenceAcknowledged.get(), "Successful reset must wait for persistence acknowledgement");
             check(EmpUserSession.getInstance().getCurrentUser() != null, "Successful reset may create the full employee session");
             check(" new unique password ".equals(savedPassword.get()), "Replacement password whitespace must not be trimmed");
             check(allCleared(oldWorking.get()) && allCleared(newWorking.get()), "Reset working password arrays must be cleared");
@@ -259,7 +353,7 @@ public final class UiRegressionTest {
         AtomicInteger navigation = new AtomicInteger();
         SwingUtilities.invokeAndWait(() -> {
             frame.set(new frm_Login((user, password) ->
-                    new DatabaseHandler.AuthenticationResult(new EmpDetails(user, "Sample", "Employee"), "EMPLOYEE"),
+                    AUTH.issue("EMPLOYEE", false),
                     (user, current, replacement) -> { throw new AssertionError("A remediated account must not reset on every login"); },
                     result -> navigation.incrementAndGet()));
             find(frame.get(), "username", JTextField.class).setText("90001");
@@ -342,49 +436,33 @@ public final class UiRegressionTest {
     }
 
     private static void failedPayrollSavePreservesDisplay() throws Exception {
-        String previousDirectory = System.getProperty("aoop.data.dir");
-        Path directory = Files.createTempDirectory("motorph-ui-ledger-test-");
-        System.setProperty("aoop.data.dir", directory.toString());
-        EmpUserSession session = EmpUserSession.getInstance();
-        EmpDetails previousUser = session.getCurrentUser();
-        String previousRole = session.getRole();
-        try {
-            String[] payroll = new String[22];
-            java.util.Arrays.fill(payroll, "0");
-            payroll[0] = "TX-TEST-1"; payroll[1] = "90001";
-            payroll[2] = "Sample"; payroll[3] = "Employee";
-            payroll[4] = "2026-01-01"; payroll[5] = "2026-01-15"; payroll[21] = "Pending";
-            CSVHandler.saveUpdatedPayrollData(Collections.singletonList(payroll));
-            SwingUtilities.invokeAndWait(() -> {
-                session.setCurrentUser(new EmpDetails("90001", "Sample", "Employee"), "HR");
-                frm_EmployeesPayrollPaid frame = new frm_EmployeesPayrollPaid();
-                try {
-                    java.lang.reflect.Field field = frm_EmployeesPayrollPaid.class.getDeclaredField("tbl_Payroll");
-                    field.setAccessible(true);
-                    JTable table = (JTable) field.get(frame);
-                    check(table.getRowCount() == 1, "Local payroll fixture must load into the approval table");
-                    table.setRowSelectionInterval(0, 0);
-                    // Simulate a record removed by another writer between display and Save.
-                    CSVHandler.saveUpdatedPayrollData(Collections.emptyList());
-                    Method action = frm_EmployeesPayrollPaid.class.getDeclaredMethod("changePayrollStatus", String.class, String.class);
-                    action.setAccessible(true);
-                    boolean failed = false;
-                    try { action.invoke(frame, "Pending", "Verified"); }
-                    catch (InvocationTargetException ex) { failed = ex.getCause() instanceof PersistenceException; }
-                    check(failed, "A stale payroll row must report failed persistence");
-                    check("Pending".equals(table.getValueAt(0, 21)), "Failed persistence must leave the displayed payroll status unchanged");
-                } catch (ReflectiveOperationException ex) {
-                    throw new AssertionError(ex);
-                } finally {
-                    frame.dispose();
-                }
-            });
-        } finally {
-            if (previousDirectory == null) System.clearProperty("aoop.data.dir");
-            else System.setProperty("aoop.data.dir", previousDirectory);
-            if (previousUser == null) session.clearSession();
-            else session.setCurrentUser(previousUser, previousRole);
-        }
+        AUTH.establish("HR");
+        SwingUtilities.invokeAndWait(() -> {
+            frm_EmployeesPayrollPaid frame = new frm_EmployeesPayrollPaid();
+            try {
+                java.lang.reflect.Field field = frm_EmployeesPayrollPaid.class.getDeclaredField("tbl_Payroll");
+                field.setAccessible(true);
+                JTable table = (JTable) field.get(frame);
+                String[] payroll = new String[22];
+                java.util.Arrays.fill(payroll, "0");
+                payroll[0] = "TX-TEST-1"; payroll[1] = "90001";
+                payroll[2] = "Sample"; payroll[3] = "Employee";
+                payroll[4] = "2026-01-01"; payroll[5] = "2026-01-15"; payroll[21] = "Pending";
+                // The displayed row is stale: the protected database fixture has no such ledger row.
+                ((DefaultTableModel) table.getModel()).addRow(payroll);
+                table.setRowSelectionInterval(0, 0);
+                Method action = frm_EmployeesPayrollPaid.class.getDeclaredMethod("changePayrollStatus", String.class, String.class);
+                action.setAccessible(true);
+                boolean failed = false;
+                try { action.invoke(frame, "Pending", "Verified"); }
+                catch (InvocationTargetException ex) { failed = ex.getCause() instanceof PersistenceException; }
+                check(failed, "A stale payroll row must report failed persistence");
+                check("Pending".equals(table.getValueAt(0, 21)), "Failed persistence must leave the displayed payroll status unchanged");
+            } catch (ReflectiveOperationException ex) {
+                throw new AssertionError(ex);
+            } finally { frame.dispose(); }
+        });
+        EmpUserSession.getInstance().clearSession();
     }
 
     private static void readOnlyControlsStayReadable() throws Exception {
@@ -404,6 +482,76 @@ public final class UiRegressionTest {
             AppTheme.apply(phone);
             check("Phone:".equals(phone.getText()), "The phone field label must fit its existing narrow slot");
         });
+    }
+
+    private static void securityActivityLifecycle() throws Exception {
+        AUTH.establish("EMPLOYEE");
+        AtomicInteger unauthorizedQueries = new AtomicInteger();
+        SwingUtilities.invokeAndWait(() -> {
+            expectDenied(() -> new SecurityActivityPanel(() -> { unauthorizedQueries.incrementAndGet(); return java.util.List.of(); }));
+            expectDenied(() -> new frm_SecurityEvents(() -> { unauthorizedQueries.incrementAndGet(); return java.util.List.of(); }));
+            check(unauthorizedQueries.get() == 0, "Employee denial must occur before any security-event supplier runs");
+            EmpUserSession.getInstance().clearSession();
+        });
+        AUTH.establish("HR");
+        AtomicReference<JFrame> owner = new AtomicReference<>();
+        AtomicReference<SecurityActivityPanel> panel = new AtomicReference<>();
+        AtomicReference<frm_SecurityEvents> events = new AtomicReference<>();
+        AtomicBoolean background = new AtomicBoolean();
+        java.util.List<SecurityAlert> alerts = java.util.List.of(
+                new SecurityAlert(102, java.time.Instant.parse("2026-10-17T01:23:45Z"), "90001", "TEST-DESKTOP", "AUTH_LOCKED"),
+                new SecurityAlert(101, java.time.Instant.parse("2026-10-17T01:23:40Z"), "<html>untrusted account</html>", "TEST-DESKTOP", "AUTH_FAILURE"));
+        SwingUtilities.invokeAndWait(() -> {
+            owner.set(new JFrame("Offline HR fixture"));
+            panel.set(new SecurityActivityPanel(() -> {
+                background.set(!SwingUtilities.isEventDispatchThread()); return alerts;
+            }));
+            owner.get().setContentPane(panel.get()); owner.get().pack();
+            events.set(new frm_SecurityEvents(owner.get(), () -> alerts));
+            events.get().addNotify();
+        });
+        awaitUiText(panel.get(), "securitySummary", "Account lockouts: 1");
+        awaitUiText(events.get(), "securityEventsStatus", "2 recent");
+        SwingUtilities.invokeAndWait(() -> {
+            check(background.get(), "HR alert queries must run off the Swing event thread");
+            JTable table = find(events.get(), "securityEventsTable", JTable.class);
+            check(table.getRowCount() == 2, "The HR activity view must show its returned alert rows");
+            check("2026-10-17 01:23:45".equals(table.getValueAt(0, 1)), "Security timestamps must be labeled and formatted as UTC");
+            check("Account lockout".equals(table.getValueAt(0, 3)), "Lockout codes must have readable activity labels");
+            int criticalWidth = 0;
+            for (int column = 0; column <= 3; column++) criticalWidth += table.getColumnModel().getColumn(column).getPreferredWidth();
+            check(criticalWidth < 580, "Account and activity must remain visible before horizontal scrolling on a compact desktop");
+            check(!table.isCellEditable(0, 2), "Security audit events must be read-only");
+            Component rendered = table.prepareRenderer(table.getCellRenderer(1, 2), 1, 2);
+            check(Boolean.TRUE.equals(((JComponent) rendered).getClientProperty("html.disable")), "Untrusted audit values must render as plain text, without Swing HTML");
+            EmpUserSession.getInstance().clearSession();
+            owner.get().dispose();
+            check(!events.get().isDisplayable(), "Disposing the HR parent at logout must close its security-event window");
+        });
+        AUTH.establish("HR");
+        SwingUtilities.invokeAndWait(() -> {
+            events.set(new frm_SecurityEvents(() -> { throw new PersistenceException("Offline query fixture"); }));
+            events.get().addNotify();
+        });
+        awaitUiText(events.get(), "securityEventsStatus", "unavailable");
+        SwingUtilities.invokeAndWait(() -> {
+            check(find(events.get(), "refreshSecurityEvents", JButton.class).isEnabled(), "Unavailable security activity must support retry");
+            check(find(events.get(), "securityEventsTable", JTable.class).getRowCount() == 0, "A failed activity query must not leave stale sensitive rows visible");
+            check("Security activity unavailable.".equals(find(events.get(), "securityEventsTable", JTable.class).getClientProperty("motorph.emptyMessage")),
+                    "Unavailable queries must not claim that there are no audit events");
+            events.get().dispose(); EmpUserSession.getInstance().clearSession();
+        });
+    }
+
+    private static void awaitUiText(Container container, String name, String text) throws Exception {
+        AtomicBoolean found = new AtomicBoolean();
+        long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
+        while (System.nanoTime() < deadline) {
+            SwingUtilities.invokeAndWait(() -> found.set(find(container, name, JLabel.class).getText().contains(text)));
+            if (found.get()) return;
+            Thread.sleep(20);
+        }
+        throw new AssertionError("Expected UI status: " + name + " containing " + text);
     }
 
     private static void awaitText(frm_Login frame, String text) throws Exception {

@@ -9,6 +9,7 @@ import java.awt.Cursor;
 public class frm_EmployeesSalary extends javax.swing.JFrame {
 
     public frm_EmployeesSalary() {
+        AuthorizationService.requireHr();
         initComponents();
         AppTheme.finish(this);
         

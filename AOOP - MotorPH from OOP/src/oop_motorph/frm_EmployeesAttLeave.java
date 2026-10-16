@@ -13,6 +13,7 @@ import java.time.format.DateTimeParseException;
 public class frm_EmployeesAttLeave extends javax.swing.JFrame {
 
     public frm_EmployeesAttLeave() {
+        AuthorizationService.requireHr();
         initComponents();
         AppTheme.finish(this);
         

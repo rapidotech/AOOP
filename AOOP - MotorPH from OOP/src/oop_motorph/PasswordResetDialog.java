@@ -26,6 +26,8 @@ public final class PasswordResetDialog extends JDialog {
     private final JCheckBox showPasswords = new JCheckBox("Show passwords");
     private final char echo;
     private boolean saving;
+    private Timer retryTimer;
+    private long retryDeadlineNanos;
 
     PasswordResetDialog(JFrame owner, String username, ResetAction resetter,
             Consumer<DatabaseHandler.AuthenticationResult> onSuccess) {
@@ -118,7 +120,7 @@ public final class PasswordResetDialog extends JDialog {
     }
 
     private void savePassword() {
-        if (saving) return;
+        if (saving || (retryTimer != null && retryTimer.isRunning())) return;
         final char[] oldPassword = current.getPassword();
         final char[] newPassword = replacement.getPassword();
         char[] confirmed = confirmation.getPassword();
@@ -162,7 +164,9 @@ public final class PasswordResetDialog extends JDialog {
                     setStatus("Password change interrupted. Please try again.", true);
                 } catch (ExecutionException ex) {
                     EmpUserSession.getInstance().clearSession();
-                    if (ex.getCause() instanceof IllegalArgumentException) setStatus(ex.getCause().getMessage(), true);
+                    if (ex.getCause() instanceof AuthenticationThrottledException) {
+                        startRetryDelay(((AuthenticationThrottledException) ex.getCause()).getRetryAfterSeconds());
+                    } else if (ex.getCause() instanceof IllegalArgumentException) setStatus(ex.getCause().getMessage(), true);
                     else setStatus("Password not changed. Check the connection and retry.", true);
                 }
             }
@@ -186,6 +190,30 @@ public final class PasswordResetDialog extends JDialog {
     }
 
     private void clearFields() { current.setText(""); replacement.setText(""); confirmation.setText(""); }
+
+    private void startRetryDelay(long retryAfterSeconds) {
+        retryDeadlineNanos = System.nanoTime() + java.util.concurrent.TimeUnit.SECONDS.toNanos(Math.max(1, Math.min(retryAfterSeconds, 86400)));
+        if (retryTimer != null) retryTimer.stop();
+        retryTimer = new Timer(250, event -> updateRetryDelay());
+        updateRetryDelay(); retryTimer.start();
+    }
+
+    private void updateRetryDelay() {
+        long remaining = retryDeadlineNanos - System.nanoTime();
+        if (remaining <= 0) {
+            retryTimer.stop(); save.setEnabled(true); save.setText("Save password and sign in");
+            setStatus("You can try changing your password again.", false);
+            return;
+        }
+        long seconds = (remaining + 999999999L) / 1000000000L;
+        save.setEnabled(false); save.setText("Try again (" + seconds + " s)");
+        setStatus("Password change could not be completed. Try again in " + seconds + " seconds.", true);
+    }
+
+    @Override public void dispose() {
+        if (retryTimer != null) retryTimer.stop();
+        super.dispose();
+    }
 
     private void setStatus(String message, boolean error) {
         status.setForeground(error ? new Color(185, 28, 28) : AppTheme.MUTED);

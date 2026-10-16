@@ -6,7 +6,7 @@ import java.nio.file.*;
 import java.util.*;
 import java.util.function.Consumer;
 
-/** Writable legacy records, kept separate from normalized database time logs. */
+/** Read-only legacy import source. Supported writes use DatabaseLedger and transactional audit. */
 final class LocalRecordStore {
     static final String ATTENDANCE = "CSV_Attendance.csv";
     static final String PAYROLL = "CSV_Payroll.csv";
@@ -22,6 +22,7 @@ final class LocalRecordStore {
     }
 
     static synchronized List<String[]> read(String name) {
+        AuthorizationService.requireHr();
         try {
             Path file = directory().resolve(name);
             if (Files.notExists(file)) { return new ArrayList<>(); }
@@ -38,34 +39,13 @@ final class LocalRecordStore {
         }
     }
 
-    static synchronized void update(String name, Consumer<List<String[]>> update) {
-        List<String[]> rows = read(name);
-        update.accept(rows);
-        write(name, rows);
+    /** Retained only to fail closed for callers of the retired file-writing API. */
+    static void update(String name, Consumer<List<String[]>> update) {
+        throw new AuthorizationException("Local ledger writing is retired. Use the authorized database ledger API.");
     }
 
-    static synchronized void write(String name, List<String[]> rows) {
-        validate(name, rows);
-        Path temporary = null;
-        try {
-            Path directory = directory();
-            Files.createDirectories(directory);
-            Path target = directory.resolve(name);
-            temporary = Files.createTempFile(directory, name, ".tmp");
-            try (BufferedWriter output = Files.newBufferedWriter(temporary, StandardCharsets.UTF_8)) {
-                writeRow(output, header(name));
-                for (String[] row : rows) { writeRow(output, row); }
-            }
-            // A failed replacement leaves the previous complete record file intact.
-            Files.move(temporary, target, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
-            temporary = null;
-        } catch (IOException | InvalidPathException failure) {
-            throw new PersistenceException("Unable to save local attendance/payroll records. The previous records were preserved; check the data directory and retry.");
-        } finally {
-            if (temporary != null) {
-                try { Files.deleteIfExists(temporary); } catch (IOException ignored) { }
-            }
-        }
+    static void write(String name, List<String[]> rows) {
+        throw new AuthorizationException("Local ledger writing is retired. Use the authorized database ledger API.");
     }
 
     private static String[] header(String name) {
@@ -82,17 +62,6 @@ final class LocalRecordStore {
                 throw new PersistenceException("Local attendance/payroll records have an unexpected column count. No records were saved.");
             }
         }
-    }
-
-    private static void writeRow(Writer output, String[] row) throws IOException {
-        for (int i = 0; i < row.length; i++) {
-            if (i > 0) { output.write(','); }
-            String value = row[i] == null ? "" : row[i];
-            output.write('"');
-            output.write(value.replace("\"", "\"\""));
-            output.write('"');
-        }
-        output.write('\n');
     }
 
     private static List<String[]> parse(Reader source) throws IOException {

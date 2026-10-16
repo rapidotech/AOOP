@@ -18,11 +18,12 @@ foreach ($resourceDirectory in @('img', 'resources')) {
 $classpath = "$classes;$(Join-Path $projectRoot 'lib/*')"
 Write-Output "Build passed (Java 17 target): $classes"
 if ($Test) {
-    $testFiles = @(Get-ChildItem -LiteralPath (Join-Path $projectRoot 'test') -Filter '*Test.java' -Recurse | ForEach-Object FullName)
+    $testSources = @(Get-ChildItem -LiteralPath (Join-Path $projectRoot 'test') -Filter '*.java' -Recurse | ForEach-Object FullName)
+    $testFiles = @($testSources | Where-Object { [System.IO.Path]::GetFileName($_) -like '*Test.java' })
     if ($testFiles.Count -eq 0) { throw 'No regression tests found.' }
     $testClasses = Join-Path $outputRoot 'test-classes'
     New-Item -ItemType Directory -Force -Path $testClasses | Out-Null
-    & $javac --release 17 -encoding UTF-8 -d $testClasses -cp $classpath $testFiles
+    & $javac --release 17 -encoding UTF-8 -d $testClasses -cp $classpath $testSources
     if ($LASTEXITCODE -ne 0) { throw 'Test compilation failed.' }
     # Keep the real MySQL driver off the regression runtime classpath.
     # Persistence tests register their own JDBC double; UI tests inject auth.

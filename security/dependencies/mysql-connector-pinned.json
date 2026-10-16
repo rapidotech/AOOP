@@ -1,0 +1,9 @@
+{
+  "coordinate": "com.mysql:mysql-connector-j:9.7.0",
+  "source": "https://repo.maven.apache.org/maven2/com/mysql/mysql-connector-j/9.7.0/mysql-connector-j-9.7.0.jar",
+  "sha256": "0353648eaa1c91e0f4020c959abf756bc866ffd583df22ae6b6f6e0cbd43eb44",
+  "maven_sha1_verified": true,
+  "driver_class_major": 52,
+  "reason": "Replace8.0.33 affected byGHSA-m6vm-37g8-gqvh. 9.7supportsMySQL8.0; 26.7requires8.4. Verify actual cloneTLS/CRUD.",
+  "compatibility_source": "https://downloads.mysql.com/docs/connector-j-en.pdf"
+}

@@ -18,6 +18,7 @@ public class frm_EmployeesRecords2 extends javax.swing.JFrame {
     private Map<String, String> supervisorMap;
     
     public frm_EmployeesRecords2(EmpDetails empDetails, boolean isEditMode) {
+        AuthorizationService.requireHr();
         // Autopopulate supervisor list from employee table, store EmployeeID and name
         supervisorMap = new LinkedHashMap<>();
         supervisorMap.put("Select", null);

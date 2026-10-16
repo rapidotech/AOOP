@@ -1,0 +1,11 @@
+title = "MotorPH default rules plus credential regression coverage"
+[extend]
+useDefault = true
+
+[[rules]]
+id = "motorph-embedded-db-credential"
+description = "DatabaseConfig credential string literals, including low entropy values"
+path = '''(^|[\\/])DatabaseConfig\.java$'''
+regex = '''(?i)\b(?:db_?)?(?:password|username)\s*=\s*"([^"\r\n]+)"'''
+secretGroup = 1
+keywords = ["password", "username"]

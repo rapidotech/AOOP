@@ -1,0 +1,26 @@
+[
+  {
+    "file": "bcrypt-0.10.2.jar",
+    "package": "at.favre.lib:bcrypt",
+    "version": "0.10.2",
+    "sha256": "0b1fb99db605955de904d8e61782a53dddbadd12619a0cf37dd88b5d14a61957"
+  },
+  {
+    "file": "bytes-1.5.0.jar",
+    "package": "at.favre.lib:bytes",
+    "version": "1.5.0",
+    "sha256": "b933631573148647943040d8d7496a64458b432610e6da2eb87ec3458814dee5"
+  },
+  {
+    "file": "jcalendar-1.4.jar",
+    "package": "com.toedter:jcalendar",
+    "version": "1.4",
+    "sha256": "284fcfbb7938d5b85bb0f540c712fa042521a4c50f4a5d47da02ba19bff291eb"
+  },
+  {
+    "file": "mysql-connector-j-9.7.0.jar",
+    "package": "com.mysql:mysql-connector-j",
+    "version": "9.7.0",
+    "sha256": "0353648eaa1c91e0f4020c959abf756bc866ffd583df22ae6b6f6e0cbd43eb44"
+  }
+]

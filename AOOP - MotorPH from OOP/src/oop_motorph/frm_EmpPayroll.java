@@ -13,6 +13,7 @@ import java.util.List;
 public class frm_EmpPayroll extends javax.swing.JFrame {
 
     public frm_EmpPayroll() {
+        AuthorizationService.requireAuthenticated();
         initComponents();
         AppTheme.finish(this);
         

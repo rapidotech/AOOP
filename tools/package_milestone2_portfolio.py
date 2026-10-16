@@ -12,17 +12,21 @@ ROOT = Path(__file__).resolve().parents[1]
 def main():
     (OUTPUT / 'START_HERE.md').write_text('''# MotorPH Group 13 Milestone 2
 
-Open MotorPH_Group13_Milestone2_Implementation_Log.pdf to read the complete
-ten-page portfolio. Edit the matching DOCX to continue your implementation log.
+Open MotorPH_Group13_Milestone2_Implementation_Log.pdf to read the expanded
+portfolio. Edit the matching DOCX to continue your implementation log.
 It covers all five Midgame Moves: control mapping, readiness and rollback,
 implementation, assurance tests, and the updated system diagram.
 
-The control diagram is available as an interactive HTML file, PNG, SVG and PDF.
-The evidence folder contains sanitized results and five password-reset UI images.
+MotorPH_Expanded_Control_Diagram is the current diagram, in interactive HTML,
+PNG, SVG and PDF. The earlier C1/C2 diagram is retained as historical evidence.
+The evidence folder contains sanitized results and UI captures with provenance.
 The supplied Milestone 1 SIP and audit workbook were preserved unchanged.
 
-Both selected controls were implemented and verified in an isolated MySQL clone:
-protected credentials/least privilege, and BCrypt12 with mandatory password reset.
+All worthwhile feasible core controls were implemented in an isolated MySQL clone:
+protected credentials/least privilege, BCrypt12/mandatory reset, persistent lockout,
+scoped authorization, transactional audit logging and DB workflow ledgers.
+CONTROL_ASSESSMENT.md records every proposed option and its decision.
+The revised audit workbook is under outputs/all-controls; original source remains intact.
 The original database and shared root account remain unchanged. Deferred controls
 and test limitations are identified in the log; this is local assurance evidence.
 
@@ -36,8 +40,9 @@ are deliberately excluded from this archive. Keep the private recovery material
 on the provisioning computer; it is not a group-sharing deliverable.
 ''', encoding='utf-8')
     (OUTPUT / 'SECURITY_RUNBOOK.md').write_bytes((ROOT / 'security/README.md').read_bytes())
+    (OUTPUT / 'CONTROL_ASSESSMENT.md').write_bytes((ROOT / 'security/EXPANDED_CONTROL_PLAN.md').read_bytes())
     primary = [OUTPUT / name for name in [
-        'START_HERE.md', 'SECURITY_RUNBOOK.md',
+        'START_HERE.md', 'SECURITY_RUNBOOK.md', 'CONTROL_ASSESSMENT.md',
         'MotorPH_Group13_Milestone2_Implementation_Log.docx',
         'MotorPH_Group13_Milestone2_Implementation_Log.pdf',
         'MotorPH_Updated_Control_Diagram.html',
@@ -45,13 +50,20 @@ on the provisioning computer; it is not a group-sharing deliverable.
         'MotorPH_Updated_Control_Diagram.svg',
         'MotorPH_Updated_Control_Diagram.pdf',
         'MotorPH_Updated_Control_Diagram.visual-check.json',
+        'MotorPH_Expanded_Control_Diagram.html',
+        'MotorPH_Expanded_Control_Diagram.png',
+        'MotorPH_Expanded_Control_Diagram.svg',
+        'MotorPH_Expanded_Control_Diagram.pdf',
+        'MotorPH_Expanded_Control_Diagram.visual-check.json',
+        'outputs/all-controls/MotorPH_Group13_Updated_Control_Audit.xlsx',
     ]]
     evidence = [p for p in (OUTPUT / 'evidence').rglob('*') if p.is_file()
                 and (p.suffix in {'.json', '.txt'} or
-                     (p.parent.name == 'ui' and p.suffix == '.png'))
+                     ('ui' in p.relative_to(OUTPUT / 'evidence').parts and p.suffix == '.png'))
                 and 'render' not in p.parts]
     files = sorted(set(primary + evidence))
-    assert all(p.is_file() for p in files), 'Missing deliverable'
+    if not all(p.is_file() for p in files):
+        raise ValueError('Missing deliverable')
     manifest = [{'file': str(p.relative_to(OUTPUT)).replace('\\', '/'),
                  'bytes': p.stat().st_size,
                  'sha256': hashlib.sha256(p.read_bytes()).hexdigest()} for p in files]
@@ -59,12 +71,12 @@ on the provisioning computer; it is not a group-sharing deliverable.
     manifest_path.write_text(json.dumps(manifest, indent=2), encoding='utf-8')
     with zipfile.ZipFile(ARCHIVE, 'w', zipfile.ZIP_DEFLATED) as archive:
         for p in files + [manifest_path]:
-            assert 'private-backup' not in p.parts
+            if 'private-backup' in p.parts:
+                raise ValueError('Private recovery material cannot enter the public package')
             archive.write(p, p.relative_to(OUTPUT))
     with zipfile.ZipFile(ARCHIVE) as archive:
-        assert archive.testzip() is None
-        assert not any('private-backup' in name for name in archive.namelist())
-        assert len(archive.namelist()) == len(files) + 1
+        if archive.testzip() is not None or any('private-backup' in name for name in archive.namelist()) or len(archive.namelist()) != len(files) + 1:
+            raise ValueError('Public archive integrity/exclusion check failed')
     print(f'Public portfolio verified: {len(files) + 1} files; {ARCHIVE.stat().st_size} bytes.')
 
 

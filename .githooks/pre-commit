@@ -1,0 +1,4 @@
+#!/bin/sh
+set -eu
+python scripts/check-security.py
+gitleaks git --pre-commit --staged --redact --no-banner --no-color --config .gitleaks.toml

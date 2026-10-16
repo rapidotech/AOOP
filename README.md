@@ -41,23 +41,32 @@ must begin with `jdbc:mysql://`; connection/socket waits are bounded. Use your
 existing database account and schema. Credential rotation and account privilege
 changes are separate database administration operations.
 
-Login can open without a database. Milestone 2 adds BCrypt cost 12 and mandatory
-password changes. The prepared isolated profile uses DPAPI credentials,
-restricted grants, and verified TLS. See [security setup](security/README.md)
+Login can open without a database. Milestone2 now includes BCrypt cost12,
+mandatory resets, persisted lockout/retry deadlines, scoped authorization and
+transactional audit logging. The prepared isolated profile uses DPAPI,
+restricted grants and verified TLS. See [security setup](security/README.md)
 for bootstrap access and the unchanged original database boundary.
 
-## Local request data
+## Workflow data
 
-Local attendance requests and legacy payroll CSV operations use a separate
-writable directory selected by `aoop.data.dir` / `AOOP_DATA_DIR`, with a default
-under `%USERPROFILE%/.motorph`. Database time logs and local requests remain
-distinct. Bundled historical CSVs are preserved, not automatically imported.
-See [architecture](docs/ARCHITECTURE.md) for storage boundaries and limitations.
+Attendance requests and payroll workflow records use separate database ledgers
+alongside normalized time logs and calculated payroll. Existing CSVHandler call
+sites now perform scoped, audited transactions. HR can import validated historical
+20/22-field ledgers explicitly; source files are preserved and conflicting imports
+roll back. Bundled historical seeds are not silently reimported. See
+[architecture](docs/ARCHITECTURE.md) for storage and trust boundaries.
 
 ## Verification
 
-`-Test` compiles and runs offline regression programs using temporary CSV files
-and JDBC doubles. It does not modify the configured database.
+`-Test` compiles and runs offline programs using JDBC doubles and genuine issued
+authentication fixtures. It excludes the real MySQL driver and does not modify
+the configured database. Current checks cover persistence, authorization,
+workflow transitions, authentication and UI behavior.
+
+```powershell
+# Requires Gitleaks and working advisory feed; uses only the marked clone.
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/verify.ps1 -Integration
+```
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts/verify-ui.ps1
@@ -65,12 +74,18 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/verify-ui.ps1
 
 Visual verification opens short-lived Swing windows with synthetic session data
 and an in-process JDBC fixture. It removes real JDBC drivers inside that separate
-fixture process, refuses writes, and never opens a database connection. Captures
+fixture process, handles simulated authentication writes only, and never opens a database connection. Captures
 cover login, employee profile, HR records, and payroll at normal and smaller
 window sizes. This is visual evidence, not live database integration proof.
 
 [Improvement goal](docs/SYSTEM_IMPROVEMENT_GOAL.md) |
 [Architecture](docs/ARCHITECTURE.md) | [Milestone 2 security](security/README.md)
+
+The expanded control assessment is [here](security/EXPANDED_CONTROL_PLAN.md).
+HR can review the latest100 failure/lockout events in the security activity view.
+Supported-client authorization does not replace a trusted server against a
+modified desktop client holding the shared JDBC credential. Off-host audit
+custody and coordinated original-root/history/privacy changes remain separate.
 
 ## Authors
 

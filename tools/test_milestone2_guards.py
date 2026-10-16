@@ -60,18 +60,19 @@ def main():
     p = json.loads(original)
     environment = os.environ.copy(); environment.update(M2_JDBC_URL=p['jdbc_url'], M2_ADMIN_PASSWORD=admin['password'], M2_APP_PASSWORD=app['password'])
     project = ROOT / 'AOOP - MotorPH from OOP'
-    classpath = str(project / '.build/security-assurance') + ';' + str(project / '.build/classes') + ';' + str(project / 'lib/*')
-    count = sql(admin['user'], admin['password'], "SELECT (SELECT COUNT(*) FROM users WHERE username='99001')+(SELECT COUNT(*) FROM employees WHERE EmployeeID=99001);", database='aoop_m2').strip()
+    classpath = str(project / '.build/expanded-assurance') + ';' + str(project / '.build/classes') + ';' + str(project / 'lib/*')
+    environment['COMPUTERNAME'] = 'M2-ASSURANCE-COLLISION-' + os.urandom(8).hex()
+    count = sql(admin['user'], admin['password'], "SELECT (SELECT COUNT(*) FROM users WHERE username='99002')+(SELECT COUNT(*) FROM employees WHERE EmployeeID=99002);", database='aoop_m2').strip()
     if count != '0':
         raise RuntimeError('Collision fixture ID occupied; preserving it.')
-    sql(admin['user'], admin['password'], "INSERT INTO users(username,password,role,first_name,last_name,must_change_password) VALUES('99001','collision-sentinel-not-a-password','Employee','Collision','Fixture',1);", database='aoop_m2')
+    sql(admin['user'], admin['password'], "INSERT INTO users(username,password,role,first_name,last_name,must_change_password) VALUES('99002','collision-sentinel-not-a-password','Employee','Collision','Fixture',1);", database='aoop_m2')
     try:
-        failed = subprocess.run(['java', '-cp', classpath, 'SecurityAssurance', 'test'], env=environment, capture_output=True, timeout=40)
-        intact = sql(admin['user'], admin['password'], "SELECT COUNT(*) FROM users WHERE username='99001' AND password='collision-sentinel-not-a-password';", database='aoop_m2').strip()
-        if failed.returncode == 0 or intact != '1':
+        failed = subprocess.run(['java', '-cp', classpath, 'oop_motorph.ExpandedSecurityAssurance'], env=environment, capture_output=True, timeout=40)
+        intact = sql(admin['user'], admin['password'], "SELECT COUNT(*) FROM users WHERE username='99002' AND password='collision-sentinel-not-a-password';", database='aoop_m2').strip()
+        if failed.returncode == 0 or b'Disposable fixture 99002 is unused' not in failed.stderr or intact != '1':
             raise RuntimeError('Assurance cleanup changed a pre-existing collision fixture.')
     finally:
-        sql(admin['user'], admin['password'], "DELETE FROM users WHERE username='99001' AND password='collision-sentinel-not-a-password';", database='aoop_m2')
+        sql(admin['user'], admin['password'], "DELETE FROM users WHERE username='99002' AND password='collision-sentinel-not-a-password';", database='aoop_m2')
     checks.append('Occupied test account causes abort and remains untouched: success')
     evidence = Path.home() / 'Downloads/AOOP_Milestone2_Group13/evidence/review-correction-regressions.json'
     evidence.write_text(json.dumps({'checks': checks, 'assertions': len(checks), 'scope': 'Private synthetic escrow and isolated aoop_m2 only', 'original_database_writes': 0}, indent=2))

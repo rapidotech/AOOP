@@ -1,8 +1,11 @@
 # Milestone 2 security implementation
 
-This implements the two Group 13 SIP controls: protected database credentials
-with least privilege, and BCrypt storage with default-password remediation.
-Effectiveness evidence applies to the isolated local clone.
+This implements the two originally selected Group13 SIP controls plus the
+worthwhile additional audit proposals authorized in the expanded goal:
+persistent authentication throttling, DAL/object authorization, transactional
+audit logging and database-backed workflow ledgers. Supporting repository,
+dependency, transport and release checks are included. Effectiveness evidence
+applies to the isolated clone and supported desktop client.
 
 ## Environment and access
 
@@ -51,10 +54,16 @@ python scripts/check-security.py
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts/start-milestone2.ps1 -SkipBuild -VerifyOnly
 python tools/test_milestone2_guards.py
 python tools/run_milestone2_assurance.py
+python tools/run_expanded_assurance.py
+python tools/test_integrity_gates.py
+python tools/test_repository_controls.py
+python tools/archive_audit.py
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/verify.ps1 -Integration
 ```
 
-Offline tests have no real MySQL driver at runtime. The final two commands use
-only the marked clone and disposable records. Tests record exact denial codes,
+Offline tests have no real MySQL driver at runtime. Database assurance, guard
+and archive commands require the marked clone; mutation tests use disposable
+records. Tests record exact denial codes,
 not credential values. A colliding test account aborts and remains untouched.
 The initializers are `tools/milestone2_environment.py` and
 `tools/milestone2_secure_profile.py`; they require the protected baseline backup
@@ -92,11 +101,82 @@ The editable log, PDF, diagram, and sanitized evidence are in Downloads
 Implementation Log template was supplied; this original log follows the fields
 in the user-provided guidelines.
 
-No production effectiveness, internet exposure test, physical printing, lockout,
-new audit trail, per-user DAL authorization, or current statutory compliance is
-claimed. Original shared-root rotation and Git-history remediation still need
-separate coordinated work before real rollout. The old plaintext settings
+No production effectiveness, internet exposure test, physical printing or current
+statutory compliance is claimed. Original shared-root rotation and Git-history/
+repository-visibility remediation need coordinated rollout. The plaintext settings
 fallback remains a compatibility API; the active verified profile uses DPAPI.
+
+## Expanded controls
+
+Apply `tools/prepare_expanded_controls.py` only after the protected source/clone
+backup exists. Migration002 adds counters, source throttles, workflow ledgers and
+the audit procedure/tables without changing original3306. The pre-expansion
+recovery baseline is private-backup/pre-expansion-9ba48e6: source archive, complete
+clone dump, protected settings/escrow and TLS configuration. Recover into a separate
+schema/directory and validate before replacing the owned clone.
+
+Five failed credential proofs cause a15-minute account/source lock. Earlier
+failures enforce1/2/4/8-second retry deadlines, including reset proof. Failed
+attempt state and audit commit before the generic rejection. Login/reset timers
+remain asynchronous. HR's security activity panel shows the latest100 failure/
+lockout events with UTC times; it is not an all-time count or email notification.
+
+Only successful committed authentication can issue the single-use capability
+accepted by `EmpUserSession.establish`. The DAL rechecks database role/reset/
+credential state. Employees read only their own records and create/edit their
+own Pending requests. HR manages records, salaries, account enrollment, workflow
+approvals, imports and security activity. Every restricted constructor checks
+before initialization. Bulk credential dumping is denied.
+
+HR can open the read-only Audit trail viewer from Security activity. It uses
+100-row keyset pages, UTC metadata and plain-text details; newest/older navigation
+does not expose credentials or full sensitive records. Workflow events include
+only allowlisted status-before/status-after values in the same transaction.
+
+Audit append is a DEFINER routine that locks a private chain head and never
+commits on its own. The application has EXECUTE/SELECT but no direct audit/head
+DML. Business changes and their event share one transaction. Whole-chain/head
+verification uses a consistent snapshot. Event payloads omit credentials, hashes
+and payroll/personnel record bodies. Source-machine labels are telemetry.
+
+Attendance requests and payroll workflow records now live in `AttendanceRequests`
+and `PayrollLedger`, preserving the previous20/22-field compatibility shapes.
+Normal CSVHandler writes are audited database operations. Status transitions are
+enforced under row locks; ordinary edit/save cannot bypass approvals. The old
+file writers and obsolete raw-SQL migration generator are retired. Normal payroll
+UI processing remains available; statutory calculations were not redesigned.
+
+`DatabaseHandler.importLegacyLedgers` is an authenticated-HR maintenance API.
+It validates all rows, imports in one audited transaction, skips only exact
+duplicates and aborts conflicting records. Preserve source CSVs and compare
+row/field counts. No external local ledgers existed on this computer; disposable
+fixtures exercised exact reimport/conflict behavior. Bundled normalized CSV seeds
+are not silently reimported as new workflow requests.
+
+`archive_audit.py` verifies and exports a consistent snapshot plus SHA256 manifest
+to the private runtime directory. `--verify <file>` checks an existing archive.
+`--destination <existing authorized directory>` explicitly copies/checksums an
+export; no external transfer was performed. The installed task
+`MotorPH-M2-Audit-Archive` runs daily23:00 while the provisioning Windows user is
+signed in. Database availability is required; failures produce a nonzero task
+result. Remove only this owned task with `Unregister-ScheduledTask` if retiring
+the lab. Local export does not establish independent off-host custody.
+
+`scripts/verify.ps1 -Integration` is the complete prepared-machine gate. CI's
+source/build checks do not replace its real database tests. Gitleaks with the
+custom low-entropy rule is installed in the local commit hook; install it on
+another machine and run `git config core.hooksPath .githooks`. Python optimization
+cannot bypass archive/dependency integrity validation. OSV feed unavailability
+or returned advisories fail the dependency gate. Current JAR hashes are in
+security/dependencies/inventory.json. Connector/J9.7.0 replaces vulnerable8.0.33.
+
+The expanded assessment is `security/EXPANDED_CONTROL_PLAN.md`. C5 is partial for
+independent archive custody. A modified desktop client holding the shared JDBC
+credential can still issue SQL permitted by that account; a trusted server/API
+is needed to enforce human authorization outside this supported client. A DBA
+can rewrite local database history and local anchors. Email and expanded roles
+remain deferred. Semgrep/Dependency-Check were not successfully rerun in this
+Windows environment; live OSV and Gitleaks are recorded with their actual scopes.
 
 Official references:
 

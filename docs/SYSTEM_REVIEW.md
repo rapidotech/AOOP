@@ -1,6 +1,11 @@
 # System review and implementation record
 
 This record describes the cleanup baseline before the added Milestone 2 work.
+The expanded implementation now includes C1-C5 local mechanisms and supporting
+gates. Current evidence:331 offline assertions,76 real isolated application
+checks and15 SQL/chain checks. See `security/EXPANDED_CONTROL_PLAN.md` and the
+expanded Implementation Log for the current assessment. The sections below
+remain historical baseline notes, including their earlier file-storage limits.
 For the final BCrypt migration, protected configuration, isolated integration
 evidence, and remaining rollout boundaries, see `security/README.md` and the
 Group 13 Implementation Log in Downloads. References below to retained SHA-256

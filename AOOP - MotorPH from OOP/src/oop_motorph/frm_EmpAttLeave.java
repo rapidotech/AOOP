@@ -14,6 +14,7 @@ public class frm_EmpAttLeave extends javax.swing.JFrame {
 
     
     public frm_EmpAttLeave() {
+        AuthorizationService.requireAuthenticated();
         initComponents();
         AppTheme.finish(this);
         

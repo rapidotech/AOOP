@@ -11,6 +11,7 @@ public class frm_EmployeesPayrollPaid extends javax.swing.JFrame {
 
    
     public frm_EmployeesPayrollPaid() {
+        AuthorizationService.requireHr();
         initComponents();
         AppTheme.finish(this);
 
@@ -36,7 +37,7 @@ public class frm_EmployeesPayrollPaid extends javax.swing.JFrame {
     }
 
     private void loadPayrollData() {
-        // Approval states belong to the explicit local ledger, not calculated database rows.
+        // Approval states come from the protected database ledger.
         List<String[]> payrollData = CSVHandler.loadPayrollLedger();
 
         // Define column headers

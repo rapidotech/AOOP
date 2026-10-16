@@ -1,46 +1,31 @@
-
 package oop_motorph;
 
-
-public class EmpUserSession {
-    private static EmpUserSession instance;
-
-    // Private fields to store the current user's data and role
+/** A session can only be established from a committed, verified authentication result. */
+public final class EmpUserSession {
+    private static final EmpUserSession INSTANCE = new EmpUserSession();
     private EmpDetails currentUser;
-    private String role;
+    private AuthorizationService.Identity identity;
+    private EmpUserSession() { }
+    public static EmpUserSession getInstance() { return INSTANCE; }
 
-    // Private constructor to prevent instantiation from outside
-    private EmpUserSession() {
-        // Constructor is private to enforce singleton pattern
+    public synchronized void establish(DatabaseHandler.AuthenticationResult result) {
+        AuthorizationService.Identity verified = AuthorizationService.consume(result);
+        currentUser = result.getEmployee();
+        identity = verified;
     }
 
-    // Public method to get the instance of the class
-    public static EmpUserSession getInstance() {
-        if (instance == null) {
-            instance = new EmpUserSession();
-        }
-        return instance;
-    }
-
-    // Method to set the current user and their role
+    /** Caller-supplied users and role strings are not authentication proof. */
+    @Deprecated
     public void setCurrentUser(EmpDetails user, String role) {
-        this.currentUser = user;
-        this.role = role;
+        throw new AuthorizationException("A user and role cannot create a session. Sign in with verified credentials.");
     }
 
-    // Method to get the current user
-    public EmpDetails getCurrentUser() {
-        return currentUser;
-    }
-
-    // Method to get the current user's role
-    public String getRole() {
-        return role;
-    }
-
-    // Method to clear the session (for logout)
-    public void clearSession() {
-        this.currentUser = null;
-        this.role = null;
+    public synchronized EmpDetails getCurrentUser() { return identity == null ? null : currentUser; }
+    public synchronized String getRole() { return identity == null ? null : identity.role; }
+    synchronized AuthorizationService.Identity identity() { return identity; }
+    public synchronized void clearSession() {
+        currentUser = null;
+        identity = null;
+        AuthorizationService.revokeOutstanding();
     }
 }

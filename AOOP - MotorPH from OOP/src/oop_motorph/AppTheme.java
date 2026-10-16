@@ -39,6 +39,8 @@ public final class AppTheme {
             @Override protected void dispatchEvent(AWTEvent event) {
                 try {
                     super.dispatchEvent(event);
+                } catch (AuthorizationException ex) {
+                    showAccessDenied();
                 } catch (PersistenceException ex) {
                     showDataError(KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow(), ex);
                 } catch (UnsupportedOperationException ex) {
@@ -51,8 +53,26 @@ public final class AppTheme {
 
     public static void showDataError(Component parent, PersistenceException ex) {
         JOptionPane.showMessageDialog(parent, ex.getMessage()
-                + "\nCheck the connection or local data settings, then try again.",
+                + "\nCheck the connection, then try again.",
                 "Data unavailable", JOptionPane.ERROR_MESSAGE);
+    }
+
+    private static void showAccessDenied() {
+        Window owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
+        if (EmpUserSession.getInstance().getCurrentUser() == null) {
+            frm_Login login = null;
+            for (Window window : Window.getWindows()) {
+                if (window instanceof frm_Login && window.isDisplayable()) login = (frm_Login) window;
+            }
+            if (login == null) { login = new frm_Login(); login.setVisible(true); }
+            for (Window window : Window.getWindows()) {
+                if (window != login && window.isDisplayable()) window.dispose();
+            }
+            owner = login;
+        }
+        JOptionPane.showMessageDialog(owner,
+                "You do not have access to this page or action. Sign in with an authorized account.",
+                "Access denied", JOptionPane.WARNING_MESSAGE);
     }
 
     /** Runs after each form's existing initialization and styling. */
@@ -119,7 +139,8 @@ public final class AppTheme {
                         if (table.getRowCount() == 0) {
                             graphics.setColor(MUTED);
                             graphics.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-                            String message = "No records to display.";
+                            Object emptyMessage = table.getClientProperty("motorph.emptyMessage");
+                            String message = emptyMessage == null ? "No records to display." : String.valueOf(emptyMessage);
                             int width = graphics.getFontMetrics().stringWidth(message);
                             graphics.drawString(message, Math.max(16, (viewport.getWidth() - width) / 2), 70);
                         }
@@ -188,9 +209,9 @@ public final class AppTheme {
         int contentHeight = preferred.height;
         String form = frame.getClass().getSimpleName();
         String sourceMessage = form.contains("AttLeave")
-                ? "Time logs: database  |  Requests and approvals: local workspace"
-                : form.equals("frm_EmployeesPayrollPaid") ? "Payroll records and approval status: local workspace"
-                : form.contains("Payroll") ? "Calculated payroll: database  |  Approval workflow: local workspace" : null;
+                ? "Attendance and requests: database  |  Changes recorded in the audit trail"
+                : form.equals("frm_EmployeesPayrollPaid") ? "Payroll approvals: database  |  Changes recorded in the audit trail"
+                : form.contains("Payroll") ? "Calculated payroll and approvals: database" : null;
         if (contentWidth > 950 || contentHeight > 650 || sourceMessage != null) {
             FormCanvas canvas = new FormCanvas(content);
             if (sourceMessage != null) {

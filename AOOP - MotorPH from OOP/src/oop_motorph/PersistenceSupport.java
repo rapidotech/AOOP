@@ -18,7 +18,9 @@ final class PersistenceSupport {
     }
 
     static <T> T inTransactionResult(String operation, TransactionResult<T> transaction) {
+        AuthorizationService.beginOperation();
         try (Connection connection = DatabaseConfig.getInstance().getConnection()) {
+            connection.setTransactionIsolation(Connection.TRANSACTION_REPEATABLE_READ);
             connection.setAutoCommit(false);
             try {
                 T result = transaction.run(connection);
@@ -31,6 +33,8 @@ final class PersistenceSupport {
             }
         } catch (SQLException failure) {
             throw PersistenceException.databaseFailure(operation, failure);
+        } finally {
+            AuthorizationService.endOperation();
         }
     }
 

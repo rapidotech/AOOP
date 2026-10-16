@@ -15,6 +15,7 @@ public class frm_EmpAttLeaveApproval extends javax.swing.JFrame {
 
    
     public frm_EmpAttLeaveApproval() {
+        AuthorizationService.requireHr();
         initComponents();
         AppTheme.finish(this);
         displayAttendanceData();
@@ -104,12 +105,9 @@ public class frm_EmpAttLeaveApproval extends javax.swing.JFrame {
     // Clear existing data
     model.setRowCount(0);
 
-    // concatenate lastname and first name
-    String userFullName = employee.getLastName() + " " + employee.getFirstName();
-    // Add only rows with AttendanceStatus = "Pending"
+    // This HR-only view shows pending requests; DAL authorization remains authoritative.
     for (EmpAttLeave att : attendanceList) {
-        // add another condition where it checks if the Immediate Supervisor of the user in the attendance list is the same in the current user logged In
-        if ("Pending".equalsIgnoreCase(att.getAttendanceStatus()) && userFullName.equalsIgnoreCase(att.getImmediateSupervisor())) { 
+        if ("Pending".equalsIgnoreCase(att.getAttendanceStatus())) {
             model.addRow(new Object[]{
                 att.getEmpID(), att.getFirstName(), att.getLastName(), att.getEmployeeStatus(),
                 att.getPosition(), att.getImmediateSupervisor(), att.getAttDateFrom(), att.getAttDateTo(), 

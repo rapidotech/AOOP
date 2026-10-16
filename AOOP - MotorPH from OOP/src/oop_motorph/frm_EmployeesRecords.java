@@ -9,6 +9,7 @@ import java.awt.Cursor;
 public class frm_EmployeesRecords extends javax.swing.JFrame {
 
     public frm_EmployeesRecords() {
+        AuthorizationService.requireHr();
         initComponents();
         AppTheme.finish(this);
         

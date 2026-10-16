@@ -76,6 +76,14 @@ def main():
     (destination / "C2-controlled-enrollment.json").write_text(json.dumps({"initial_enrolled": initial_count, "newly_enrolled_this_run": enrollment["count"], "bcrypt_cost": 12,
         "retry_duration_ms": enrollment["duration_ms"], "escrow_protected_before_commit": True, "escrow": "DPAPI CurrentUser in private runtime",
         "legacy_sha_wrapped_in_bcrypt": False, "shared_default_login": "denied", "original_database_writes": 0}, indent=2))
+    # The original C1/C2 harness predates mandatory DAL sessions and throttling.
+    # Keep enrollment/restore above, but use the current full-control runtime suite.
+    expanded = sql(admin["user"], admin["password"], "SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA='aoop_m2' AND TABLE_NAME='AuthThrottle';").strip() == '1'
+    if expanded:
+        from run_expanded_assurance import main as expanded_assurance
+        expanded_assurance()
+        print('Controlled enrollment/restore completed; expanded controls supersede the historical C1/C2 runtime harness.')
+        return
     result = subprocess.run(command + ["test"], env=environment, capture_output=True, text=True, encoding="utf-8", timeout=120)
     if result.returncode:
         (RUNTIME / "assurance-private-error.txt").write_text(result.stderr)

@@ -10,32 +10,13 @@ public class DatabaseHandler {
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
     private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm:ss");
 
-    public static Connection getConnection() {
+    static Connection getConnection() {
         return DatabaseConfig.getInstance().getConnection();
     }
 
     // User Credentials
     public static Map<String, String[]> loadCredentials() {
-        Map<String, String[]> credentials = new HashMap<>();
-        String query = "SELECT username, password, role, first_name, last_name FROM Users";
-
-        try (Connection conn = getConnection();
-             PreparedStatement stmt = PersistenceSupport.prepareStatement(conn, query);
-             ResultSet rs = stmt.executeQuery()) {
-
-            while (rs.next()) {
-                String username = rs.getString("username");
-                String password = rs.getString("password");
-                String role = rs.getString("role");
-                String firstName = rs.getString("first_name");
-                String lastName = rs.getString("last_name");
-                credentials.put(username, new String[]{password, role, firstName, lastName});
-            }
-        } catch (SQLException e) {
-            throw PersistenceException.databaseFailure("load database records", e);
-        }
-
-        return credentials;
+        throw new AuthorizationException("Bulk credential access is disabled. Use the authentication service.");
     }
 
     public static final class AuthenticationResult {
@@ -68,8 +49,9 @@ public class DatabaseHandler {
 
     // Employee Operations
     public static List<EmpDetails> getEmployeeData() {
+        AuthorizationService.requireAuthenticated();
         try (Connection connection = getConnection()) {
-            return getEmployeeData(connection, null);
+            return getEmployeeData(connection, AuthorizationService.employeeScope(connection));
         } catch (SQLException failure) {
             throw PersistenceException.databaseFailure("load employee records", failure);
         }
@@ -130,6 +112,7 @@ public class DatabaseHandler {
     }
 
     public static boolean employeeExists(String empID, String existingEmpID) {
+        AuthorizationService.requireHr();
         if (empID == null || empID.isBlank()) {
             throw new IllegalArgumentException("Employee ID is required.");
         }
@@ -137,7 +120,7 @@ public class DatabaseHandler {
         String query = "SELECT COUNT(*) FROM employees WHERE EmployeeID = ?"
                 + (excludingCurrent ? " AND EmployeeID <> ?" : "");
         try (Connection conn = getConnection();
-             PreparedStatement stmt = PersistenceSupport.prepareStatement(conn, query)) {
+             PreparedStatement stmt = prepareHrStatement(conn, query)) {
             stmt.setString(1, empID);
             if (excludingCurrent) { stmt.setString(2, existingEmpID); }
             try (ResultSet rs = stmt.executeQuery()) {
@@ -150,7 +133,12 @@ public class DatabaseHandler {
     }
 
     public static void addEmployee(EmpDetails newEmp) {
-        PersistenceSupport.inTransaction("add the employee", conn -> insertEmployee(conn, newEmp));
+        AuthorizationService.requireHr();
+        PersistenceSupport.inTransaction("add the employee", conn -> {
+            AuthorizationService.requireHr(conn);
+            insertEmployee(conn, newEmp);
+            AuditService.business(conn, "EMPLOYEE_CREATED", newEmp.getEmpID());
+        });
     }
 
     private static void insertEmployee(Connection conn, EmpDetails newEmp) throws SQLException {
@@ -208,7 +196,9 @@ public class DatabaseHandler {
     }
 
     public static void updateEmployee(EmpDetails updatedEmp) {
+        AuthorizationService.requireHr();
         PersistenceSupport.inTransaction("update the employee", conn -> {
+            AuthorizationService.requireHr(conn);
 
             // Update address
             int addressId = insertOrGetAddressId(conn, updatedEmp.getAddress());
@@ -245,16 +235,21 @@ public class DatabaseHandler {
                 PersistenceSupport.requireOneRow(empStmt.executeUpdate());
             }
 
+            AuditService.business(conn, "EMPLOYEE_UPDATED", updatedEmp.getEmpID());
         });
     }
 
     public static void deleteEmployee(String empID) {
+        AuthorizationService.requireHr();
         PersistenceSupport.inTransaction("delete the employee", conn -> {
+            AuthorizationService.requireHr(conn);
 
             int employeeId = Integer.parseInt(empID);
 
             // Delete from related tables first (foreign key constraints)
             String[] deleteQueries = {
+                    "DELETE FROM AttendanceRequests WHERE EmployeeID = ?",
+                    "DELETE FROM PayrollLedger WHERE EmployeeID = ?",
                     "DELETE FROM governmentids WHERE EmployeeID = ?",
                     "DELETE FROM compensation WHERE EmployeeID = ?",
                     "DELETE FROM attendance WHERE EmployeeID = ?",
@@ -269,11 +264,13 @@ public class DatabaseHandler {
                 }
             }
 
+            AuditService.business(conn, "EMPLOYEE_DELETED", empID);
         });
     }
 
     // Salary Operations
     public static List<EmpSalaryDetails> getSalaryData() {
+        AuthorizationService.requireAuthenticated();
         List<EmpSalaryDetails> salaryList = new ArrayList<>();
         String query = "SELECT e.EmployeeID, e.FirstName, e.LastName, " +
                       "g.SSSNumber, g.PhilHealthNumber, g.TINNumber, g.PagIBIGNumber, " +
@@ -285,7 +282,7 @@ public class DatabaseHandler {
                       "ORDER BY e.EmployeeID";
 
         try (Connection conn = DatabaseConfig.getInstance().getConnection();
-             PreparedStatement stmt = PersistenceSupport.prepareStatement(conn, query);
+             PreparedStatement stmt = prepareScopedStatement(conn, query, "e.EmployeeID", false);
              ResultSet rs = stmt.executeQuery()) {
 
             while (rs.next()) {
@@ -314,17 +311,25 @@ public class DatabaseHandler {
     }
 
     public static void addEmployeeSalary(EmpSalaryDetails salary) {
+        AuthorizationService.requireHr();
         Objects.requireNonNull(salary, "Salary details are required.");
         EmpDetails employee = new EmpDetails(salary.getEmpID(), salary.getFirstName(), salary.getLastName(),
                 "", "", "", "Active", "General", "");
         PersistenceSupport.inTransaction("add the employee and salary", conn -> {
+            AuthorizationService.requireHr(conn);
             insertEmployee(conn, employee);
             writeEmployeeSalary(conn, salary);
+            AuditService.business(conn, "EMPLOYEE_SALARY_CREATED", salary.getEmpID());
         });
     }
 
     public static void updateEmployeeSalary(EmpSalaryDetails updatedSalary) {
-        PersistenceSupport.inTransaction("update employee salary", conn -> writeEmployeeSalary(conn, updatedSalary));
+        AuthorizationService.requireHr();
+        PersistenceSupport.inTransaction("update employee salary", conn -> {
+            AuthorizationService.requireHr(conn);
+            writeEmployeeSalary(conn, updatedSalary);
+            AuditService.business(conn, "SALARY_UPDATED", updatedSalary.getEmpID());
+        });
     }
 
     private static void writeEmployeeSalary(Connection conn, EmpSalaryDetails updatedSalary) throws SQLException {
@@ -364,6 +369,7 @@ public class DatabaseHandler {
 
     // Attendance Operations
     public static List<EmpAttLeave> getAttendanceData() {
+        AuthorizationService.requireAuthenticated();
         List<EmpAttLeave> attendanceList = new ArrayList<>();
         String query = "SELECT a.EmployeeID, e.FirstName, e.LastName, " +
                       "es.StatusName, p.PositionName, " +
@@ -378,7 +384,7 @@ public class DatabaseHandler {
                       "ORDER BY a.EmployeeID, a.AttendanceDate";
 
         try (Connection conn = DatabaseConfig.getInstance().getConnection();
-             PreparedStatement stmt = PersistenceSupport.prepareStatement(conn, query);
+             PreparedStatement stmt = prepareScopedStatement(conn, query, "a.EmployeeID", false);
              ResultSet rs = stmt.executeQuery()) {
 
             while (rs.next()) {
@@ -418,11 +424,12 @@ public class DatabaseHandler {
     }
 
     public static List<String[]> readPayrollFromDatabase() {
+        AuthorizationService.requireAuthenticated();
         List<String[]> payrollData = new ArrayList<>();
         String query = "SELECT * FROM Payroll ORDER BY EmployeeID, PayrollPeriodStartDate";
 
         try (Connection conn = DatabaseConfig.getInstance().getConnection();
-             PreparedStatement stmt = PersistenceSupport.prepareStatement(conn, query);
+             PreparedStatement stmt = prepareScopedStatement(conn, query, "EmployeeID", false);
              ResultSet rs = stmt.executeQuery()) {
 
             ResultSetMetaData meta = rs.getMetaData();
@@ -453,6 +460,7 @@ public class DatabaseHandler {
 
     // Payroll Operations
     public static List<String[]> getPayrollData() {
+        AuthorizationService.requireAuthenticated();
         List<String[]> payrollList = new ArrayList<>();
 
         // Query to get payroll data from the Payroll table - using only actual database columns
@@ -484,7 +492,7 @@ public class DatabaseHandler {
             """;
 
         try (Connection conn = DatabaseConfig.getInstance().getConnection();
-             PreparedStatement stmt = PersistenceSupport.prepareStatement(conn, query);
+             PreparedStatement stmt = prepareScopedStatement(conn, query, "p.EmployeeID", true);
              ResultSet rs = stmt.executeQuery()) {
 
             // Fetch each row and map to the desired column format
@@ -556,6 +564,52 @@ public class DatabaseHandler {
             "Philhealth Contribution", "Pag-ibig No.", "Pag-ibig Contribution",
             "TIN", "Withholding Tax", "Net Pay", "PayrollPeriodStartDate"
         };
+    }
+
+    public static List<SecurityAlert> getSecurityAlerts(long afterEventId) {
+        AuthorizationService.requireHr();
+        return PersistenceSupport.inTransactionResult("read security alerts", connection -> {
+            AuthorizationService.requireHr(connection);
+            return AuditService.securityAlerts(connection, afterEventId);
+        });
+    }
+
+    /** Newest first; a positive cursor returns only older events, up to 100 per page. */
+    public static List<AuditEvent> getAuditEvents(long beforeEventId) {
+        AuthorizationService.requireHr();
+        if (beforeEventId<0) { throw new IllegalArgumentException("The audit cursor cannot be negative."); }
+        return PersistenceSupport.inTransactionResult("read audit history", connection -> {
+            AuthorizationService.requireHr(connection);
+            return AuditService.auditEvents(connection, beforeEventId);
+        });
+    }
+
+    public static boolean verifyAuditChain() {
+        AuthorizationService.requireHr();
+        return PersistenceSupport.inTransactionResult("verify the audit chain", connection -> {
+            AuthorizationService.requireHr(connection);
+            return AuditService.verify(connection);
+        });
+    }
+
+    public static void importLegacyLedgers(List<String[]> attendance, List<String[]> payroll) {
+        DatabaseLedger.importLegacy(attendance, payroll);
+    }
+
+    private static PreparedStatement prepareHrStatement(Connection connection, String sql) throws SQLException {
+        AuthorizationService.requireHr(connection);
+        return PersistenceSupport.prepareStatement(connection, sql);
+    }
+
+    private static PreparedStatement prepareScopedStatement(Connection connection, String sql, String employeeColumn, boolean hasWhere) throws SQLException {
+        String employee = AuthorizationService.employeeScope(connection);
+        if (employee == null) { return PersistenceSupport.prepareStatement(connection, sql); }
+        int order = sql.indexOf("ORDER BY");
+        if (order < 0) { order = sql.length(); }
+        String scoped = sql.substring(0, order) + (hasWhere ? " AND " : " WHERE ") + employeeColumn + " = ? " + sql.substring(order);
+        PreparedStatement statement = PersistenceSupport.prepareStatement(connection, scoped);
+        try { statement.setString(1, employee); return statement; }
+        catch (SQLException failure) { statement.close(); throw failure; }
     }
 
     // Utility methods for validation
@@ -729,10 +783,11 @@ public class DatabaseHandler {
     }
 
     public static int getNextEmployeeId() {
+        AuthorizationService.requireHr();
         String query = "SELECT MAX(EmployeeID) FROM employees";
 
         try (Connection conn = DatabaseConfig.getInstance().getConnection();
-             PreparedStatement stmt = PersistenceSupport.prepareStatement(conn, query);
+             PreparedStatement stmt = prepareHrStatement(conn, query);
              ResultSet rs = stmt.executeQuery()) {
 
             if (rs.next()) {
@@ -749,6 +804,7 @@ public class DatabaseHandler {
     // Helper methods for normalized database operations
 
     public static List<String> getAllSupervisors() {
+        AuthorizationService.requireHr();
         List<String> supervisors = new ArrayList<>();
         supervisors.add("N/A"); // Option for no supervisor
 
@@ -758,7 +814,7 @@ public class DatabaseHandler {
                       "ORDER BY FirstName, LastName";
 
         try (Connection conn = DatabaseConfig.getInstance().getConnection();
-             PreparedStatement stmt = PersistenceSupport.prepareStatement(conn, query);
+             PreparedStatement stmt = prepareHrStatement(conn, query);
              ResultSet rs = stmt.executeQuery()) {
 
             while (rs.next()) {
@@ -776,6 +832,7 @@ public class DatabaseHandler {
 
     // Debug method to check supervisor relationships
     public static void debugSupervisorData() {
+        AuthorizationService.requireHr();
         String query = "SELECT e.EmployeeID, e.FirstName, e.LastName, " +
                       "e.ImmediateSupervisorID, " +
                       "CONCAT(sup.FirstName, ' ', sup.LastName) as SupervisorName " +
@@ -784,7 +841,7 @@ public class DatabaseHandler {
                       "ORDER BY e.EmployeeID";
 
         try (Connection conn = DatabaseConfig.getInstance().getConnection();
-             PreparedStatement stmt = PersistenceSupport.prepareStatement(conn, query);
+             PreparedStatement stmt = prepareHrStatement(conn, query);
              ResultSet rs = stmt.executeQuery()) {
 
             System.out.println("=== SUPERVISOR DEBUG INFO ===");
