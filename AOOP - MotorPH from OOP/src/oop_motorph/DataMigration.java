@@ -21,33 +21,7 @@ public class DataMigration {
     }
 
     private static void migrateUsers() {
-        String insertQuery = "INSERT INTO users (username, password, role, first_name, last_name) VALUES (?, ?, ?, ?, ?)";
-
-        try (Connection conn = DatabaseConfig.getInstance().getConnection();
-             PreparedStatement stmt = conn.prepareStatement(insertQuery);
-             InputStream in = DataMigration.class.getResourceAsStream("/oop_motorph/resources/CSV_Users.csv");
-             BufferedReader br = new BufferedReader(new InputStreamReader(in))) {
-
-            String line;
-            br.readLine(); // Skip header
-
-            while ((line = br.readLine()) != null) {
-                String[] values = line.split(",", -1);
-                if (values.length >= 5) {
-                    stmt.setString(1, values[0].trim());
-                    stmt.setString(2, values[1].trim());
-                    stmt.setString(3, values[2].trim());
-                    stmt.setString(4, values[3].trim());
-                    stmt.setString(5, values[4].trim());
-                    stmt.executeUpdate();
-                }
-            }
-            System.out.println("Users migrated successfully");
-
-        } catch (SQLException | IOException e) {
-            System.err.println("Error migrating users: " + e.getMessage());
-            e.printStackTrace();
-        }
+        throw new PersistenceException("Bundled user-password imports are disabled. Enroll users with the protected administrator migration tool and unique temporary BCrypt credentials.");
     }
 
     private static void migrateEmployees() {

@@ -12,6 +12,7 @@ form designer, launchers, and coursework references.
 | Presentation | `frm_*.java`, matching `.form` files | Existing employee and HR workflows; generated layouts remain paired with their forms. |
 | Presentation support | `AppTheme` | Shared colors, typography, focus, table defaults, reachable window content, and recoverable data errors. |
 | Session and models | `EmpUserSession`, `EmpDetails`, `EmpAttLeave`, `EmpSalaryDetails`, `PayrollProcessor` | Existing session and domain data contracts. |
+| Password security | `AuthenticationService`, `PasswordService`, `PasswordResetDialog` | BCrypt12 verification, restricted reset state, and transactional credential replacement. |
 | Database operations | `DatabaseHandler` | Prepared queries, employee/salary transactions, targeted authentication, and database views. |
 | Connection configuration | `DatabaseConfig`, `PersistenceException` | External settings, per-operation connection ownership, bounded network waits, and safe failure messages. |
 | Compatibility facade | `CSVHandler` | Retain existing call sites while delegating database and local-record operations. |
@@ -36,9 +37,11 @@ employee/salary operations use transactions and propagate failures, so a caller
 can only report success after persistence returns.
 
 Login runs database work in a Swing worker and publishes results on the event
-dispatch thread. The current password format stays compatible with existing
-SHA-256 accounts; a password-storage migration needs its own verified upgrade
-and recovery procedure.
+dispatch thread. Milestone 2 adds BCrypt12-only authentication and a restricted
+reset state. Cloned legacy accounts receive unique temporary credentials from
+protected enrollment. A reset rechecks proof under a row lock and commits before
+a normal session is created. The original database remains unchanged. Normal
+launch uses the protected isolated profile; see `security/README.md` for recovery.
 
 ## Repository layout
 

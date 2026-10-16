@@ -26,20 +26,41 @@ public final class DatabaseConfig {
         }
         // URL properties override JDBC Properties in Connector/J. Reject timeout overrides
         // so every application connection retains the same bounded network behavior.
-        String lowerUrl = url.toLowerCase(java.util.Locale.ROOT);
-        if (!lowerUrl.startsWith("jdbc:mysql://") || lowerUrl.matches(".*[?&](connecttimeout|sockettimeout|autoreconnect)=.*")) {
-            throw new PersistenceException("Database URL must use jdbc:mysql:// and must not override connectTimeout, socketTimeout or autoReconnect.");
-        }
+        validateUrl(url);
         Properties properties = new Properties();
         properties.setProperty("user", user);
         properties.setProperty("password", password);
         properties.setProperty("connectTimeout", "5000");
         properties.setProperty("socketTimeout", "15000");
         properties.setProperty("autoReconnect", "false");
+        properties.setProperty("sslMode", "REQUIRED");
         try {
             return DriverManager.getConnection(url, properties);
         } catch (SQLException e) {
             throw PersistenceException.databaseFailure("connect to the database", e);
+        }
+    }
+
+    private static void validateUrl(String url) {
+        if (!url.startsWith("jdbc:mysql://")) { throw new PersistenceException("Database URL must use jdbc:mysql:// with TLS enabled."); }
+        int queryStart = url.indexOf('?');
+        if (queryStart < 0) { return; }
+        try {
+            for (String parameter : url.substring(queryStart + 1).split("&")) {
+                String[] pair = parameter.split("=", 2);
+                String key = java.net.URLDecoder.decode(pair[0], StandardCharsets.UTF_8).toLowerCase(java.util.Locale.ROOT);
+                String value = pair.length > 1 ? java.net.URLDecoder.decode(pair[1], StandardCharsets.UTF_8) : "";
+                if (key.equals("connecttimeout") || key.equals("sockettimeout") || key.equals("autoreconnect")) {
+                    throw new PersistenceException("Database URL must not override connectTimeout, socketTimeout or autoReconnect.");
+                }
+                if (key.equals("usessl") || key.equals("requiressl") || key.equals("verifyservercertificate")
+                        || (key.equals("sslmode") && !value.equalsIgnoreCase("REQUIRED")
+                        && !value.equalsIgnoreCase("VERIFY_CA") && !value.equalsIgnoreCase("VERIFY_IDENTITY"))) {
+                    throw new PersistenceException("Database TLS cannot be disabled. Use sslMode=REQUIRED, VERIFY_CA or VERIFY_IDENTITY.");
+                }
+            }
+        } catch (IllegalArgumentException failure) {
+            throw new PersistenceException("Database URL contains an invalid option.");
         }
     }
 

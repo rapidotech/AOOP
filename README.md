@@ -41,9 +41,10 @@ must begin with `jdbc:mysql://`; connection/socket waits are bounded. Use your
 existing database account and schema. Credential rotation and account privilege
 changes are separate database administration operations.
 
-Login can open without a database. Connection or credential failures are shown
-when signing in. Existing SHA-256 password records remain compatible; this work
-does not claim a password-storage migration or current regulatory compliance.
+Login can open without a database. Milestone 2 adds BCrypt cost 12 and mandatory
+password changes. The prepared isolated profile uses DPAPI credentials,
+restricted grants, and verified TLS. See [security setup](security/README.md)
+for bootstrap access and the unchanged original database boundary.
 
 ## Local request data
 
@@ -68,8 +69,8 @@ fixture process, refuses writes, and never opens a database connection. Captures
 cover login, employee profile, HR records, and payroll at normal and smaller
 window sizes. This is visual evidence, not live database integration proof.
 
-[Improvement goal](docs/SYSTEM_IMPROVEMENT_GOAL.md) ?
-[Architecture](docs/ARCHITECTURE.md)
+[Improvement goal](docs/SYSTEM_IMPROVEMENT_GOAL.md) |
+[Architecture](docs/ARCHITECTURE.md) | [Milestone 2 security](security/README.md)
 
 ## Authors
 

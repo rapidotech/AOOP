@@ -41,43 +41,41 @@ public class DatabaseHandler {
     public static final class AuthenticationResult {
         private final EmpDetails employee;
         private final String role;
-        private AuthenticationResult(EmpDetails employee, String role) {
-            this.employee = employee;
-            this.role = role;
+        private final boolean resetRequired;
+        AuthenticationResult(EmpDetails employee, String role) { this(employee, role, false); }
+        static AuthenticationResult resetRequired(String username) { return new AuthenticationResult(null, null, true); }
+        AuthenticationResult(EmpDetails employee, String role, boolean resetRequired) {
+            this.employee = resetRequired ? null : employee;
+            this.role = resetRequired ? null : role;
+            this.resetRequired = resetRequired;
         }
         public EmpDetails getEmployee() { return employee; }
         public String getRole() { return role; }
+        public boolean isResetRequired() { return resetRequired; }
     }
 
-    /** Preserves the existing SHA-256 storage format without loading every account. */
-    public static AuthenticationResult authenticate(String username, String passwordHash) {
-        if (username == null || username.isBlank() || passwordHash == null) { return null; }
-        String role;
-        try (Connection conn = getConnection();
-             PreparedStatement stmt = PersistenceSupport.prepareStatement(conn,
-                     "SELECT password, role FROM Users WHERE username = ?")) {
-            stmt.setString(1, username);
-            try (ResultSet rs = stmt.executeQuery()) {
-                if (!rs.next()) { return null; }
-                String storedHash = rs.getString("password");
-                if (storedHash == null || !java.security.MessageDigest.isEqual(
-                        storedHash.getBytes(java.nio.charset.StandardCharsets.UTF_8),
-                        passwordHash.getBytes(java.nio.charset.StandardCharsets.UTF_8))) { return null; }
-                role = rs.getString("role");
-            }
-        } catch (SQLException e) {
-            throw PersistenceException.databaseFailure("authenticate the account", e);
-        }
-        List<EmpDetails> employees = getEmployeeData(username);
-        return employees.isEmpty() ? null : new AuthenticationResult(employees.get(0), role);
+    public static AuthenticationResult authenticate(String username, char[] password) {
+        return AuthenticationService.authenticate(username, password);
+    }
+
+    public static AuthenticationResult resetPassword(String username, char[] currentPassword, char[] newPassword) {
+        return AuthenticationService.resetPassword(username, currentPassword, newPassword);
+    }
+
+    public static void createUser(String username, char[] temporaryPassword, String role, String firstName, String lastName) {
+        AuthenticationService.createUser(username, temporaryPassword, role, firstName, lastName);
     }
 
     // Employee Operations
     public static List<EmpDetails> getEmployeeData() {
-        return getEmployeeData(null);
+        try (Connection connection = getConnection()) {
+            return getEmployeeData(connection, null);
+        } catch (SQLException failure) {
+            throw PersistenceException.databaseFailure("load employee records", failure);
+        }
     }
 
-    private static List<EmpDetails> getEmployeeData(String employeeID) {
+    static List<EmpDetails> getEmployeeData(Connection conn, String employeeID) throws SQLException {
         List<EmpDetails> employees = new ArrayList<>();
         String query = "SELECT e.EmployeeID, e.FirstName, e.LastName, e.Birthday, " +
                       "a.StreetAddress, a.City, a.Region, " +
@@ -91,8 +89,7 @@ public class DatabaseHandler {
                       (employeeID == null ? "" : "WHERE e.EmployeeID = ? ") +
                       "ORDER BY e.EmployeeID";
 
-        try (Connection conn = DatabaseConfig.getInstance().getConnection();
-             PreparedStatement stmt = PersistenceSupport.prepareStatement(conn, query)) {
+        try (PreparedStatement stmt = PersistenceSupport.prepareStatement(conn, query)) {
             if (employeeID != null) { stmt.setString(1, employeeID); }
             try (ResultSet rs = stmt.executeQuery()) {
 
@@ -127,8 +124,6 @@ public class DatabaseHandler {
                 employees.add(emp);
             }
             }
-        } catch (SQLException e) {
-            throw PersistenceException.databaseFailure("load database records", e);
         }
 
         return employees;
@@ -168,11 +163,13 @@ public class DatabaseHandler {
         // Get or create position ID
         int positionId = getOrCreatePositionId(conn, newEmp.getPosition());
 
+        int departmentId = getDepartmentIdForPosition(conn, positionId);
+
         // Find supervisor ID if exists
         Integer supervisorId = getSupervisorId(conn, newEmp.getImmediateSupervisor());
 
         // Insert into employees table
-        String empQuery = "INSERT INTO employees (EmployeeID, FirstName, LastName, Birthday, AddressID, PhoneNumber, StatusID, PositionID, DepartmentID, ImmediateSupervisorID) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, ?)";
+        String empQuery = "INSERT INTO employees (EmployeeID, FirstName, LastName, Birthday, AddressID, PhoneNumber, StatusID, PositionID, DepartmentID, ImmediateSupervisorID) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         try (PreparedStatement empStmt = PersistenceSupport.prepareStatement(conn, empQuery)) {
             empStmt.setInt(1, Integer.parseInt(newEmp.getEmpID()));
             empStmt.setString(2, newEmp.getFirstName());
@@ -190,7 +187,8 @@ public class DatabaseHandler {
             empStmt.setString(6, newEmp.getPhoneNumber());
             empStmt.setInt(7, statusId);
             empStmt.setInt(8, positionId);
-            empStmt.setObject(9, supervisorId);
+            empStmt.setInt(9, departmentId);
+            empStmt.setObject(10, supervisorId);
             PersistenceSupport.requireOneRow(empStmt.executeUpdate());
         }
 
@@ -588,6 +586,23 @@ public class DatabaseHandler {
     }
 
     // Helper methods for normalized database operations
+
+    private static int getDepartmentIdForPosition(Connection connection, int positionId) throws SQLException {
+        try (PreparedStatement statement = PersistenceSupport.prepareStatement(connection,
+                "SELECT DISTINCT DepartmentID FROM employees WHERE PositionID = ? ORDER BY DepartmentID")) {
+            statement.setInt(1, positionId);
+            try (ResultSet result = statement.executeQuery()) {
+                if (!result.next()) {
+                    throw new PersistenceException("No department is configured for this position. Ask an administrator to configure its department before adding the employee.");
+                }
+                int departmentId = result.getInt("DepartmentID");
+                if (result.wasNull() || result.next()) {
+                    throw new PersistenceException("This position does not identify one department. Ask an administrator to configure its department before adding the employee.");
+                }
+                return departmentId;
+            }
+        }
+    }
 
     private static int insertOrGetAddressId(Connection conn, String address) throws SQLException {
         if (address == null || address.trim().isEmpty() || address.equals("Address not available")) {

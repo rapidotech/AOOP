@@ -54,9 +54,23 @@ simple and cover both the cleanup work and the security implementation.
 
 ## Tracking
 
-The native goal remains active. Its API supports status updates but does not
-expose an operation to edit an active goal's objective text. This document and
-the Astra checkpoint record the user's expanded scope without falsely marking
-unfinished work complete to recreate the goal.
+Implementation and verification completed on 17 October 2026. The expanded
+scope is recorded here because the native goal API cannot edit objective text.
+
+- Standardized Java 17 builds, configuration and connection ownership,
+  transactional writes, atomic local records, and shared UI styling across
+  all 16 forms; generated output removed from version control.
+- Completed the five Milestone 2 moves for the two selected SIP controls in
+  a separate, backed-up MySQL clone, with the original database unchanged.
+- Verified 75 persistence, 53 security and 63 UI assertions offline; 30 real
+  isolated-database checks; six focused review-correction checks; and protected
+  temporary-credential retrieval against all 34 enrolled cloned accounts.
+- Delivered an editable ten-page Implementation Log, PDF, annotated diagram
+  in HTML/SVG/PNG/PDF, and sanitized evidence. Every log page was rendered and
+  visually inspected. Private recovery material is excluded from sharing.
+
+The portfolio is at `C:/Users/JAYCEE/Downloads/AOOP_Milestone2_Group13`.
+See `security/README.md` for launching, temporary credentials, reproduction,
+rollback and the explicit limits of the assurance claims.
 
 Run state: `C:/Users/JAYCEE/.codex/tmp/astra-runs/aoop-20261017-system-improvements/checkpoint.json`.

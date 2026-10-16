@@ -1,0 +1,200 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "MotorPH Milestone 2 control integration",
+    "quality_profile": "showcase",
+    "locale": "en",
+    "viewBox": [
+      1390,
+      660
+    ]
+  },
+  "components": [
+    {
+      "id": "operator",
+      "type": "external",
+      "label": "Employee or HR",
+      "sublabel": "Windows desktop",
+      "pos": [
+        33,
+        275
+      ],
+      "size": [
+        195,
+        82
+      ]
+    },
+    {
+      "id": "desktop",
+      "type": "frontend",
+      "label": "MotorPH Swing UI",
+      "sublabel": "Login and existing workflows",
+      "pos": [
+        307,
+        275
+      ],
+      "size": [
+        195,
+        82
+      ]
+    },
+    {
+      "id": "password-control",
+      "type": "security",
+      "label": "BCrypt authentication",
+      "sublabel": "Cost 12; no default fallback",
+      "tag": "C2 MODIFIED",
+      "pos": [
+        581,
+        275
+      ],
+      "size": [
+        195,
+        82
+      ]
+    },
+    {
+      "id": "data-access",
+      "type": "backend",
+      "label": "DatabaseHandler / JDBC",
+      "sublabel": "Owned connections; transactions",
+      "pos": [
+        856,
+        275
+      ],
+      "size": [
+        209,
+        82
+      ]
+    },
+    {
+      "id": "isolated-database",
+      "type": "database",
+      "label": "Isolated MySQL clone",
+      "sublabel": "127.0.0.1:3307 / aoop_m2",
+      "tag": "C1 MODIFIED",
+      "pos": [
+        1135,
+        275
+      ],
+      "size": [
+        209,
+        82
+      ]
+    },
+    {
+      "id": "mandatory-reset",
+      "type": "security",
+      "label": "Mandatory password reset",
+      "sublabel": "No session until reset commits",
+      "tag": "C2 ADDED",
+      "pos": [
+        581,
+        75
+      ],
+      "size": [
+        223,
+        82
+      ]
+    },
+    {
+      "id": "protected-config",
+      "type": "security",
+      "label": "Windows DPAPI profile",
+      "sublabel": "CurrentUser encryption + file ACL",
+      "tag": "C1 ADDED",
+      "pos": [
+        856,
+        485
+      ],
+      "size": [
+        209,
+        82
+      ]
+    },
+    {
+      "id": "restricted-grants",
+      "type": "security",
+      "label": "Restricted application user",
+      "sublabel": "Required tables only; no DDL/admin",
+      "tag": "C1 ADDED",
+      "pos": [
+        1135,
+        485
+      ],
+      "size": [
+        209,
+        82
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "user-ui",
+      "from": "operator",
+      "to": "desktop",
+      "label": "sign in"
+    },
+    {
+      "id": "ui-auth",
+      "from": "desktop",
+      "to": "password-control",
+      "label": "credentials"
+    },
+    {
+      "id": "auth-data",
+      "from": "password-control",
+      "to": "data-access",
+      "label": "verified"
+    },
+    {
+      "id": "data-mysql",
+      "from": "data-access",
+      "to": "isolated-database",
+      "label": "verified TLS",
+      "variant": "security"
+    },
+    {
+      "id": "reset-gate",
+      "from": "password-control",
+      "to": "mandatory-reset",
+      "label": "reset required",
+      "variant": "security",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "config-jdbc",
+      "from": "protected-config",
+      "to": "data-access",
+      "label": "decrypted at launch",
+      "variant": "security"
+    },
+    {
+      "id": "grants-database",
+      "from": "restricted-grants",
+      "to": "isolated-database",
+      "label": "enforced grants",
+      "variant": "security"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Implementation scope",
+      "items": [
+        "Separate local clone; original aoop and shared root remain unchanged.",
+        "C1 protects configuration and database access; C2 gates the login/reset path."
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Assurance boundary",
+      "items": [
+        "Controlled tests use synthetic accounts and isolated database effects.",
+        "Backups, rollback, test results and limitations are traced in the implementation log."
+      ]
+    }
+  ]
+}

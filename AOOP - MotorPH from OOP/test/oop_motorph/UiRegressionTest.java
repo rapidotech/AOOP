@@ -24,6 +24,11 @@ public final class UiRegressionTest {
             lazyLoginAndKeyboard();
             asynchronousAuthentication();
             unavailableAndRetry();
+            resetGateAndCancel();
+            resetValidationAndFailure();
+            successfulResetAndNavigation();
+            regularSecureLoginAndNavigation();
+            resetPrimaryButtonContrast();
             sortedPayrollMapping();
             failedPayrollSavePreservesDisplay();
             readOnlyControlsStayReadable();
@@ -67,12 +72,13 @@ public final class UiRegressionTest {
         AtomicBoolean background = new AtomicBoolean();
         AtomicInteger calls = new AtomicInteger();
         AtomicReference<String> suppliedUser = new AtomicReference<>();
-        AtomicReference<String> suppliedHash = new AtomicReference<>();
+        AtomicReference<String> suppliedPassword = new AtomicReference<>();
+        AtomicReference<char[]> suppliedArray = new AtomicReference<>();
         AtomicReference<frm_Login> frame = new AtomicReference<>();
-        SwingUtilities.invokeAndWait(() -> frame.set(new frm_Login((user, hash) -> {
+        SwingUtilities.invokeAndWait(() -> frame.set(new frm_Login((user, password) -> {
             calls.incrementAndGet();
             background.set(!SwingUtilities.isEventDispatchThread());
-            suppliedUser.set(user); suppliedHash.set(hash); started.countDown();
+            suppliedUser.set(user); suppliedPassword.set(new String(password)); suppliedArray.set(password); started.countDown();
             try { release.await(5, TimeUnit.SECONDS); }
             catch (InterruptedException ex) { Thread.currentThread().interrupt(); }
             return null;
@@ -92,9 +98,10 @@ public final class UiRegressionTest {
             check(calls.get() == 1, "Repeated Enter while pending must not start another request");
         });
         check("90001".equals(suppliedUser.get()), "Username whitespace may be normalized");
-        check(frm_Login.hashPassword(" secret ").equals(suppliedHash.get()), "Password whitespace must be preserved exactly");
+        check(" secret ".equals(suppliedPassword.get()), "Password whitespace must be preserved exactly");
         release.countDown();
         awaitText(frame.get(), "incorrect");
+        check(allCleared(suppliedArray.get()), "Authentication working password must be cleared after the worker finishes");
         SwingUtilities.invokeAndWait(() -> {
             check(find(frame.get(), "signIn", JButton.class).isEnabled(), "Invalid credentials must restore retry controls");
             check(find(frame.get(), "password", JPasswordField.class).getPassword().length == 0, "Invalid password must be cleared");
@@ -117,6 +124,205 @@ public final class UiRegressionTest {
             check(EmpUserSession.getInstance().getCurrentUser() == null, "Failed authentication must not create a session");
             frame.get().dispose();
         });
+    }
+
+    private static void resetGateAndCancel() throws Exception {
+        AtomicReference<frm_Login> frame = new AtomicReference<>();
+        AtomicInteger navigation = new AtomicInteger();
+        AtomicInteger resetCalls = new AtomicInteger();
+        SwingUtilities.invokeAndWait(() -> {
+            frame.set(new frm_Login((user, password) -> DatabaseHandler.AuthenticationResult.resetRequired(user),
+                    (user, oldPassword, newPassword) -> { resetCalls.incrementAndGet(); return null; },
+                    result -> navigation.incrementAndGet()));
+            find(frame.get(), "username", JTextField.class).setText("90001");
+            find(frame.get(), "password", JPasswordField.class).setText("unique-temporary-fixture");
+            find(frame.get(), "signIn", JButton.class).doClick();
+        });
+        PasswordResetDialog dialog = awaitResetDialog();
+        SwingUtilities.invokeAndWait(() -> {
+            check(EmpUserSession.getInstance().getCurrentUser() == null, "Reset-required authentication must not create a full employee session");
+            check(navigation.get() == 0, "A reset-required account must not navigate into employee workflows");
+            check(dialog.getRootPane().getDefaultButton() == find(dialog, "savePassword", JButton.class), "Enter must submit the mandatory reset");
+            find(dialog, "cancelReset", JButton.class).doClick();
+        });
+        awaitText(frame.get(), "required");
+        SwingUtilities.invokeAndWait(() -> {
+            check(EmpUserSession.getInstance().getCurrentUser() == null, "Canceling reset must leave the session empty");
+            check(resetCalls.get() == 0, "Canceling before submission must never call password persistence");
+            check(navigation.get() == 0, "Canceling reset must not open employee workflows");
+            frame.get().dispose();
+        });
+    }
+
+    private static void resetValidationAndFailure() throws Exception {
+        AtomicReference<PasswordResetDialog> dialog = new AtomicReference<>();
+        AtomicInteger calls = new AtomicInteger();
+        AtomicBoolean flag = new AtomicBoolean(true);
+        SwingUtilities.invokeAndWait(() -> {
+            dialog.set(new PasswordResetDialog(null, "90001", (user, oldPassword, newPassword) -> {
+                calls.incrementAndGet();
+                check(!SwingUtilities.isEventDispatchThread(), "Reset persistence must run off the event thread");
+                return null;
+            }, result -> { throw new AssertionError("Failed reset must not authenticate"); }));
+            fillReset(dialog.get(), "unique-temporary-fixture", "short", "short");
+            find(dialog.get(), "savePassword", JButton.class).doClick();
+            check(calls.get() == 0, "Short replacement passwords must not reach persistence");
+            fillReset(dialog.get(), "unique-temporary-fixture", "\u00e9".repeat(37), "\u00e9".repeat(37));
+            find(dialog.get(), "savePassword", JButton.class).doClick();
+            check(calls.get() == 0, "Passwords above 72 UTF-8 bytes must be rejected rather than truncated");
+            fillReset(dialog.get(), "unique-temporary-fixture", "a unique replacement", "different replacement");
+            find(dialog.get(), "savePassword", JButton.class).doClick();
+            check(calls.get() == 0, "Mismatched confirmation must not reach persistence");
+            fillReset(dialog.get(), "unique-temporary-fixture", "123412341234", "123412341234");
+            find(dialog.get(), "savePassword", JButton.class).doClick();
+            check(calls.get() == 0, "A known repeated default must not reach password persistence");
+            fillReset(dialog.get(), "incorrect-temporary-fixture", "a unique replacement", "a unique replacement");
+            find(dialog.get(), "savePassword", JButton.class).doClick();
+        });
+        awaitResetText(dialog.get(), "not changed");
+        SwingUtilities.invokeAndWait(() -> {
+            check(flag.get(), "Rejected reset must leave the simulated mandatory-reset flag intact");
+            check(EmpUserSession.getInstance().getCurrentUser() == null, "Rejected reset must leave the session empty");
+            check(find(dialog.get(), "savePassword", JButton.class).isEnabled(), "Rejected reset must restore retry controls");
+            dialog.get().dispose();
+            dialog.set(new PasswordResetDialog(null, "90001", (user, oldPassword, newPassword) -> {
+                throw new PersistenceException("Offline fixture");
+            }, result -> { throw new AssertionError("Unavailable reset must not authenticate"); }));
+            fillReset(dialog.get(), "unique-temporary-fixture", "a unique replacement", "a unique replacement");
+            find(dialog.get(), "savePassword", JButton.class).doClick();
+        });
+        awaitResetText(dialog.get(), "connection");
+        SwingUtilities.invokeAndWait(() -> {
+            check(EmpUserSession.getInstance().getCurrentUser() == null, "Persistence failure must leave the session empty");
+            check(flag.get(), "Persistence failure must not claim reset completion");
+            dialog.get().dispose();
+        });
+    }
+
+    private static void successfulResetAndNavigation() throws Exception {
+        AtomicReference<frm_Login> frame = new AtomicReference<>();
+        AtomicInteger navigation = new AtomicInteger();
+        AtomicBoolean flag = new AtomicBoolean(true);
+        AtomicReference<char[]> oldWorking = new AtomicReference<>();
+        AtomicReference<char[]> newWorking = new AtomicReference<>();
+        AtomicReference<String> savedPassword = new AtomicReference<>();
+        CountDownLatch started = new CountDownLatch(1), release = new CountDownLatch(1);
+        SwingUtilities.invokeAndWait(() -> {
+            frame.set(new frm_Login((user, password) -> DatabaseHandler.AuthenticationResult.resetRequired(user),
+                    (user, oldPassword, newPassword) -> {
+                        oldWorking.set(oldPassword); newWorking.set(newPassword);
+                        savedPassword.set(new String(newPassword));
+                        started.countDown();
+                        try { release.await(5, TimeUnit.SECONDS); }
+                        catch (InterruptedException ex) { Thread.currentThread().interrupt(); }
+                        flag.set(false);
+                        return new DatabaseHandler.AuthenticationResult(new EmpDetails("90001", "Sample", "Employee"), "EMPLOYEE");
+                    }, result -> navigation.incrementAndGet()));
+            find(frame.get(), "username", JTextField.class).setText("90001");
+            find(frame.get(), "password", JPasswordField.class).setText("unique-temporary-fixture");
+            find(frame.get(), "signIn", JButton.class).doClick();
+        });
+        PasswordResetDialog dialog = awaitResetDialog();
+        SwingUtilities.invokeAndWait(() -> {
+            fillReset(dialog, "unique-temporary-fixture", " new unique password ", " new unique password ");
+            find(dialog, "savePassword", JButton.class).doClick();
+        });
+        check(started.await(3, TimeUnit.SECONDS), "Valid reset must dispatch its worker");
+        SwingUtilities.invokeAndWait(() -> {
+            check(!find(dialog, "savePassword", JButton.class).isEnabled(), "Pending reset must prevent duplicate submissions");
+            check(!find(dialog, "cancelReset", JButton.class).isEnabled(), "A dispatched commit cannot falsely claim cancellation");
+            check(EmpUserSession.getInstance().getCurrentUser() == null, "Pending reset must not create a session before persistence returns");
+            dialog.dispatchEvent(new java.awt.event.WindowEvent(dialog, java.awt.event.WindowEvent.WINDOW_CLOSING));
+            check(dialog.isDisplayable(), "Window close must wait until an in-flight password change completes");
+        });
+        release.countDown();
+        long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
+        while (navigation.get() == 0 && System.nanoTime() < deadline) Thread.sleep(20);
+        SwingUtilities.invokeAndWait(() -> {
+            check(navigation.get() == 1, "Successful reset must open the existing authenticated workflow exactly once");
+            check(!flag.get(), "Successful reset must reflect committed mandatory-reset remediation");
+            check(EmpUserSession.getInstance().getCurrentUser() != null, "Successful reset may create the full employee session");
+            check(" new unique password ".equals(savedPassword.get()), "Replacement password whitespace must not be trimmed");
+            check(allCleared(oldWorking.get()) && allCleared(newWorking.get()), "Reset working password arrays must be cleared");
+            EmpUserSession.getInstance().clearSession();
+        });
+    }
+
+    private static boolean allCleared(char[] password) {
+        if (password == null) return false;
+        for (char character : password) if (character != '\0') return false;
+        return true;
+    }
+
+    private static void regularSecureLoginAndNavigation() throws Exception {
+        AtomicReference<frm_Login> frame = new AtomicReference<>();
+        AtomicInteger navigation = new AtomicInteger();
+        SwingUtilities.invokeAndWait(() -> {
+            frame.set(new frm_Login((user, password) ->
+                    new DatabaseHandler.AuthenticationResult(new EmpDetails(user, "Sample", "Employee"), "EMPLOYEE"),
+                    (user, current, replacement) -> { throw new AssertionError("A remediated account must not reset on every login"); },
+                    result -> navigation.incrementAndGet()));
+            find(frame.get(), "username", JTextField.class).setText("90001");
+            find(frame.get(), "password", JPasswordField.class).setText("already-remediated-fixture");
+            find(frame.get(), "signIn", JButton.class).doClick();
+        });
+        long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
+        while (navigation.get() == 0 && System.nanoTime() < deadline) Thread.sleep(20);
+        SwingUtilities.invokeAndWait(() -> {
+            check(navigation.get() == 1, "A fully authenticated account must retain access to the existing workflow");
+            check("90001".equals(EmpUserSession.getInstance().getCurrentUser().getEmpID()), "A full authentication result must set the correct employee session");
+            check(!frame.get().isDisplayable(), "Successful sign in must close the login form");
+            EmpUserSession.getInstance().clearSession();
+        });
+    }
+
+    private static void resetPrimaryButtonContrast() throws Exception {
+        SwingUtilities.invokeAndWait(() -> {
+            PasswordResetDialog dialog = new PasswordResetDialog(null, "90001", (user, current, replacement) -> null, result -> { });
+            try {
+                JButton button = find(dialog, "savePassword", JButton.class);
+                for (boolean enabled : new boolean[]{true, false}) {
+                    button.setEnabled(enabled);
+                    java.awt.image.BufferedImage image = new java.awt.image.BufferedImage(button.getWidth(), button.getHeight(), java.awt.image.BufferedImage.TYPE_INT_RGB);
+                    Graphics2D graphics = image.createGraphics();
+                    button.paint(graphics); graphics.dispose();
+                    Color painted = new Color(image.getRGB(button.getWidth() / 2, 5));
+                    check(contrast(Color.WHITE, painted) >= 4.5, "Rendered reset primary button must keep white-text contrast in enabled and pending states");
+                }
+            } finally { dialog.dispose(); }
+        });
+    }
+
+    private static void fillReset(PasswordResetDialog dialog, String current, String replacement, String confirmation) {
+        find(dialog, "currentPassword", JPasswordField.class).setText(current);
+        find(dialog, "newPassword", JPasswordField.class).setText(replacement);
+        find(dialog, "confirmPassword", JPasswordField.class).setText(confirmation);
+    }
+
+    private static PasswordResetDialog awaitResetDialog() throws Exception {
+        AtomicReference<PasswordResetDialog> dialog = new AtomicReference<>();
+        long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
+        while (System.nanoTime() < deadline) {
+            SwingUtilities.invokeAndWait(() -> {
+                for (Window window : Window.getWindows()) {
+                    if (window instanceof PasswordResetDialog && window.isVisible()) dialog.set((PasswordResetDialog) window);
+                }
+            });
+            if (dialog.get() != null) return dialog.get();
+            Thread.sleep(20);
+        }
+        throw new AssertionError("Mandatory password reset dialog did not open");
+    }
+
+    private static void awaitResetText(PasswordResetDialog dialog, String text) throws Exception {
+        AtomicBoolean found = new AtomicBoolean();
+        long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
+        while (System.nanoTime() < deadline) {
+            SwingUtilities.invokeAndWait(() -> found.set(find(dialog, "resetStatus", JLabel.class).getText().contains(text)));
+            if (found.get()) return;
+            Thread.sleep(20);
+        }
+        throw new AssertionError("Expected reset status: " + text);
     }
 
     private static void sortedPayrollMapping() throws Exception {

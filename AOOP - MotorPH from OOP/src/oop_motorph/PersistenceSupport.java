@@ -10,12 +10,20 @@ final class PersistenceSupport {
     @FunctionalInterface
     interface Transaction { void run(Connection connection) throws SQLException; }
 
+    @FunctionalInterface
+    interface TransactionResult<T> { T run(Connection connection) throws SQLException; }
+
     static void inTransaction(String operation, Transaction transaction) {
+        inTransactionResult(operation, connection -> { transaction.run(connection); return null; });
+    }
+
+    static <T> T inTransactionResult(String operation, TransactionResult<T> transaction) {
         try (Connection connection = DatabaseConfig.getInstance().getConnection()) {
             connection.setAutoCommit(false);
             try {
-                transaction.run(connection);
+                T result = transaction.run(connection);
                 connection.commit();
+                return result;
             } catch (SQLException | RuntimeException failure) {
                 try { connection.rollback(); }
                 catch (SQLException rollbackFailure) { failure.addSuppressed(rollbackFailure); }

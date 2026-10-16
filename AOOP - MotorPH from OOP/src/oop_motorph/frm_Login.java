@@ -1,18 +1,18 @@
 package oop_motorph;
 
 import java.awt.*;
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.concurrent.ExecutionException;
 import java.util.function.BiFunction;
+import java.util.function.Consumer;
 import javax.swing.*;
 
 
 public class frm_Login extends javax.swing.JFrame {
 
-    private final BiFunction<String, String, DatabaseHandler.AuthenticationResult> authenticator;
+    private final BiFunction<String, char[], DatabaseHandler.AuthenticationResult> authenticator;
+    private final PasswordResetDialog.ResetAction passwordResetter;
+    private final Consumer<DatabaseHandler.AuthenticationResult> authenticatedNavigation;
     private final JLabel loginStatus = new JLabel("Enter your username and password.");
     private boolean signingIn;
     private char passwordEcho;
@@ -22,8 +22,17 @@ public class frm_Login extends javax.swing.JFrame {
     }
 
     // Package-private injection keeps UI tests independent of any database.
-    frm_Login(BiFunction<String, String, DatabaseHandler.AuthenticationResult> authenticator) {
+    frm_Login(BiFunction<String, char[], DatabaseHandler.AuthenticationResult> authenticator) {
+        this(authenticator, DatabaseHandler::resetPassword, null);
+    }
+
+    frm_Login(BiFunction<String, char[], DatabaseHandler.AuthenticationResult> authenticator,
+            PasswordResetDialog.ResetAction passwordResetter,
+            Consumer<DatabaseHandler.AuthenticationResult> authenticatedNavigation) {
         this.authenticator = authenticator;
+        this.passwordResetter = passwordResetter;
+        this.authenticatedNavigation = authenticatedNavigation;
+        EmpUserSession.getInstance().clearSession();
         AppTheme.install();
         initComponents();
         configureLogin();
@@ -281,7 +290,7 @@ public class frm_Login extends javax.swing.JFrame {
     private void btn_LoginActionPerformed(java.awt.event.ActionEvent evt) {
         if (signingIn) return;
         final String username = txt_Login.getText().trim();
-        char[] password = jPasswordField.getPassword();
+        final char[] password = jPasswordField.getPassword();
         if (username.isEmpty() || password.length == 0) {
             Arrays.fill(password, '\0');
             setStatus("Enter both your username and password.", true);
@@ -289,18 +298,17 @@ public class frm_Login extends javax.swing.JFrame {
             else jPasswordField.requestFocusInWindow();
             return;
         }
-        final String passwordHash;
-        try {
-            // Preserve password whitespace and the existing SHA-256 storage format.
-            passwordHash = hashPassword(new String(password));
-        } finally {
-            Arrays.fill(password, '\0');
-        }
+        EmpUserSession.getInstance().clearSession();
+        jPasswordField.setText("");
         setSigningIn(true);
         setStatus("Signing in\u2026", false);
         new SwingWorker<DatabaseHandler.AuthenticationResult, Void>() {
             @Override protected DatabaseHandler.AuthenticationResult doInBackground() {
-                return authenticator.apply(username, passwordHash);
+                try {
+                    return authenticator.apply(username, password);
+                } finally {
+                    Arrays.fill(password, '\0');
+                }
             }
             @Override protected void done() {
                 setSigningIn(false);
@@ -313,15 +321,18 @@ public class frm_Login extends javax.swing.JFrame {
                         jPasswordField.requestFocusInWindow();
                         return;
                     }
-                    EmpUserSession.getInstance().setCurrentUser(result.getEmployee(), result.getRole());
-                    try {
-                        frm_EmpProfile profile = new frm_EmpProfile();
-                        profile.setVisible(true);
-                        dispose();
-                    } catch (PersistenceException ex) {
+                    if (result.isResetRequired()) {
                         EmpUserSession.getInstance().clearSession();
-                        setStatus("Profile unavailable. Check the connection and retry.", true);
+                        setStatus("Change your temporary password to continue.", false);
+                        PasswordResetDialog reset = new PasswordResetDialog(frm_Login.this, username,
+                                passwordResetter, frm_Login.this::completeAuthentication);
+                        reset.setVisible(true);
+                        if (isDisplayable() && EmpUserSession.getInstance().getCurrentUser() == null) {
+                            setStatus("Password change required. Sign in to try again.", true);
+                        }
+                        return;
                     }
+                    completeAuthentication(result);
                 } catch (InterruptedException ex) {
                     Thread.currentThread().interrupt();
                     setStatus("Sign in was interrupted. Please try again.", true);
@@ -331,6 +342,23 @@ public class frm_Login extends javax.swing.JFrame {
             }
         }.execute();
     }//GEN-LAST:event_btn_LoginActionPerformed
+
+    private void completeAuthentication(DatabaseHandler.AuthenticationResult result) {
+        if (result == null || result.isResetRequired() || result.getEmployee() == null || result.getRole() == null) {
+            EmpUserSession.getInstance().clearSession();
+            setStatus("Sign in could not be completed. Please try again.", true);
+            return;
+        }
+        EmpUserSession.getInstance().setCurrentUser(result.getEmployee(), result.getRole());
+        try {
+            if (authenticatedNavigation == null) new frm_EmpProfile().setVisible(true);
+            else authenticatedNavigation.accept(result);
+            dispose();
+        } catch (PersistenceException ex) {
+            EmpUserSession.getInstance().clearSession();
+            setStatus("Profile unavailable. Check the connection and retry.", true);
+        }
+    }
 
     private void setSigningIn(boolean busy) {
         signingIn = busy;
@@ -346,20 +374,6 @@ public class frm_Login extends javax.swing.JFrame {
         loginStatus.setForeground(error ? new Color(185, 28, 28) : AppTheme.MUTED);
         loginStatus.setText(text);
         loginStatus.getAccessibleContext().setAccessibleDescription(text);
-    }
-
-    public static String hashPassword(String password) {
-        try {
-            MessageDigest md = MessageDigest.getInstance("SHA-256");
-            byte[] hashBytes = md.digest(password.getBytes(StandardCharsets.UTF_8));
-            StringBuilder sb = new StringBuilder();
-            for (byte b : hashBytes) {
-                sb.append(String.format("%02x", b));
-            }
-            return sb.toString();
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException("SHA-256 not supported on this platform", e);
-        }
     }
 
     //Mikko end

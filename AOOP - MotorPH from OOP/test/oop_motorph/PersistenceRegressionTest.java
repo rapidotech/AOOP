@@ -155,6 +155,14 @@ public final class PersistenceRegressionTest {
         check(DRIVER.latest().sql.stream().anyMatch(sql -> sql.startsWith("INSERT INTO employees")),
                 "Salary rollback test must fail after employee insertion");
         DRIVER.failUpdateSql = null;
+        DRIVER.departmentRows = 0;
+        expectPersistence(() -> CSVHandler.addEmployeeSalary(salary));
+        check(DRIVER.latest().rolledBack && DRIVER.latest().sql.stream().noneMatch(sql -> sql.startsWith("INSERT INTO employees")),
+                "A position without a known department must fail before inserting an employee");
+        DRIVER.departmentRows = 2;
+        expectPersistence(() -> CSVHandler.addEmployeeSalary(salary));
+        check(DRIVER.latest().rolledBack, "Ambiguous departments must roll back rather than choose an arbitrary department");
+        DRIVER.departmentRows = 1;
     }
 
     private static void localRecordsRoundTrip(Path directory) throws Exception {
@@ -216,18 +224,18 @@ public final class PersistenceRegressionTest {
     }
 
     private static void targetedAuthentication() {
-        DRIVER.accountHash = "stored-test-hash";
+        DRIVER.accountHash = PasswordService.hashPassword("Stored-test-password!".toCharArray());
         int before = DRIVER.connections.size();
-        check(DatabaseHandler.authenticate("10001", "wrong-hash") == null, "Invalid hashes must reject login");
+        check(DatabaseHandler.authenticate("10001", "wrong-password".toCharArray()) == null, "Invalid hashes must reject login");
         check(DRIVER.connections.size() == before + 1, "Rejected login must not load employees");
         State invalid = DRIVER.latest();
         check(invalid.sql.get(0).contains("WHERE username = ?"), "Credential lookup must target one account");
         check(invalid.parameters.get(1).equals("10001"), "Login username must be bound");
-        DatabaseHandler.AuthenticationResult result = DatabaseHandler.authenticate("10001", "stored-test-hash");
+        DatabaseHandler.AuthenticationResult result = DatabaseHandler.authenticate("10001", "Stored-test-password!".toCharArray());
         check(result != null && "10001".equals(result.getEmployee().getEmpID()), "Valid login must resolve its employee");
         check("HR".equals(result.getRole()), "Valid login must retain its role");
         State employee = DRIVER.latest();
-        check(employee.sql.get(0).contains("WHERE e.EmployeeID = ?"), "Login employee lookup must target one employee");
+        check(employee.sql.stream().anyMatch(sql -> sql.contains("WHERE e.EmployeeID = ?")), "Login employee lookup must target one employee");
         check(employee.closed, "Authentication must release employee connections");
     }
 
@@ -265,7 +273,7 @@ public final class PersistenceRegressionTest {
         final List<State> connections = new ArrayList<>();
         Properties properties;
         boolean failConnect, failQuery, failUpdate;
-        int count = 1, updateRows = 1;
+        int count = 1, updateRows = 1, departmentRows = 1;
         String accountHash;
         String failUpdateSql;
 
@@ -315,7 +323,7 @@ public final class PersistenceRegressionTest {
             int[] cursor = {0};
             return (ResultSet) Proxy.newProxyInstance(getClass().getClassLoader(), new Class<?>[]{ResultSet.class}, (proxy, method, args) -> {
                 switch (method.getName()) {
-                    case "next": return cursor[0]++ == 0;
+                    case "next": return cursor[0]++ < (sql.startsWith("SELECT DISTINCT DepartmentID") ? departmentRows : 1);
                     case "getInt": return count;
                     case "getString":
                         if ("password".equals(args[0])) { return accountHash; }

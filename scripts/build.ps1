@@ -26,7 +26,7 @@ if ($Test) {
     if ($LASTEXITCODE -ne 0) { throw 'Test compilation failed.' }
     # Keep the real MySQL driver off the regression runtime classpath.
     # Persistence tests register their own JDBC double; UI tests inject auth.
-    $testRuntime = "$testClasses;$classes;$(Join-Path $projectRoot 'lib/jcalendar-1.4.jar')"
+    $testRuntime = "$testClasses;$classes;$(Join-Path $projectRoot 'lib/jcalendar-1.4.jar');$(Join-Path $projectRoot 'lib/bcrypt-0.10.2.jar');$(Join-Path $projectRoot 'lib/bytes-1.5.0.jar')"
     foreach ($testFile in $testFiles) {
         $testName = [System.IO.Path]::GetFileNameWithoutExtension($testFile)
         & $java -ea -cp $testRuntime "oop_motorph.$testName"
@@ -34,6 +34,11 @@ if ($Test) {
     }
 }
 if ($Run) {
-    & $java -cp $classpath oop_motorph.OOP_MotorPH
+    $secureProfile = Join-Path $env:USERPROFILE '.motorph/milestone2/profile.json'
+    if (Test-Path -LiteralPath $secureProfile) {
+        & (Join-Path $PSScriptRoot 'start-milestone2.ps1') -SkipBuild
+    } else {
+        & $java -cp $classpath oop_motorph.OOP_MotorPH
+    }
     if ($LASTEXITCODE -ne 0) { throw 'Application exited with an error.' }
 }

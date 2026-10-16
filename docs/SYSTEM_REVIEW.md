@@ -1,5 +1,11 @@
 # System review and implementation record
 
+This record describes the cleanup baseline before the added Milestone 2 work.
+For the final BCrypt migration, protected configuration, isolated integration
+evidence, and remaining rollout boundaries, see `security/README.md` and the
+Group 13 Implementation Log in Downloads. References below to retained SHA-256
+describe the baseline, not the implemented isolated security profile.
+
 ## Scope and decisions
 
 The user requested a whole-system review, code and architecture cleanup,
