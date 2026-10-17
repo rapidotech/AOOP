@@ -129,6 +129,8 @@ public class frm_EmployeesRecords2 extends javax.swing.JFrame implements Workspa
     private void setFieldsEditable(boolean editable) {
         // Employee ID is never editable (primary key - auto-generated in add mode, immutable in edit mode)
         txt_empID.setEditable(false);
+        btn_EditEmp.setVisible(empDetails!=null&&!editable);
+        btn_SaveEmp.setVisible(editable);
         txt_firstName.setEditable(editable);
         txt_lastName.setEditable(editable);
         txt_birthdate.setEditable(editable);
@@ -375,9 +377,10 @@ public class frm_EmployeesRecords2 extends javax.swing.JFrame implements Workspa
     }//GEN-LAST:event_cbox_empStatusActionPerformed
 
     private void btn_EditEmpActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_EditEmpActionPerformed
-        isEditMode = true;
+        if(empDetails!=null)isEditMode = true;
         setFieldsEditable(true);
-        setTitle("Edit Employee");
+        WorkspaceShell.setPageTitle(this,empDetails==null?"Add employee":"Edit employee");
+        AppTheme.apply(getContentPane());
     }//GEN-LAST:event_btn_EditEmpActionPerformed
 
     /**
