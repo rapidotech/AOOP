@@ -13,6 +13,8 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--integration', action='store_true')
+    parser.add_argument('--request-create-only', action='store_true')
+    parser.add_argument('--attendance-only', action='store_true')
     args = parser.parse_args()
     args.output.mkdir(parents=True, exist_ok=True)
     project = ROOT / 'AOOP - MotorPH from OOP'
@@ -41,6 +43,10 @@ def main():
     else:
         classpath = ';'.join([str(classes), str(production), *[str(libraries / name) for name in ('bcrypt-0.10.2.jar', 'bytes-1.5.0.jar', 'jcalendar-1.4.jar')]])
         command = ['java', '-ea', '-cp', classpath, 'oop_motorph.NativeUiQa', str(args.output.resolve())]
+        if args.request_create_only:
+            command.append('request-create-only')
+        elif args.attendance_only:
+            command.append('attendance-only')
     try:
         result = subprocess.run(command, capture_output=True, text=True, encoding='utf-8', env=environment, timeout=240)
     except subprocess.TimeoutExpired as error:

@@ -119,7 +119,13 @@ public final class NativeUiQa {
         output=Path.of(args[0]);Files.createDirectories(output);robot=new Robot();robot.setAutoDelay(30);
         try{
             for(UIManager.LookAndFeelInfo look:UIManager.getInstalledLookAndFeels())if("Nimbus".equals(look.getName()))UIManager.setLookAndFeel(look.getClassName());
-            auth=new UiAuthFixture();installMetadataBridge();login();
+            auth=new UiAuthFixture();installMetadataBridge();
+            if(args.length>1&&"attendance-only".equals(args[1])){
+                frame("attendance",frm_EmpAttLeave::new,"Employee");
+            }else if(args.length>1&&"request-create-only".equals(args[1])){
+                frame("request-create",()->new frm_EmpAddAttLeave(request(),false),"Employee");
+            }else{
+            login();
             frame("profile",frm_EmpProfile::new,"Employee");frame("salary",frm_EmpSalary::new,"Employee");
             frame("attendance",frm_EmpAttLeave::new,"Employee");frame("payroll",frm_EmpPayroll::new,"Employee");
             frame("new-request",()->new frm_EmpAttLeaveRequest(request(),false),"Employee");
@@ -135,6 +141,7 @@ public final class NativeUiQa {
             frame("attendance-approval",frm_EmpAttLeaveApproval::new,"HR");
             frame("payroll-process",frm_EmployeesPayrollProcess::new,"HR");
             frame("payroll-approval",frm_EmployeesPayrollPaid::new,"HR");navigation();dialogs();
+            }
         }finally{
             closeWindows();if(metadataBridge!=null)DriverManager.deregisterDriver(metadataBridge);if(auth!=null)auth.close();
             Files.write(output.resolve("native-qa-results.txt"),results);Files.write(output.resolve("native-qa-failures.txt"),failures);
