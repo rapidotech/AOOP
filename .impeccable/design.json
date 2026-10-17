@@ -1,0 +1,353 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-17T10:39:50.3954621+08:00",
+  "title": "Design System: MotorPH payroll",
+  "extensions": {
+    "colorMeta": {
+      "forest": {
+        "role": "primary",
+        "displayName": "Forest",
+        "tonalRamp": [
+          "oklch(15.00% 0.0497 165.65)",
+          "oklch(26.43% 0.0497 165.65)",
+          "oklch(37.86% 0.0497 165.65)",
+          "oklch(49.29% 0.0497 165.65)",
+          "oklch(60.71% 0.0497 165.65)",
+          "oklch(72.14% 0.0497 165.65)",
+          "oklch(83.57% 0.0497 165.65)",
+          "oklch(95.00% 0.0497 165.65)"
+        ]
+      },
+      "action": {
+        "role": "primary",
+        "displayName": "Emerald action",
+        "tonalRamp": [
+          "oklch(15.00% 0.1001 160.94)",
+          "oklch(26.43% 0.1001 160.94)",
+          "oklch(37.86% 0.1001 160.94)",
+          "oklch(49.29% 0.1001 160.94)",
+          "oklch(60.71% 0.1001 160.94)",
+          "oklch(72.14% 0.1001 160.94)",
+          "oklch(83.57% 0.1001 160.94)",
+          "oklch(95.00% 0.1001 160.94)"
+        ]
+      },
+      "nav-selected": {
+        "role": "primary",
+        "displayName": "Selected forest",
+        "tonalRamp": [
+          "oklch(15.00% 0.0651 160.31)",
+          "oklch(26.43% 0.0651 160.31)",
+          "oklch(37.86% 0.0651 160.31)",
+          "oklch(49.29% 0.0651 160.31)",
+          "oklch(60.71% 0.0651 160.31)",
+          "oklch(72.14% 0.0651 160.31)",
+          "oklch(83.57% 0.0651 160.31)",
+          "oklch(95.00% 0.0651 160.31)"
+        ]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Forest ink",
+        "tonalRamp": [
+          "oklch(15.00% 0.0272 168.05)",
+          "oklch(26.43% 0.0272 168.05)",
+          "oklch(37.86% 0.0272 168.05)",
+          "oklch(49.29% 0.0272 168.05)",
+          "oklch(60.71% 0.0272 168.05)",
+          "oklch(72.14% 0.0272 168.05)",
+          "oklch(83.57% 0.0272 168.05)",
+          "oklch(95.00% 0.0272 168.05)"
+        ]
+      },
+      "muted": {
+        "role": "neutral",
+        "displayName": "Muted ink",
+        "tonalRamp": [
+          "oklch(15.00% 0.0249 162.33)",
+          "oklch(26.43% 0.0249 162.33)",
+          "oklch(37.86% 0.0249 162.33)",
+          "oklch(49.29% 0.0249 162.33)",
+          "oklch(60.71% 0.0249 162.33)",
+          "oklch(72.14% 0.0249 162.33)",
+          "oklch(83.57% 0.0249 162.33)",
+          "oklch(95.00% 0.0249 162.33)"
+        ]
+      },
+      "workspace": {
+        "role": "neutral",
+        "displayName": "Warm workspace",
+        "tonalRamp": [
+          "oklch(15.00% 0.0082 121.63)",
+          "oklch(26.43% 0.0082 121.63)",
+          "oklch(37.86% 0.0082 121.63)",
+          "oklch(49.29% 0.0082 121.63)",
+          "oklch(60.71% 0.0082 121.63)",
+          "oklch(72.14% 0.0082 121.63)",
+          "oklch(83.57% 0.0082 121.63)",
+          "oklch(95.00% 0.0082 121.63)"
+        ]
+      },
+      "paper": {
+        "role": "neutral",
+        "displayName": "White paper",
+        "tonalRamp": [
+          "oklch(15.00% 0.0000 0.00)",
+          "oklch(26.43% 0.0000 0.00)",
+          "oklch(37.86% 0.0000 0.00)",
+          "oklch(49.29% 0.0000 0.00)",
+          "oklch(60.71% 0.0000 0.00)",
+          "oklch(72.14% 0.0000 0.00)",
+          "oklch(83.57% 0.0000 0.00)",
+          "oklch(95.00% 0.0000 0.00)"
+        ]
+      },
+      "line": {
+        "role": "neutral",
+        "displayName": "Hairline",
+        "tonalRamp": [
+          "oklch(15.00% 0.0162 148.39)",
+          "oklch(26.43% 0.0162 148.39)",
+          "oklch(37.86% 0.0162 148.39)",
+          "oklch(49.29% 0.0162 148.39)",
+          "oklch(60.71% 0.0162 148.39)",
+          "oklch(72.14% 0.0162 148.39)",
+          "oklch(83.57% 0.0162 148.39)",
+          "oklch(95.00% 0.0162 148.39)"
+        ]
+      },
+      "row-selected": {
+        "role": "secondary",
+        "displayName": "Selected mint",
+        "tonalRamp": [
+          "oklch(15.00% 0.0434 156.74)",
+          "oklch(26.43% 0.0434 156.74)",
+          "oklch(37.86% 0.0434 156.74)",
+          "oklch(49.29% 0.0434 156.74)",
+          "oklch(60.71% 0.0434 156.74)",
+          "oklch(72.14% 0.0434 156.74)",
+          "oklch(83.57% 0.0434 156.74)",
+          "oklch(95.00% 0.0434 156.74)"
+        ]
+      },
+      "danger": {
+        "role": "secondary",
+        "displayName": "Destructive red",
+        "tonalRamp": [
+          "oklch(15.00% 0.1559 26.34)",
+          "oklch(26.43% 0.1559 26.34)",
+          "oklch(37.86% 0.1559 26.34)",
+          "oklch(49.29% 0.1559 26.34)",
+          "oklch(60.71% 0.1559 26.34)",
+          "oklch(72.14% 0.1559 26.34)",
+          "oklch(83.57% 0.1559 26.34)",
+          "oklch(95.00% 0.1559 26.34)"
+        ]
+      },
+      "disabled": {
+        "role": "neutral",
+        "displayName": "Disabled neutral",
+        "tonalRamp": [
+          "oklch(15.00% 0.0090 134.87)",
+          "oklch(26.43% 0.0090 134.87)",
+          "oklch(37.86% 0.0090 134.87)",
+          "oklch(49.29% 0.0090 134.87)",
+          "oklch(60.71% 0.0090 134.87)",
+          "oklch(72.14% 0.0090 134.87)",
+          "oklch(83.57% 0.0090 134.87)",
+          "oklch(95.00% 0.0090 134.87)"
+        ]
+      },
+      "rail-focus": {
+        "role": "primary",
+        "displayName": "Pale rail focus",
+        "tonalRamp": [
+          "oklch(15.00% 0.0578 156.75)",
+          "oklch(26.43% 0.0578 156.75)",
+          "oklch(37.86% 0.0578 156.75)",
+          "oklch(49.29% 0.0578 156.75)",
+          "oklch(60.71% 0.0578 156.75)",
+          "oklch(72.14% 0.0578 156.75)",
+          "oklch(83.57% 0.0578 156.75)",
+          "oklch(95.00% 0.0578 156.75)"
+        ]
+      },
+      "rail-muted": {
+        "role": "neutral",
+        "displayName": "Rail muted",
+        "tonalRamp": [
+          "oklch(15.00% 0.0324 154.05)",
+          "oklch(26.43% 0.0324 154.05)",
+          "oklch(37.86% 0.0324 154.05)",
+          "oklch(49.29% 0.0324 154.05)",
+          "oklch(60.71% 0.0324 154.05)",
+          "oklch(72.14% 0.0324 154.05)",
+          "oklch(83.57% 0.0324 154.05)",
+          "oklch(95.00% 0.0324 154.05)"
+        ]
+      },
+      "scroll-thumb": {
+        "role": "neutral",
+        "displayName": "Sage scroll thumb",
+        "tonalRamp": [
+          "oklch(15.00% 0.0271 154.30)",
+          "oklch(26.43% 0.0271 154.30)",
+          "oklch(37.86% 0.0271 154.30)",
+          "oklch(49.29% 0.0271 154.30)",
+          "oklch(60.71% 0.0271 154.30)",
+          "oklch(72.14% 0.0271 154.30)",
+          "oklch(83.57% 0.0271 154.30)",
+          "oklch(95.00% 0.0271 154.30)"
+        ]
+      },
+      "error": {
+        "role": "secondary",
+        "displayName": "Error red",
+        "tonalRamp": [
+          "oklch(15.00% 0.1905 27.52)",
+          "oklch(26.43% 0.1905 27.52)",
+          "oklch(37.86% 0.1905 27.52)",
+          "oklch(49.29% 0.1905 27.52)",
+          "oklch(60.71% 0.1905 27.52)",
+          "oklch(72.14% 0.1905 27.52)",
+          "oklch(83.57% 0.1905 27.52)",
+          "oklch(95.00% 0.1905 27.52)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "headline": {
+        "displayName": "Workspace headline",
+        "purpose": "Native bold 25-point page title and rail wordmark."
+      },
+      "title": {
+        "displayName": "Section title",
+        "purpose": "Native bold 16-point work-group title."
+      },
+      "body": {
+        "displayName": "Working body",
+        "purpose": "Native regular 13-point controls, table cells and navigation."
+      },
+      "label": {
+        "displayName": "Field label and help",
+        "purpose": "Native regular 12-point labels, help and identity."
+      },
+      "button": {
+        "displayName": "Action label",
+        "purpose": "Native bold 13-point non-rail buttons."
+      },
+      "table-header": {
+        "displayName": "Table header",
+        "purpose": "Native bold 12-point column labels."
+      }
+    },
+    "shadows": [],
+    "motion": [],
+    "breakpoints": [
+      {
+        "name": "field-panel-columns",
+        "value": "600px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Portable visual translation of the native Swing painter; native sizing and interaction remain defined by AppTheme.java.",
+      "html": "<button class=\"ds-button-primary\">Save</button> <button class=\"ds-button-primary\" disabled>Save</button>",
+      "css": ".ds-button-primary{font:700 13px 'Segoe UI',sans-serif;background:#16704c;color:#ffffff;padding:9px 13px;border:1px solid #16704c;border-radius:4px;cursor:pointer}.ds-button-primary:hover:enabled{background:#1fa06c}.ds-button-primary:active:enabled{background:#0f4e35}.ds-button-primary:focus-visible{outline:2px solid #16704c;outline-offset:-3px}.ds-button-primary:disabled{background:#e8ece6;color:#596a61;cursor:default}"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Portable visual translation of the native Swing painter; native sizing and interaction remain defined by AppTheme.java.",
+      "html": "<button class=\"ds-button-secondary\">Refresh</button> <button class=\"ds-button-secondary\" disabled>Refresh</button>",
+      "css": ".ds-button-secondary{font:700 13px 'Segoe UI',sans-serif;background:#ffffff;color:#1b2d26;padding:9px 13px;border:1px solid #d6e0d7;border-radius:4px;cursor:pointer}.ds-button-secondary:hover:enabled{background:#f4f6f0}.ds-button-secondary:active:enabled{background:#b2b2b2}.ds-button-secondary:focus-visible{outline:2px solid #16704c;outline-offset:-3px}.ds-button-secondary:disabled{background:#e8ece6;color:#596a61;cursor:default}"
+    },
+    {
+      "name": "Danger Button",
+      "kind": "button",
+      "refersTo": "button-danger",
+      "description": "Portable visual translation of the native Swing painter; native sizing and interaction remain defined by AppTheme.java.",
+      "html": "<button class=\"ds-button-danger\">Delete</button> <button class=\"ds-button-danger\" disabled>Delete</button>",
+      "css": ".ds-button-danger{font:700 13px 'Segoe UI',sans-serif;background:#a52e2b;color:#ffffff;padding:9px 13px;border:1px solid #a52e2b;border-radius:4px;cursor:pointer}.ds-button-danger:hover:enabled{background:#eb413d}.ds-button-danger:active:enabled{background:#73201e}.ds-button-danger:focus-visible{outline:2px solid #16704c;outline-offset:-3px}.ds-button-danger:disabled{background:#e8ece6;color:#596a61;cursor:default}"
+    },
+    {
+      "name": "Labeled Field",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Native label-above-field pattern, translated for the design panel; disabled combos retain ink in the application.",
+      "html": "<label class=\"ds-field\">First name<input class=\"ds-input\" value=\"Sample\"></label>",
+      "css": ".ds-field{display:grid;gap:7px;font:400 12px 'Segoe UI',sans-serif;color:#596a61}.ds-input{font:400 13px 'Segoe UI',sans-serif;background:#fff;color:#1b2d26;border:1px solid #d6e0d7;border-radius:0;padding:7px 9px;min-height:20px;caret-color:#16704c}.ds-input:focus-visible{outline:2px solid #16704c;outline-offset:-2px}.ds-input:disabled,.ds-input[readonly]{background:#f4f6f0}.ds-input:disabled{color:#596a61}.ds-input::selection{background:#16704c;color:white}"
+    },
+    {
+      "name": "Workspace Navigation",
+      "kind": "nav",
+      "refersTo": "navigation",
+      "description": "Persistent forest rail sample. Selected fill and focus outline remain independent; no browser semantics are claimed for Swing.",
+      "html": "<nav class=\"ds-nav\" aria-label=\"Workspace\"><strong class=\"ds-brand\">MotorPH</strong><button class=\"ds-nav-row\" aria-current=\"page\">My profile</button><button class=\"ds-nav-row\">Attendance &amp; leave</button></nav>",
+      "css": ".ds-nav{width:168px;padding:18px 12px;background:#14392b;color:#fff;font:400 13px 'Segoe UI',sans-serif}.ds-brand{display:block;padding:0 11px 16px;font-size:25px}.ds-nav-row{display:block;width:100%;height:36px;background:#14392b;color:#fff;font:400 13px 'Segoe UI',sans-serif;text-align:left;border:0;border-radius:4px;padding:7px 13px;cursor:pointer}.ds-nav-row[aria-current]{background:#27563f}.ds-nav-row:hover{background:#1c513d}.ds-nav-row[aria-current]:hover{background:#377a5a}.ds-nav-row:active{background:#0e271e}.ds-nav-row[aria-current]:active{background:#1b3c2c}.ds-nav-row:focus-visible{outline:2px solid #aed8bd;outline-offset:-3px}"
+    },
+    {
+      "name": "Work Section",
+      "kind": "card",
+      "refersTo": "section",
+      "description": "Square flat work group, with title, supporting text and a bottom hairline; no floating-card shadow.",
+      "html": "<section class=\"ds-section\"><h2 class=\"ds-section-title\">Personal information</h2><p class=\"ds-section-note\">Your employee record</p><div class=\"ds-section-body\">Employee details</div></section>",
+      "css": ".ds-section{padding:20px 22px;background:#fff;color:#1b2d26;border-bottom:1px solid #d6e0d7;font:400 13px 'Segoe UI',sans-serif}.ds-section-title{font-size:16px;font-weight:700;margin:0 0 6px}.ds-section-note{font-size:12px;color:#596a61;margin:0}.ds-section-body{margin-top:16px}"
+    },
+    {
+      "name": "Scrollable Records",
+      "kind": "custom",
+      "refersTo": "table-header",
+      "description": "Compact flat table sample. Native JTable controls selection, prerequisites and horizontal data scrolling.",
+      "html": "<div class=\"ds-table-frame\"><table class=\"ds-table\"><thead><tr><th>Employee ID</th><th>First name</th><th>Last name</th></tr></thead><tbody><tr tabindex=\"0\" aria-selected=\"true\"><td>90001</td><td>Sample</td><td>Employee</td></tr></tbody></table></div>",
+      "css": ".ds-table-frame{overflow:auto;border:1px solid #d6e0d7;background:#fff}.ds-table{border-collapse:collapse;min-width:420px;width:100%;color:#1b2d26;font:400 13px 'Segoe UI',sans-serif}.ds-table th{height:22px;padding:8px 10px;background:#f4f6f0;border-bottom:1px solid #d6e0d7;text-align:left;font-weight:700;font-size:12px}.ds-table td{height:34px;padding:0 10px}.ds-table tr[aria-selected]{background:#dcfce7}.ds-table tr:focus-visible{outline:2px solid #16704c;outline-offset:-2px}"
+    }
+  ],
+  "narrative": {
+    "northStar": "Motor-service workfolio",
+    "overview": "MotorPH is a Windows desktop workspace built in Java 17 Swing with Nimbus. A deep forest navigation rail anchors warm pale work areas and white working surfaces. The application prioritizes readable employee, attendance and payroll records, with an explicit identity, scope and current section.\n\nThe built system uses compact Segoe UI typography, flat native painters, restrained hairlines and line icons. Its character is practical and orderly: tasks share the same shell, controls retain recognizable native behavior, and dense data receives scrollable space. MotorPH and the supplied organization identity remain product truth; this document makes no additional branding or licensing claims.",
+    "keyCharacteristics": [
+      "Persistent forest navigation with a distinct filled current section.",
+      "Warm neutral workspace, white forms and flat controls.",
+      "Compact readable type with grouped, adaptive fields.",
+      "Semantic actions, explicit prerequisites and recoverable feedback."
+    ],
+    "rules": [
+      {
+        "name": "The State Has Meaning Rule",
+        "body": "Filled navigation identifies the current section; a focus outline identifies keyboard focus. Preserve both independently.",
+        "section": "colors"
+      },
+      {
+        "name": "The Readable Density Rule",
+        "body": "Reflow fields and scroll records before reducing shared labels or body type.",
+        "section": "typography"
+      },
+      {
+        "name": "The Flat Work Surface Rule",
+        "body": "Use neutral fills and hairlines for working controls and containers; do not restore metallic gradients or recessed field treatment to shared surfaces.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do preserve MotorPH and the supplied organization identity without invented business claims.",
+      "Do reuse the shared native shell, theme and field helpers for new workspace surfaces.",
+      "Do keep identity, role scope, current section and keyboard focus distinguishable.",
+      "Do reflow form columns and provide horizontal data scrolling before shrinking readable text.",
+      "Do explain empty states and enforce permission, selection and record-state prerequisites.",
+      "Do keep disabled labels readable and failures actionable with text."
+    ],
+    "donts": [
+      "Don't introduce web-only layout, hover or accessibility assumptions as native runtime guarantees.",
+      "Don't add decorative shadows, metallic gradients or recessed treatments to shared work surfaces.",
+      "Don't replace complete labels or table data with clipped text to conceal a layout issue.",
+      "Don't equate a focus outline with the current navigation selection.",
+      "Don't present synthetic capture data or a native self-print as production or physical OS-input proof."
+    ]
+  }
+}

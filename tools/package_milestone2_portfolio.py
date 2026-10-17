@@ -22,6 +22,12 @@ PNG, SVG and PDF. The earlier C1/C2 diagram is retained as historical evidence.
 The evidence folder contains sanitized results and UI captures with provenance.
 The supplied Milestone 1 SIP and audit workbook were preserved unchanged.
 
+UI overhaul addendum: evidence/ui-overhaul-qa-report.txt and
+evidence/ui-overhaul-visual-verdict.txt document the rebuilt Java desktop UI.
+The 42 final synthetic captures and current results are under evidence/ui/overhaul.
+The implementation log retains the earlier security implementation chronology;
+this addendum records the later UI work and additional workflow corrections.
+
 All worthwhile feasible core controls were implemented in an isolated MySQL clone:
 protected credentials/least privilege, BCrypt12/mandatory reset, persistent lockout,
 scoped authorization, transactional audit logging and DB workflow ledgers.

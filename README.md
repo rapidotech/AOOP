@@ -1,8 +1,12 @@
 # MotorPH Payroll System
 
 Java Swing employee, attendance, leave, salary, and payroll management for the
-AOOP MotorPH project. Existing employee and HR workflows and NetBeans forms are
-retained.
+AOOP MotorPH project. Employee and HR workflows run in a responsive, code-maintained
+desktop workspace. Historical NetBeans `.form` layouts are archived; the Java
+compositions are the current UI authority.
+
+See [the desktop UI guide](docs/UI_REDESIGN.md), [design system](DESIGN.md), and
+[native QA report](.gstack/qa-reports/qa-report-motorph-desktop-2026-10-17.md).
 
 ## Build and run
 

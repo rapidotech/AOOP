@@ -89,6 +89,12 @@ An independently authenticated server/API is needed for that stronger boundary.
 Original shared-root rotation, repository privacy and Git-history rewriting are
 coordinated rollout tasks, not implied by local tests.
 
+The UI is maintained in source through `WorkspaceShell`, `WorkspaceUI` and
+`AppTheme`. Historical `.form` layouts are retired; their generated geometry is
+not the active layout. Existing guarded frame entry points adapt to responsive
+page compositions while preserving their controls and action handlers. See
+`UI_REDESIGN.md` and root `DESIGN.md` for the composition and visual contract.
+
 This is an incremental architecture cleanup. Existing forms still contain
 workflow logic and some synchronous reads. `CSVHandler` remains a compatibility
 facade rather than a new domain layer. Historical statutory formulas have not

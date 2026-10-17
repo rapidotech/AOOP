@@ -1,11 +1,11 @@
 # MotorPH native desktop QA
 
-Status: In progress. User-authorized full redesign at baseline d7ee701.
+Status: DONE_WITH_CONCERNS. Full redesign and targeted fixes completed; independent visual disposition: ship. Baseline d7ee701.
 
 This is an explicit native Swing adaptation of the web-oriented gstack QA
 workflow. Browser navigation/DOM/console checks do not apply to this desktop
-program. Native Robot clicks, keyboard actions, window captures, executable
-assertions and isolated JDBC verification provide the relevant evidence. No
+program. Owned-window Swing rendering, direct component actions, executable assertions
+and isolated JDBC verification provide the relevant evidence. No
 browser QA is claimed. Java17 regression infrastructure already exists; no
 framework bootstrap or CI changes are needed. The baseline tree was clean.
 
@@ -30,7 +30,7 @@ Baseline captures: C:/Users/JAYCEE/.codex/tmp/astra-runs/aoop-20261017-ui-overha
 ## Test plan
 
 Visit every frame and all three security/auth dialogs at desktop/laptop sizes;
-check navigation, keyboard use, read-only tables, controls and state messages.
+check navigation, configured keyboard/focus behavior, read-only tables, controls and state messages.
 Run existing asynchronous authentication/reset, worker/session and persistence
 regressions. Exercise real native create/edit, salary save, request submit,
 attendance approve/reject and payroll verify/approve/undo with owned disposable
@@ -81,3 +81,50 @@ edit can insert instead of preserving the original date key, and a failed edit
 can mutate its in-memory original. Evidence:round1/edit-attendance-laptop.png;
 confirmed controller path. Correction preserves the original until successful
 save and uses the exact original key for edits.
+
+
+## Final results and fixes
+
+All six scored visual corrections are resolved in the independent final verdict.
+The final set contains 42 distinct synthetic captures at desktop/laptop sizes,
+including separate request creation and viewing states; two targeted attendance
+captures replace the clipped versions. No unrelated desktop capture is included.
+
+- Release gate: 351 regression assertions (Audit UI 32, Payroll UI permission 20,
+  Persistence 37, Security 150, UI 112), focused security guard and current-source
+  secret scan passed. Four dependency hashes verified; live OSV returned zero
+  advisories for the checked dependencies.
+- Native component checks: 176 (158 main plus 18 targeted checks); nine navigation
+  routes and confirmed logout covered. This proves programmatic Swing actions,
+  configured focus behavior and owned-window rendering, not physical input.
+- Real UI-to-isolated-database workflows: 38 checks passed, including employee
+  create/edit, compensation add/edit, rejection/rollback cases, attendance request
+  key preservation, HR approve/reject, payroll transitions and audit integrity.
+- Separate release integration: 76 backend runtime and 15 SQL/audit checks passed.
+
+ISSUE-001?003 resolved by the structural redesign and shared control/layout fixes
+(cab85dd, 1fd2257). ISSUE-004 resolved by permission/state-aware payroll actions
+(3e71d1d). ISSUE-005 resolved by transactional existing-employee compensation
+creation with profile preservation (d2c3247; final release includes the reviewed
+explicit government-ID ownership checks). ISSUE-006 resolved by detached request
+validation and original-key updates (d8708f1). Truthful form actions (a93a49b),
+contextual states (eff94ff) and the final attendance clipping correction (a1c1c34)
+complete F1?F6. Production source is frozen after the passing final gate.
+
+A single scalar health score is omitted: browser performance, console and physical
+OS-input categories have no equivalent measured baseline here. Known scored
+findings are resolved; that is not a claim that all defects are eliminated.
+
+## Evidence and limits
+
+See FINAL_VISUAL_VERDICT.md, QA_RESULTS.json, final-release-gate.txt and
+native-workflow-results.txt in the accompanying UI evidence archive. Screenshots
+are synthetic test fixtures, not proof of the operator's current account data.
+The seven before views are owned-window baseline captures. The incomplete initial
+Robot pass is excluded. Physical keyboard/mouse/focus, physical printing and
+performance benchmarks remain unverified. Existing synchronous reads and the
+local direct-JDBC deployment boundary remain documented architecture limitations.
+No original-database mutation or credential change is part of this UI redesign.
+The original milestone security evidence remains historical; this is its UI/QA
+addendum, with separate evidence scopes rather than overwritten implementation
+notes. The final archive includes a SHA-256 manifest and a checked ZIP CRC.
