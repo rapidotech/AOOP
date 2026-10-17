@@ -67,6 +67,12 @@ public final class NativeUiQa {
             check(!visible.isEmpty(),name+" has reachable enabled actions");
             check(visible.stream().allMatch(b->b.getWidth()>20&&b.getHeight()>=26),name+" action hit areas remain usable");
             capture(f,name+(compact?"-laptop":"-desktop"));
+            if(name.equals("payroll-approval")){
+                JTable table=all(f,JTable.class).get(0);
+                edt(()->{javax.swing.table.DefaultTableModel model=(javax.swing.table.DefaultTableModel)table.getModel();model.setRowCount(0);model.addRow(new Object[]{"QA-SYNTHETIC-001","90001","Sample","Employee","01-Oct-26","15-Oct-26","20000","113.64","600","176","80","0","10600","0","0","0","0","0","0","0","10600","Pending"});table.setRowSelectionInterval(0,0);});
+                settle();capture(f,name+"-selected"+(compact?"-laptop":"-desktop"));
+                edt(()->((javax.swing.table.DefaultTableModel)table.getModel()).setRowCount(0));
+            }
         }
         List<JTextComponent> fields=all(f,JTextComponent.class).stream().filter(Component::isShowing).filter(Component::isEnabled).toList();
         if(!fields.isEmpty()){
@@ -94,6 +100,21 @@ public final class NativeUiQa {
         AtomicReference<PasswordResetDialog> reset=new AtomicReference<>();
         edt(()->{reset.set(new PasswordResetDialog(null,"90001",(a,b,c)->null,r->{}));reset.get().setModalityType(Dialog.ModalityType.MODELESS);reset.get().setVisible(true);});settle();capture(reset.get(),"password-reset-desktop");closeWindows();
     }
+    private static void navigation()throws Exception{
+        closeWindows();auth.establish("HR");AtomicReference<JFrame> current=new AtomicReference<>();
+        edt(()->{current.set(new frm_EmpProfile());current.get().setVisible(true);});settle();
+        String[][] route={{"employee-records","frm_EmployeesRecords"},{"compensation","frm_EmployeesSalary"},{"requests","frm_EmployeesAttLeave"},{"processing","frm_EmployeesPayrollProcess"},{"approvals","frm_EmployeesPayrollPaid"},{"profile","frm_EmpProfile"},{"attendance","frm_EmpAttLeave"},{"salary","frm_EmpSalary"},{"payroll","frm_EmpPayroll"}};
+        for(String[] page:route){
+            click(named(current.get(),"workspace.nav."+page[0]));
+            JFrame[] next={null};edt(()->{for(Window window:Window.getWindows())if(window instanceof JFrame&&window.isShowing()&&window.getClass().getSimpleName().equals(page[1]))next[0]=(JFrame)window;});
+            check(next[0]!=null,"Navigation opens "+page[1]+" through its guarded entry point");
+            if(next[0]==null)throw new IllegalStateException("Navigation target missing");current.set(next[0]);
+        }
+        javax.swing.Timer confirmation=new javax.swing.Timer(120,event->{for(Window window:Window.getWindows())if(window instanceof JDialog&&window.isShowing())for(JOptionPane pane:all(window,JOptionPane.class)){pane.setValue(JOptionPane.YES_OPTION);window.dispose();}});
+        confirmation.start();JButton logout=(JButton)named(current.get(),"workspace.nav.logout");SwingUtilities.invokeLater(logout::doClick);settle();
+        long end=System.nanoTime()+TimeUnit.SECONDS.toNanos(5);while(EmpUserSession.getInstance().getCurrentUser()!=null&&System.nanoTime()<end)Thread.sleep(30);
+        confirmation.stop();check(EmpUserSession.getInstance().getCurrentUser()==null,"Confirmed sign out clears the authenticated session");closeWindows();
+    }
     public static void main(String[] args)throws Exception{
         output=Path.of(args[0]);Files.createDirectories(output);robot=new Robot();robot.setAutoDelay(30);
         try{
@@ -113,7 +134,7 @@ public final class NativeUiQa {
             frame("employee-attendance",frm_EmployeesAttLeave::new,"HR");
             frame("attendance-approval",frm_EmpAttLeaveApproval::new,"HR");
             frame("payroll-process",frm_EmployeesPayrollProcess::new,"HR");
-            frame("payroll-approval",frm_EmployeesPayrollPaid::new,"HR");dialogs();
+            frame("payroll-approval",frm_EmployeesPayrollPaid::new,"HR");navigation();dialogs();
         }finally{
             closeWindows();if(metadataBridge!=null)DriverManager.deregisterDriver(metadataBridge);if(auth!=null)auth.close();
             Files.write(output.resolve("native-qa-results.txt"),results);Files.write(output.resolve("native-qa-failures.txt"),failures);

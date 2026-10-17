@@ -22,6 +22,9 @@ public final class NativeWorkflowAssurance {
     private static void check(boolean ok,String label){if(!ok)throw new IllegalStateException("Native assurance failed: "+label);results.add(label);}
     private static Connection admin()throws SQLException{return DriverManager.getConnection(url,"root",System.getenv("M2_ADMIN_PASSWORD"));}
     private static long number(Connection c,String q)throws SQLException{try(Statement s=c.createStatement();ResultSet r=s.executeQuery(q)){r.next();return r.getLong(1);}}
+    private static String profile(Connection c,int id)throws SQLException{try(Statement s=c.createStatement();ResultSet r=s.executeQuery("SELECT CONCAT_WS('|',FirstName,LastName,Birthday,AddressID,PhoneNumber,StatusID,PositionID,DepartmentID,COALESCE(ImmediateSupervisorID,'')) FROM employees WHERE EmployeeID="+id)){r.next();return r.getString(1);}}
+    private static EmpSalaryDetails salary(int id,double amount){return new EmpSalaryDetails(Integer.toString(id),"Ignored","Profile","11-1111111-1","111111111111","111-111-111-111","111111111111",amount,200,100,300,amount/2,amount/176);}
+    private static void rejected(Runnable action,String label){try{action.run();}catch(RuntimeException expected){check(true,label);return;}throw new IllegalStateException("Expected rejection: "+label);}
     private static void exec(Connection c,String q)throws SQLException{try(Statement s=c.createStatement()){s.execute(q);}}
     private static void edt(Runnable work)throws Exception{SwingUtilities.invokeAndWait(work);}
     private static void settle()throws Exception{robot.waitForIdle();robot.delay(130);}
@@ -62,13 +65,55 @@ public final class NativeWorkflowAssurance {
             EmpDetails created=DatabaseHandler.getEmployeeData().stream().filter(x->Integer.toString(CREATED).equals(x.getEmpID())).findFirst().orElseThrow();
             frm_EmployeesRecords2 edit=show(()->new frm_EmployeesRecords2(created,true));click((Component)field(edit,"btn_EditEmp"));text(edit,"txt_phoneNo","09111111111");click((Component)field(edit,"btn_SaveEmp"));
             check(number(c,"SELECT COUNT(*) FROM employees WHERE EmployeeID="+CREATED+" AND PhoneNumber='09111111111'")==1,"Native employee Edit/Save persists changed phone");close();
+            String originalProfile=profile(c,CREATED);
             frm_EmployeesSalary2 salary=show(()->new frm_EmployeesSalary2(Integer.toString(CREATED),"Native","Created","00-0000000-0","000000000000","000000000000","000-000-000-000","15000","1500","500","500","7500","85.23"));
-            click((Component)field(salary,"btn_EditPayInfo"));text(salary,"txt_basicSalary","24000");click((Component)field(salary,"btn_SavePayInfo"));
-            check(number(c,"SELECT BasicSalary FROM compensation WHERE EmployeeID="+CREATED)==24000,"Native compensation edit persists salary");close();
+            if(((AbstractButton)field(salary,"btn_EditPayInfo")).isVisible())click((Component)field(salary,"btn_EditPayInfo"));text(salary,"txt_basicSalary","24000");click((Component)field(salary,"btn_SavePayInfo"));
+            check(number(c,"SELECT BasicSalary FROM compensation WHERE EmployeeID="+CREATED)==24000,"Native compensation edit persists salary");
+            check(originalProfile.equals(profile(c,CREATED)),"Compensation editing preserves every employee profile field");close();
+            exec(c,"DELETE FROM compensation WHERE EmployeeID="+CREATED);exec(c,"DELETE FROM governmentids WHERE EmployeeID="+CREATED);
+            frm_EmployeesSalary2 addSalary=show(frm_EmployeesSalary2::new);
+            check(((javax.swing.text.JTextComponent)field(addSalary,"txt_empID")).isEditable(),"Add compensation accepts an existing employee identifier");
+            text(addSalary,"txt_empID",Integer.toString(CREATED));text(addSalary,"txt_firstName","Native");text(addSalary,"txt_lastName","Created");
+            text(addSalary,"txt_sssNo","00-0000000-0");text(addSalary,"txt_philhealthNo","000000000000");text(addSalary,"txt_pagibigNo","000000000000");text(addSalary,"txt_tinNo","000-000-000-000");
+            text(addSalary,"txt_basicSalary","25000");text(addSalary,"txt_riceAllow","200");text(addSalary,"txt_phoneAllow","100");text(addSalary,"txt_clothingAllow","300");text(addSalary,"txt_grossSemi","12500");text(addSalary,"txt_hourlyRate","142.05");
+            click((Component)field(addSalary,"btn_SavePayInfo"));
+            check(number(c,"SELECT BasicSalary FROM compensation WHERE EmployeeID="+CREATED)==25000,"Native Add compensation Save creates the missing record");
+            check(number(c,"SELECT COUNT(*) FROM governmentids WHERE EmployeeID="+CREATED)==1&&originalProfile.equals(profile(c,CREATED)),"Compensation creation preserves profile and inserts missing statutory IDs");close();
+            rejected(()->DatabaseHandler.addEmployeeSalary(salary(CREATED,26000)),"Duplicate compensation rejected");
+            rejected(()->DatabaseHandler.addEmployeeSalary(salary(99016,26000)),"Unknown employee compensation rejected");
+            rejected(()->DatabaseHandler.addEmployeeSalary(salary(CREATED,Double.NaN)),"Nonfinite compensation rejected");
+            rejected(()->DatabaseHandler.addEmployeeSalary(salary(CREATED,-1)),"Negative compensation rejected");
+            exec(c,"DELETE FROM compensation WHERE EmployeeID="+CREATED);DatabaseHandler.addEmployeeSalary(salary(CREATED,26000));
+            check(number(c,"SELECT COUNT(*) FROM governmentids WHERE EmployeeID="+CREATED+" AND SSSNumber='11-1111111-1'")==1,"Existing statutory IDs receive validated submitted values");
+            exec(c,"DELETE FROM compensation WHERE EmployeeID="+CREATED);exec(c,"DELETE FROM governmentids WHERE EmployeeID="+CREATED);
+            exec(c,"REVOKE EXECUTE ON PROCEDURE aoop_m2.motorph_append_audit FROM 'motorph_m2_app'@'127.0.0.1'");
+            try{rejected(()->DatabaseHandler.addEmployeeSalary(salary(CREATED,26000)),"Audit failure rejects compensation creation");}finally{exec(c,"GRANT EXECUTE ON PROCEDURE aoop_m2.motorph_append_audit TO 'motorph_m2_app'@'127.0.0.1'");}
+            check(number(c,"SELECT COUNT(*) FROM compensation WHERE EmployeeID="+CREATED)==0&&number(c,"SELECT COUNT(*) FROM governmentids WHERE EmployeeID="+CREATED)==0&&originalProfile.equals(profile(c,CREATED)),"Audit failure rolls back both salary tables and preserves profile");
+            exec(c,"INSERT INTO governmentids(EmployeeID,SSSNumber,PhilHealthNumber,TINNumber,PagIBIGNumber) VALUES("+EMP+",'22-2222222-2','222222222222','222-222-222-222','222222222222')");
+            EmpSalaryDetails collision=new EmpSalaryDetails(Integer.toString(CREATED),"Ignored","Profile","22-2222222-2","222222222222","222-222-222-222","222222222222",26000,200,100,300,13000,147.73);
+            rejected(()->DatabaseHandler.addEmployeeSalary(collision),"Identifier collision rejects compensation creation");
+            check(number(c,"SELECT COUNT(*) FROM compensation WHERE EmployeeID="+CREATED)==0&&number(c,"SELECT COUNT(*) FROM governmentids WHERE EmployeeID="+EMP+" AND SSSNumber='22-2222222-2' AND TINNumber='222-222-222-222'")==1&&number(c,"SELECT COUNT(*) FROM governmentids WHERE EmployeeID="+CREATED)==0,"Identifier collision preserves the other employee and rolls back salary insert");
+            DatabaseHandler.addEmployeeSalary(salary(CREATED,26000));
+            exec(c,"DELETE FROM compensation WHERE EmployeeID="+CREATED);
+            exec(c,"INSERT INTO governmentids(EmployeeID,SSSNumber,PhilHealthNumber,TINNumber,PagIBIGNumber) VALUES("+CREATED+",'33-3333333-3','333333333333','333-333-333-333','333333333333')");
+            rejected(()->DatabaseHandler.addEmployeeSalary(salary(CREATED,26000)),"Ambiguous employee statutory rows rejected");
+            check(number(c,"SELECT COUNT(*) FROM compensation WHERE EmployeeID="+CREATED)==0&&number(c,"SELECT COUNT(*) FROM governmentids WHERE EmployeeID="+CREATED)==2,"Ambiguous statutory rows remain unchanged and compensation rolls back");
+            exec(c,"DELETE FROM governmentids WHERE EmployeeID="+CREATED+" AND SSSNumber='33-3333333-3'");DatabaseHandler.addEmployeeSalary(salary(CREATED,26000));
             login(EMP,empProof);frm_EmpAddAttLeave submit=show(()->new frm_EmpAddAttLeave(request(20),false));click((Component)field(submit,"btn_SubmitLeaveAtt"));
             check(number(c,"SELECT COUNT(*) FROM AttendanceRequests WHERE EmployeeID="+EMP)==1,"Native employee request Submit persists pending ledger row");close();
             frm_EmpAddAttLeave second=show(()->new frm_EmpAddAttLeave(request(21),false));click((Component)field(second,"btn_SubmitLeaveAtt"));
             check(number(c,"SELECT COUNT(*) FROM AttendanceRequests WHERE EmployeeID="+EMP)==2,"Second native request remains a distinct key");close();
+            EmpAttLeave originalRequest=CSVHandler.loadAttendanceRequests().stream().filter(x->x.getAttDateFrom().equals(LocalDate.of(2026,10,20))).findFirst().orElseThrow();
+            frm_EmpAddAttLeave editRequest=show(()->new frm_EmpAddAttLeave(originalRequest,true));
+            edt(()->{((com.toedter.calendar.JDateChooser)field(editRequest,"dc_dateFrom")).setDate(java.sql.Date.valueOf("2026-10-22"));((com.toedter.calendar.JDateChooser)field(editRequest,"dc_dateTo")).setDate(java.sql.Date.valueOf("2026-10-22"));});
+            click((Component)field(editRequest,"btn_SubmitLeaveAtt"));
+            check(number(c,"SELECT COUNT(*) FROM AttendanceRequests WHERE EmployeeID="+EMP)==2&&number(c,"SELECT COUNT(*) FROM AttendanceRequests WHERE EmployeeID="+EMP+" AND DateFrom='2026-10-22'")==1,"Native request edit updates its original key without inserting a duplicate");close();
+            EmpAttLeave unchanged=CSVHandler.loadAttendanceRequests().stream().filter(x->x.getAttDateFrom().equals(LocalDate.of(2026,10,22))).findFirst().orElseThrow();
+            frm_EmpAddAttLeave invalid=show(()->new frm_EmpAddAttLeave(unchanged,true));
+            edt(()->{((com.toedter.calendar.JDateChooser)field(invalid,"dc_dateFrom")).setDate(java.sql.Date.valueOf("2026-10-26"));((com.toedter.calendar.JDateChooser)field(invalid,"dc_dateTo")).setDate(java.sql.Date.valueOf("2026-10-25"));});
+            click((Component)field(invalid,"btn_SubmitLeaveAtt"));
+            check(unchanged.getAttDateFrom().equals(LocalDate.of(2026,10,22))&&number(c,"SELECT COUNT(*) FROM AttendanceRequests WHERE EmployeeID="+EMP+" AND DateFrom='2026-10-22'")==1,"Rejected request edit preserves original object and database key");close();
+            rejected(()->DatabaseHandler.addEmployeeSalary(salary(CREATED,26000)),"Employee cannot create compensation");
             login(HR,hrProof);frm_EmpAttLeaveApproval approve=show(frm_EmpAttLeaveApproval::new);row((JTable)field(approve,"tbl_Attendance"),0,Integer.toString(EMP));click((Component)field(approve,"btn_attApprove"));
             check(number(c,"SELECT COUNT(*) FROM AttendanceRequests WHERE EmployeeID="+EMP+" AND Status='Approved'")==1,"Native attendance Approve persists exact selected row");close();
             frm_EmpAttLeaveApproval reject=show(frm_EmpAttLeaveApproval::new);JTable attendance=(JTable)field(reject,"tbl_Attendance");
