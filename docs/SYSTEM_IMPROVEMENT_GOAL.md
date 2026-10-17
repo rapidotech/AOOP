@@ -60,6 +60,13 @@ simple and cover both the cleanup work and the security implementation.
 
 ## Tracking
 
+Current completion audit: [COMPLETION_AUDIT.md](COMPLETION_AUDIT.md). The entries
+below preserve earlier delivery stages and their earlier assertion/page counts.
+The current package has the filled school-template workbook, a 22-page
+chronological log with Docker addendum, six-page reviewer, and 352-assertion CI
+evidence. Shared log access, mentor validation and independent off-host custody
+are not recorded as complete.
+
 Implementation and verification completed on 17 October 2026. The expanded
 scope is recorded here because the native goal API cannot edit objective text.
 
