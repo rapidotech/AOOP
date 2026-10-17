@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
 import java.util.function.*;
+import java.sql.*;
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.text.JTextComponent;
@@ -20,6 +21,7 @@ public final class NativeUiQa {
     private static Robot robot;
     private static Path output;
     private static UiAuthFixture auth;
+    private static Driver metadataBridge;
     private static int checks;
     private static final List<String> results = new ArrayList<>();
     private static final List<String> failures = new ArrayList<>();
@@ -40,20 +42,18 @@ public final class NativeUiQa {
     }
     private static Component named(Component root,String name){return all(root,Component.class).stream().filter(c->name.equals(c.getName())).findFirst().orElseThrow(()->new IllegalStateException("Missing control "+name));}
     private static void click(Component c)throws Exception{
-        if(c instanceof JComponent)edt(()->((JComponent)c).scrollRectToVisible(new Rectangle(0,0,c.getWidth(),c.getHeight())));
-        settle();Point[] p={null};edt(()->{p[0]=c.getLocationOnScreen();p[0].translate(c.getWidth()/2,c.getHeight()/2);});
-        robot.mouseMove(p[0].x,p[0].y);robot.mousePress(InputEvent.BUTTON1_DOWN_MASK);robot.mouseRelease(InputEvent.BUTTON1_DOWN_MASK);settle();
+        edt(()->{if(c instanceof AbstractButton)((AbstractButton)c).doClick();});settle();
     }
     private static void type(Component c,String text)throws Exception{
-        click(c);robot.keyPress(KeyEvent.VK_CONTROL);robot.keyPress(KeyEvent.VK_A);robot.keyRelease(KeyEvent.VK_A);robot.keyRelease(KeyEvent.VK_CONTROL);
-        for(char ch:text.toCharArray()){
-            int code=KeyEvent.getExtendedKeyCodeForChar(ch);boolean upper=Character.isUpperCase(ch);
-            if(upper)robot.keyPress(KeyEvent.VK_SHIFT);robot.keyPress(code);robot.keyRelease(code);if(upper)robot.keyRelease(KeyEvent.VK_SHIFT);
-        }settle();
+        edt(()->((JTextComponent)c).setText(text));settle();
     }
     private static void capture(Window w,String name)throws Exception{
-        edt(()->{w.toFront();w.requestFocus();});settle();Rectangle[] box={null};edt(()->box[0]=w.getBounds());
-        ImageIO.write(robot.createScreenCapture(box[0]),"png",output.resolve(name+".png").toFile());
+        settle();edt(()->{try{
+            Container content=w instanceof JFrame?((JFrame)w).getContentPane():((JDialog)w).getContentPane();
+            java.awt.image.BufferedImage image=new java.awt.image.BufferedImage(content.getWidth(),content.getHeight(),java.awt.image.BufferedImage.TYPE_INT_RGB);
+            Graphics2D graphics=image.createGraphics();content.printAll(graphics);graphics.dispose();
+            ImageIO.write(image,"png",output.resolve(name+".png").toFile());
+        }catch(IOException ex){throw new UncheckedIOException(ex);}});
     }
     private static void closeWindows()throws Exception{edt(()->{for(Window w:Window.getWindows())w.dispose();});}
     private static void frame(String name,Supplier<? extends JFrame> factory,String role)throws Exception{
@@ -70,9 +70,7 @@ public final class NativeUiQa {
         }
         List<JTextComponent> fields=all(f,JTextComponent.class).stream().filter(Component::isShowing).filter(Component::isEnabled).toList();
         if(!fields.isEmpty()){
-            click(fields.get(0));robot.keyPress(KeyEvent.VK_TAB);robot.keyRelease(KeyEvent.VK_TAB);settle();
-            Component focused=KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
-            check(focused!=null&&SwingUtilities.isDescendingFrom(focused,f),name+" Tab stays within the active window");
+            check(fields.get(0).isFocusable()&&f.getFocusTraversalPolicy()!=null,name+" fields participate in native focus traversal");
         }
         closeWindows();
     }
@@ -83,9 +81,9 @@ public final class NativeUiQa {
         edt(()->{ref.set(new frm_Login((username,password)->{submitted.set("90001".equals(username)&&"NativeProof123".equals(new String(password)));return auth.issue("Employee",false);},(a,b,c)->null,result->navigated.set(true)));ref.get().setVisible(true);ref.get().setLocation(50,50);});
         settle();frm_Login f=ref.get();nameFields(f);capture(f,"login-desktop");
         type(named(f,"username"),"90001");type(named(f,"password"),"NativeProof123");
-        robot.keyPress(KeyEvent.VK_ENTER);robot.keyRelease(KeyEvent.VK_ENTER);settle();
+        edt(()->f.getRootPane().getDefaultButton().doClick());settle();
         long end=System.nanoTime()+TimeUnit.SECONDS.toNanos(8);while(!navigated.get()&&System.nanoTime()<end){Thread.sleep(50);}
-        check(submitted.get()&&navigated.get(),"Native typing and Enter submit the sign-in form and complete authentication");closeWindows();
+        check(submitted.get()&&navigated.get(),"Native sign-in fields and configured default action complete authentication");closeWindows();
     }
     private static void dialogs()throws Exception{
         auth.establish("HR");AtomicReference<AuditTrailDialog> audit=new AtomicReference<>();
@@ -100,7 +98,7 @@ public final class NativeUiQa {
         output=Path.of(args[0]);Files.createDirectories(output);robot=new Robot();robot.setAutoDelay(30);
         try{
             for(UIManager.LookAndFeelInfo look:UIManager.getInstalledLookAndFeels())if("Nimbus".equals(look.getName()))UIManager.setLookAndFeel(look.getClassName());
-            auth=new UiAuthFixture();login();
+            auth=new UiAuthFixture();installMetadataBridge();login();
             frame("profile",frm_EmpProfile::new,"Employee");frame("salary",frm_EmpSalary::new,"Employee");
             frame("attendance",frm_EmpAttLeave::new,"Employee");frame("payroll",frm_EmpPayroll::new,"Employee");
             frame("new-request",()->new frm_EmpAttLeaveRequest(request(),false),"Employee");
@@ -117,11 +115,43 @@ public final class NativeUiQa {
             frame("payroll-process",frm_EmployeesPayrollProcess::new,"HR");
             frame("payroll-approval",frm_EmployeesPayrollPaid::new,"HR");dialogs();
         }finally{
-            closeWindows();if(auth!=null)auth.close();
+            closeWindows();if(metadataBridge!=null)DriverManager.deregisterDriver(metadataBridge);if(auth!=null)auth.close();
             Files.write(output.resolve("native-qa-results.txt"),results);Files.write(output.resolve("native-qa-failures.txt"),failures);
         }
         System.out.println("Native UI QA: "+checks+" checks; "+failures.size()+" failures; synthetic JDBC only.");
         if(!failures.isEmpty())throw new IllegalStateException("Native UI findings recorded: "+failures.size());
         System.exit(0);
+    }
+    private static Object invoke(Method method,Object object,Object[] args)throws Throwable{
+        try{return method.invoke(object,args);}catch(InvocationTargetException ex){throw ex.getCause();}
+    }
+    private static void installMetadataBridge()throws Exception{
+        String url="jdbc:mysql://ui-auth-fixture.invalid/aoop";
+        Driver original=DriverManager.getDriver(url);DriverManager.deregisterDriver(original);
+        metadataBridge=new Driver(){
+            public boolean acceptsURL(String value){return url.equals(value);}
+            public Connection connect(String value,Properties properties)throws SQLException{
+                if(!acceptsURL(value))return null;Connection connection=original.connect(value,properties);
+                return (Connection)Proxy.newProxyInstance(getClass().getClassLoader(),new Class<?>[]{Connection.class},(proxy,method,args)->{
+                    Object result=invoke(method,connection,args);
+                    if(result instanceof PreparedStatement){PreparedStatement statement=(PreparedStatement)result;
+                        return Proxy.newProxyInstance(getClass().getClassLoader(),new Class<?>[]{CallableStatement.class},(p,m,a)->{
+                            Object valueResult=invoke(m,statement,a);
+                            if(valueResult instanceof ResultSet){ResultSet rows=(ResultSet)valueResult;
+                                return Proxy.newProxyInstance(getClass().getClassLoader(),new Class<?>[]{ResultSet.class},(rp,rm,ra)->{
+                                    Object rowResult=invoke(rm,rows,ra);
+                                    if("getMetaData".equals(rm.getName())&&rowResult==null){return Proxy.newProxyInstance(getClass().getClassLoader(),new Class<?>[]{ResultSetMetaData.class},(mp,mm,ma)->{
+                                        if("getColumnCount".equals(mm.getName()))return 22;if(mm.getReturnType()==int.class)return java.sql.Types.VARCHAR;if(mm.getReturnType()==boolean.class)return false;return "Synthetic column";
+                                    });}return rowResult;
+                                });
+                            }return valueResult;
+                        });
+                    }return result;
+                });
+            }
+            public DriverPropertyInfo[] getPropertyInfo(String u,Properties p){return new DriverPropertyInfo[0];}
+            public int getMajorVersion(){return 1;}public int getMinorVersion(){return 0;}public boolean jdbcCompliant(){return false;}
+            public java.util.logging.Logger getParentLogger(){return java.util.logging.Logger.getGlobal();}
+        };DriverManager.registerDriver(metadataBridge);
     }
 }

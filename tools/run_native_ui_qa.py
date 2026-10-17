@@ -55,7 +55,7 @@ def main():
     (args.output / ('native-workflow-results.txt' if args.integration else 'native-run.txt')).write_text(public, encoding='utf-8')
     if not args.integration:
         images = [{'file': p.name, 'sha256': hashlib.sha256(p.read_bytes()).hexdigest()} for p in sorted(args.output.glob('*.png'))]
-        (args.output / 'capture-provenance.json').write_text(json.dumps({'kind': 'Native Robot window captures', 'data': 'Synthetic UiAuthFixture; real BCrypt-issued capability over fake JDBC; no database driver/socket', 'application_baseline': 'd7ee701', 'images': images}, indent=2), encoding='utf-8')
+        (args.output / 'capture-provenance.json').write_text(json.dumps({'kind': 'Native Swing window self-print captures; direct component actions; no global desktop input', 'data': 'Synthetic UiAuthFixture with metadata bridge; real BCrypt-issued capability over fake JDBC; no real database driver/socket', 'application_baseline': 'd7ee701', 'images': images}, indent=2), encoding='utf-8')
     print(public)
 
 

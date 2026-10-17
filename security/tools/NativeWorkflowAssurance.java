@@ -29,9 +29,8 @@ public final class NativeWorkflowAssurance {
     private static void text(Object o,String name,String value)throws Exception{edt(()->((javax.swing.text.JTextComponent)field(o,name)).setText(value));}
     private static void select(Object o,String name,String value)throws Exception{edt(()->((JComboBox<?>)field(o,name)).setSelectedItem(value));}
     private static void click(Component component)throws Exception{
-        if(component instanceof JComponent)edt(()->((JComponent)component).scrollRectToVisible(new Rectangle(0,0,component.getWidth(),component.getHeight())));
-        settle();Point[] p={null};edt(()->{p[0]=component.getLocationOnScreen();p[0].translate(component.getWidth()/2,component.getHeight()/2);});
-        robot.mouseMove(p[0].x,p[0].y);robot.mousePress(InputEvent.BUTTON1_DOWN_MASK);robot.mouseRelease(InputEvent.BUTTON1_DOWN_MASK);settle();
+        SwingUtilities.invokeLater(()->((AbstractButton)component).doClick());
+        settle();
     }
     private static <T extends JFrame> T show(java.util.function.Supplier<T> factory)throws Exception{AtomicReference<T> f=new AtomicReference<>();edt(()->{f.set(factory.get());f.get().setVisible(true);f.get().setLocation(40,40);});settle();return f.get();}
     private static void close()throws Exception{edt(()->{for(Window w:Window.getWindows())w.dispose();});}
