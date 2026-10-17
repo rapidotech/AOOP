@@ -310,17 +310,71 @@ public class DatabaseHandler {
         return salaryList;
     }
 
+    /** Adds missing compensation to an existing employee; never creates or edits a profile. */
     public static void addEmployeeSalary(EmpSalaryDetails salary) {
         AuthorizationService.requireHr();
         Objects.requireNonNull(salary, "Salary details are required.");
-        EmpDetails employee = new EmpDetails(salary.getEmpID(), salary.getFirstName(), salary.getLastName(),
-                "", "", "", "Active", "General", "");
-        PersistenceSupport.inTransaction("add the employee and salary", conn -> {
+        validateNewCompensation(salary);
+        PersistenceSupport.inTransaction("add compensation for an existing employee", conn -> {
             AuthorizationService.requireHr(conn);
-            insertEmployee(conn, employee);
-            writeEmployeeSalary(conn, salary);
+            try (PreparedStatement employee = PersistenceSupport.prepareStatement(conn,
+                    "SELECT EmployeeID FROM employees WHERE EmployeeID = ? FOR UPDATE")) {
+                employee.setString(1, salary.getEmpID());
+                try (ResultSet result = employee.executeQuery()) {
+                    if (!result.next()) throw new PersistenceException("Employee not found. Create the employee through Employee records first.");
+                }
+            }
+            try (PreparedStatement existing = PersistenceSupport.prepareStatement(conn,
+                    "SELECT EmployeeID FROM compensation WHERE EmployeeID = ? FOR UPDATE")) {
+                existing.setString(1, salary.getEmpID());
+                try (ResultSet result = existing.executeQuery()) {
+                    if (result.next()) throw new PersistenceException("Compensation already exists. Open the employee's compensation and choose Edit.");
+                }
+            }
+            try (PreparedStatement compensation = PersistenceSupport.prepareStatement(conn,
+                    "INSERT INTO compensation (EmployeeID, BasicSalary, RiceSubsidy, PhoneAllowance, ClothingAllowance) VALUES (?, ?, ?, ?, ?)")) {
+                compensation.setString(1, salary.getEmpID());compensation.setDouble(2, salary.getBasicSalary());
+                compensation.setDouble(3, salary.getRiceSubsidy());compensation.setDouble(4, salary.getPhoneAllowance());
+                compensation.setDouble(5, salary.getClothingAllowance());PersistenceSupport.requireOneRow(compensation.executeUpdate());
+            }
+            Long governmentId=null;
+            try (PreparedStatement government = PersistenceSupport.prepareStatement(conn,
+                    "SELECT GovernmentID FROM governmentids WHERE EmployeeID = ? FOR UPDATE")) {
+                government.setString(1,salary.getEmpID());
+                try (ResultSet result=government.executeQuery()) {
+                    if(result.next()) {
+                        governmentId=result.getLong("GovernmentID");
+                        if(result.next()) throw new PersistenceException("Multiple government identifier records exist for this employee. Resolve the records before adding compensation.");
+                    }
+                }
+            }
+            String identifierSql=governmentId==null
+                    ? "INSERT INTO governmentids (SSSNumber, PhilHealthNumber, TINNumber, PagIBIGNumber, EmployeeID) VALUES (?, ?, ?, ?, ?)"
+                    : "UPDATE governmentids SET SSSNumber=?, PhilHealthNumber=?, TINNumber=?, PagIBIGNumber=? WHERE EmployeeID=? AND GovernmentID=?";
+            try (PreparedStatement identifiers=PersistenceSupport.prepareStatement(conn,identifierSql)) {
+                identifiers.setString(1,salary.getSssNo());identifiers.setString(2,salary.getPhilhealthNo());
+                identifiers.setString(3,salary.getTinNo());identifiers.setString(4,salary.getPagibigNo());
+                identifiers.setString(5,salary.getEmpID());
+                if(governmentId!=null)identifiers.setLong(6,governmentId);
+                PersistenceSupport.requireOneRow(identifiers.executeUpdate());
+            }
             AuditService.business(conn, "EMPLOYEE_SALARY_CREATED", salary.getEmpID());
         });
+    }
+
+    private static void validateNewCompensation(EmpSalaryDetails salary) {
+        if(salary.getEmpID()==null || !salary.getEmpID().matches("[0-9]{1,10}"))
+            throw new IllegalArgumentException("Enter a valid existing employee ID.");
+        double[] amounts={salary.getBasicSalary(),salary.getRiceSubsidy(),salary.getPhoneAllowance(),salary.getClothingAllowance()};
+        for(double amount:amounts)if(!Double.isFinite(amount)||amount<0)
+            throw new IllegalArgumentException("Salary and allowances must be finite, nonnegative amounts.");
+        if(salary.getBasicSalary()<=0)throw new IllegalArgumentException("Basic salary must be greater than zero.");
+        if(salary.getSssNo()==null||!salary.getSssNo().matches("[0-9]{2}-[0-9]{7}-[0-9]"))
+            throw new IllegalArgumentException("Enter an SSS number in XX-XXXXXXX-X format.");
+        if(salary.getPhilhealthNo()==null||!salary.getPhilhealthNo().matches("[0-9]{12}")
+                ||salary.getPagibigNo()==null||!salary.getPagibigNo().matches("[0-9]{12}")
+                ||salary.getTinNo()==null||!salary.getTinNo().matches("[0-9]{3}-[0-9]{3}-[0-9]{3}-[0-9]{3}"))
+            throw new IllegalArgumentException("Enter valid PhilHealth, Pag-IBIG and TIN identifiers.");
     }
 
     public static void updateEmployeeSalary(EmpSalaryDetails updatedSalary) {

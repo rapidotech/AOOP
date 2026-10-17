@@ -9,6 +9,7 @@ public class frm_EmployeesSalary2 extends javax.swing.JFrame implements Workspac
 
     private EmpSalaryDetails empSalaryDetails;
     private boolean isEditMode; // To determine if we are in edit mode or add mode
+    private boolean editingFields;
     private String originalEmpID; // To store the original empID for editing
 
     // Constructor for Edit Mode (with employee details)
@@ -16,11 +17,11 @@ public class frm_EmployeesSalary2 extends javax.swing.JFrame implements Workspac
     @Override public void composeWorkspace() {
         javax.swing.JButton back=new javax.swing.JButton("Back to compensation");back.addActionListener(e->WorkspaceShell.open(this,"compensation"));
         javax.swing.JComponent content=WorkspaceUI.scroll(WorkspaceUI.column(
-            WorkspaceUI.section("Employee","",WorkspaceUI.fields("Employee ID",txt_empID,"First name",txt_firstName,"Last name",txt_lastName)),
+            WorkspaceUI.section("Employee",isEditMode?"Employee identity is retained.":"Enter an existing employee ID whose compensation record is missing. Use Employee records to add a new employee.",WorkspaceUI.fields("Employee ID",txt_empID,"First name",txt_firstName,"Last name",txt_lastName)),
             WorkspaceUI.section("Salary & allowances","Enter amounts in Philippine pesos.",WorkspaceUI.fields("Basic salary",txt_basicSalary,"Rice subsidy",txt_riceAllow,"Phone allowance",txt_phoneAllow,"Clothing allowance",txt_clothingAllow)),
             WorkspaceUI.section("Statutory identifiers","",WorkspaceUI.fields("SSS number",txt_sssNo,"PhilHealth number",txt_philhealthNo,"Pag-IBIG number",txt_pagibigNo,"TIN",txt_tinNo)),
             WorkspaceUI.section("Calculated rates","Calculated from the saved basic salary.",WorkspaceUI.fields("Gross semi-monthly",txt_grossSemi,"Hourly rate",txt_hourlyRate))));
-        WorkspaceShell.mount(this,isEditMode?"Compensation details":"Add compensation","Maintain salary, allowances and statutory identifiers.","compensation",content,
+        WorkspaceShell.mount(this,isEditMode?(editingFields?"Edit compensation":"Compensation details"):"Add compensation","Maintain salary, allowances and statutory identifiers.","compensation",content,
             WorkspaceUI.actions(WorkspaceUI.primary(btn_SavePayInfo,"Save compensation"),WorkspaceUI.secondary(btn_EditPayInfo,"Edit compensation"),WorkspaceUI.secondary(back,"Back to compensation")));
     }
 
@@ -40,6 +41,7 @@ public class frm_EmployeesSalary2 extends javax.swing.JFrame implements Workspac
 
         isEditMode = true;  // This is in edit mode
         originalEmpID = empID; // Store the original EmpID for editing
+        setFieldsEditable(false);
     }
 
     // Constructor for Add Mode (with empty fields)
@@ -56,6 +58,8 @@ public class frm_EmployeesSalary2 extends javax.swing.JFrame implements Workspac
 
         isEditMode = false;  // This is in add mode
         originalEmpID = null; // No original EmpID in add mode
+        setFieldsEditable(true);
+        txt_empID.addFocusListener(new java.awt.event.FocusAdapter(){@Override public void focusLost(java.awt.event.FocusEvent event){populateExistingEmployee();}});
     }
 
     // Helper method to set fields for editing
@@ -90,8 +94,8 @@ public class frm_EmployeesSalary2 extends javax.swing.JFrame implements Workspac
         txt_riceAllow.setText("");
         txt_phoneAllow.setText("");
         txt_clothingAllow.setText("");
-        txt_grossSemi.setText("");
-        txt_hourlyRate.setText("");
+        txt_grossSemi.setText("0.00");
+        txt_hourlyRate.setText("0.00");
     }
 
     // Method to get new employee salary data from the fields
@@ -115,7 +119,7 @@ public class frm_EmployeesSalary2 extends javax.swing.JFrame implements Workspac
 
             // Create an EmpSalaryDetails object with the data
             EmpSalaryDetails newSalary = new EmpSalaryDetails(empID, firstName, lastName, sssNo, philhealthNo,
-                pagibigNo, tinNo, basicSalary, riceAllow, phoneAllow, clothingAllow, grossSemi, hourlyRate);
+                tinNo, pagibigNo, basicSalary, riceAllow, phoneAllow, clothingAllow, grossSemi, hourlyRate);
             return newSalary;  // Return the newly created EmpSalaryDetails object
         } catch (NumberFormatException e) {
             // Handle invalid input (e.g., if the user enters non-numeric data)
@@ -126,19 +130,20 @@ public class frm_EmployeesSalary2 extends javax.swing.JFrame implements Workspac
 
     // Method to toggle the editability of the fields
     public void setFieldsEditable(boolean editable) {
-        txt_empID.setEditable(editable);
-        txt_firstName.setEditable(editable);
-        txt_lastName.setEditable(editable);
-        txt_sssNo.setEditable(editable);
-        txt_philhealthNo.setEditable(editable);
-        txt_pagibigNo.setEditable(editable);
-        txt_tinNo.setEditable(editable);
-        txt_basicSalary.setEditable(editable);
-        txt_riceAllow.setEditable(editable);
-        txt_phoneAllow.setEditable(editable);
-        txt_clothingAllow.setEditable(editable);
-        txt_grossSemi.setEditable(editable);
-        txt_hourlyRate.setEditable(editable);
+        editingFields=editable;
+        txt_empID.setEditable(editable&&!isEditMode);
+        txt_firstName.setEditable(false);txt_lastName.setEditable(false);
+        for(JTextField field:new JTextField[]{txt_sssNo,txt_philhealthNo,txt_pagibigNo,txt_tinNo,txt_basicSalary,txt_riceAllow,txt_phoneAllow,txt_clothingAllow})field.setEditable(editable);
+        txt_grossSemi.setEditable(false);txt_hourlyRate.setEditable(false);
+        btn_EditPayInfo.setVisible(isEditMode&&!editable);btn_SavePayInfo.setVisible(editable);
+    }
+    private EmpDetails populateExistingEmployee(){
+        for(EmpDetails employee:CSVHandler.getEmployeeData()){
+            if(employee.getEmpID().equals(txt_empID.getText().trim())){
+                txt_firstName.setText(employee.getFirstName());txt_lastName.setText(employee.getLastName());return employee;
+            }
+        }
+        txt_firstName.setText("");txt_lastName.setText("");return null;
     }
 
 
@@ -318,7 +323,10 @@ public class frm_EmployeesSalary2 extends javax.swing.JFrame implements Workspac
 
     private void btn_SavePayInfoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_SavePayInfoActionPerformed
 
-    String empID = txt_empID.getText();
+    if(!isEditMode && populateExistingEmployee()==null){
+        JOptionPane.showMessageDialog(this,"Enter an existing employee ID. Create new employees through Employee records.","Employee required",JOptionPane.WARNING_MESSAGE);return;
+    }
+    String empID = txt_empID.getText().trim();
     String firstName = txt_firstName.getText();
     String lastName = txt_lastName.getText();
     String sssNo = txt_sssNo.getText();
@@ -363,7 +371,7 @@ public class frm_EmployeesSalary2 extends javax.swing.JFrame implements Workspac
 
     // Validate Salary & Allowance Fields
     double basicSalary = 0.0, riceAllow = 0.0, phoneAllow = 0.0, clothingAllow = 0.0, grossSemi = 0.0, hourlyRate = 0.0;
-    JTextField[] salaryFields = {txt_basicSalary, txt_riceAllow, txt_phoneAllow, txt_clothingAllow, txt_grossSemi, txt_hourlyRate};
+    JTextField[] salaryFields = {txt_basicSalary, txt_riceAllow, txt_phoneAllow, txt_clothingAllow};
 
     for (JTextField field : salaryFields) {
         String input = field.getText().trim();
@@ -388,29 +396,19 @@ public class frm_EmployeesSalary2 extends javax.swing.JFrame implements Workspac
         return;
     }
 
+    if(basicSalary<=0){
+        JOptionPane.showMessageDialog(this,"Basic salary must be greater than zero.","Invalid Input",JOptionPane.ERROR_MESSAGE);return;
+    }
+
     // Create new EmpSalaryDetails object
     EmpSalaryDetails updatedSalary = new EmpSalaryDetails(empID, firstName, lastName, sssNo, philhealthNo, tinNo, pagibigNo,
         basicSalary, riceAllow, phoneAllow, clothingAllow, grossSemi, hourlyRate);
 
-    String existingEmpID = (isEditMode && empSalaryDetails != null) ? empSalaryDetails.getEmpID() : null;
-
     if (isEditMode) {
-        if (existingEmpID != null && !existingEmpID.equals(empID) && CSVHandler.employeeExists(empID, null)) {
-            JOptionPane.showMessageDialog(this, "Employee ID already exists!", "Error", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
         CSVHandler.updateEmployeeSalary(updatedSalary);
     } else {
-        if (CSVHandler.employeeExists(empID, null)) {
-            JOptionPane.showMessageDialog(this, "Employee ID already exists!", "Error", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
         CSVHandler.addEmployeeSalary(updatedSalary);
     }
-
-    // Add new employee to Employees and Attendance files
-    EmpDetails newEmployee = new EmpDetails(empID, firstName, lastName, "", "", "", "", "", "");
-    CSVHandler.addOrUpdateEmployeeInSalary(newEmployee);
 
     JOptionPane.showMessageDialog(this, "Employee salary record successfully saved!");
     dispose();
@@ -428,15 +426,8 @@ public class frm_EmployeesSalary2 extends javax.swing.JFrame implements Workspac
 
     private void btn_EditPayInfoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_EditPayInfoActionPerformed
     setFieldsEditable(true);
-    isEditMode = true;
-
-    // Ensure txt_empID, txt_firstName, and txt_lastName remain not editable
-    txt_empID.setEditable(false);
-    txt_firstName.setEditable(false);
-    txt_lastName.setEditable(false);
-
-
-
+    WorkspaceShell.setPageTitle(this,isEditMode?"Edit compensation":"Add compensation");
+    AppTheme.apply(getContentPane());
 
     }//GEN-LAST:event_btn_EditPayInfoActionPerformed
 
