@@ -49,13 +49,7 @@ public class frm_Login extends javax.swing.JFrame {
         passwordEcho = jPasswordField.getEchoChar();
         jLabel1.setFont(new Font("Segoe UI", Font.BOLD, 48));
         jLabel1.setForeground(Color.WHITE);
-        jLabel3.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-        jLabel3.setForeground(new Color(209, 229, 218));
-        jLabel3.setName("companyName");
-        Dimension companySize = jLabel3.getPreferredSize();
-        companySize.width = jLabel3.getFontMetrics(jLabel3.getFont()).stringWidth(jLabel3.getText()) + 8;
-        jLabel3.setMinimumSize(companySize); jLabel3.setPreferredSize(companySize); jLabel3.setMaximumSize(companySize);
-        jLabel1.setAlignmentX(Component.LEFT_ALIGNMENT); jLabel3.setAlignmentX(Component.LEFT_ALIGNMENT);
+        jLabel1.setAlignmentX(Component.LEFT_ALIGNMENT);
         jLabel2.setIcon(null); jLabel6.setIcon(null);
         jLabel4.setText("Username"); jLabel4.setLabelFor(txt_Login); jLabel4.setDisplayedMnemonic('U');
         jLabel5.setText("Password"); jLabel5.setLabelFor(jPasswordField); jLabel5.setDisplayedMnemonic('P');
@@ -83,7 +77,6 @@ public class frm_Login extends javax.swing.JFrame {
         JPanel centeredMessage = new JPanel(new GridBagLayout()); centeredMessage.setOpaque(false);
         GridBagConstraints brandConstraint = new GridBagConstraints(); brandConstraint.anchor = GridBagConstraints.WEST; brandConstraint.weightx = 1;
         centeredMessage.add(message, brandConstraint); brand.add(centeredMessage, BorderLayout.CENTER);
-        brand.add(jLabel3, BorderLayout.SOUTH);
 
         JPanel form = new JPanel(new GridBagLayout()); form.setBackground(Color.WHITE);
         form.setBorder(BorderFactory.createEmptyBorder(36, 40, 36, 40));
@@ -128,7 +121,6 @@ public class frm_Login extends javax.swing.JFrame {
         btn_Login = new javax.swing.JButton();
         jLabel2 = new javax.swing.JLabel();
         jLabel1 = new javax.swing.JLabel();
-        jLabel3 = new javax.swing.JLabel();
         jLabel4 = new javax.swing.JLabel();
         jLabel5 = new javax.swing.JLabel();
         jCheckBox1 = new javax.swing.JCheckBox();
@@ -170,9 +162,6 @@ public class frm_Login extends javax.swing.JFrame {
         jLabel1.setForeground(new java.awt.Color(17, 24, 39));
         jLabel1.setText("MotorPH");
 
-        jLabel3.setFont(new java.awt.Font("Segoe UI", 0, 12)); // NOI18N
-        jLabel3.setForeground(new java.awt.Color(107, 114, 128));
-        jLabel3.setText("Red Dragon Technologies Inc.");
 
         jLabel4.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         jLabel4.setForeground(new java.awt.Color(55, 65, 81));
@@ -392,7 +381,6 @@ public class frm_Login extends javax.swing.JFrame {
     private javax.swing.JCheckBox jCheckBox1;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
-    private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel5;
     private javax.swing.JLabel jLabel6;
