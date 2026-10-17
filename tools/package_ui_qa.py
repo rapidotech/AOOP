@@ -58,6 +58,22 @@ def main():
         'limits': ['Physical OS keyboard/mouse/focus not tested end to end', 'Physical printing and performance benchmarks not established', 'Original database and independent archive custody boundaries remain as documented'],
         'images': hashes}
     (OUTPUT / 'QA_RESULTS.json').write_text(json.dumps(results, indent=2), encoding='utf-8')
+    # Keep later corrective proof separate from the original reviewed matrix.
+    startup = ROOT / '.impeccable/review/startup-fix'
+    workflow = ROOT / '.impeccable/review/startup-workflows/native-workflow-results.txt'
+    if (startup / 'native-run.txt').is_file() and workflow.is_file():
+        correction = OUTPUT / 'startup-fix'
+        correction.mkdir(exist_ok=True)
+        for name in ('login-desktop.png', 'login-laptop.png', 'native-run.txt', 'capture-provenance.json'):
+            shutil.copyfile(startup / name, correction / name)
+        shutil.copyfile(workflow, correction / workflow.name)
+        results['startup_correction'] = {
+            'cause': 'Production launcher used Metal while prior QA forced Nimbus',
+            'fix': 'Shared AppTheme installer selects Nimbus; QA starts from Metal',
+            'offline_assertions': 353, 'native_matrix_checks': 163,
+            'ui_to_clone_checks': 38, 'proof': 'startup-fix/',
+            'scope': 'Post-delivery correction; original release counts above are historical'}
+        (OUTPUT / 'QA_RESULTS.json').write_text(json.dumps(results, indent=2), encoding='utf-8')
     cards = ''.join('<figure><a href="screenshots/' + html.escape(name) + '"><img loading="lazy" src="screenshots/' + html.escape(name) + '" alt="' + html.escape(name.removesuffix('.png').replace('-', ' ')) + '"></a><figcaption>' + html.escape(name.removesuffix('.png').replace('-', ' ')) + '</figcaption></figure>' for name in sorted(sources))
     (OUTPUT / 'index.html').write_text('''<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>MotorPH UI and QA</title><style>body{margin:0;background:#f4f6f0;color:#1b2d26;font:15px/1.6 "Segoe UI",sans-serif}header{padding:36px 5%;background:#14392b;color:white}h1{margin:0 0 8px;font-size:32px}header p{max-width:75ch}main{padding:28px 5%}nav a{color:#16704c;margin-right:24px}section{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,500px),1fr));gap:24px}figure{margin:0;background:white;padding:14px}img{width:100%;height:auto;display:block}figcaption{padding-top:10px}a:focus-visible{outline:3px solid #16704c;outline-offset:4px}</style><header><h1>MotorPH desktop overhaul</h1><p>Responsive Employee and HR workspaces, rebuilt sign-in, focused task forms and a consistent native design system. All screenshots use synthetic records.</p></header><main><nav><a href="QA_REPORT.md">QA report</a><a href="FINAL_VISUAL_VERDICT.md">Independent verdict</a><a href="QA_RESULTS.json">Verification results</a></nav><p>351 regression assertions · 176 native component checks · 38 UI-to-database checks · 76 backend and 15 SQL/chain checks. Direct Swing actions and owned-window rendering; physical OS input and printing are separate claims.</p><section>''' + cards + '</section></main></html>', encoding='utf-8')
     # Add the current evidence to the existing security portfolio without replacing historical captures.
@@ -66,6 +82,8 @@ def main():
     for p in images.glob('*.png'):
         shutil.copyfile(p, public / p.name)
     shutil.copyfile(OUTPUT / 'QA_RESULTS.json', public / 'qa-results.json')
+    if (OUTPUT / 'startup-fix').is_dir():
+        shutil.copytree(OUTPUT / 'startup-fix', public / 'startup-fix', dirs_exist_ok=True)
     shutil.copyfile(OUTPUT / 'QA_REPORT.md', PORTFOLIO / 'evidence/ui-overhaul-qa-report.txt')
     shutil.copyfile(OUTPUT / 'FINAL_VISUAL_VERDICT.md', PORTFOLIO / 'evidence/ui-overhaul-visual-verdict.txt')
     archive = OUTPUT.with_suffix('.zip')

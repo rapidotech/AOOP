@@ -128,3 +128,25 @@ No original-database mutation or credential change is part of this UI redesign.
 The original milestone security evidence remains historical; this is its UI/QA
 addendum, with separate evidence scopes rather than overwritten implementation
 notes. The final archive includes a SHA-256 manifest and a checked ZIP CRC.
+
+
+## Post-delivery correction: production startup theme
+
+ISSUE-007 (high, visual/functional): the real OOP_MotorPH launcher used Java's
+Metal theme, while the QA harness explicitly selected Nimbus. The Nimbus-only
+button painter was therefore absent in production, leaving white sign-in text
+on a white surface. A user screenshot exposed this missed startup path.
+
+AppTheme.install now selects Nimbus centrally before normal control creation.
+The regression and native harness begin with Metal and call the same production
+installer; neither substitutes Nimbus itself. The new regression failed before
+the fix and passed after it. Button paint contrast and action bounds are checked
+at 940- and 800-unit window widths. The sign-in image was visually inspected.
+
+After correction: all 353 offline regression assertions passed (UI now 114).
+The fresh full native matrix passed 163 checks, including nine navigation routes,
+logout, all captured screens/dialogs, sign-in dispatch and both sign-in sizes.
+Earlier release integration remains dated historical evidence, not a new release
+run. The separate owned-clone workflow rerun is recorded alongside this addendum.
+Physical input, printing and performance remain unverified; this does not claim
+that every feature or possible input combination is proven correct.

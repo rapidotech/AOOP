@@ -42,3 +42,7 @@ Native captures use the window's own rendering. Keyboard bindings are checked
 programmatically. Browser behavior, physical OS input/focus, physical printing
 and performance benchmarks are separate claims. The QA report records exact
 scope, evidence, independent visual review and remaining assurance boundaries.
+
+AppTheme.install selects Nimbus centrally at application startup. The native and
+UI regression harnesses start from Metal and exercise that production installer,
+including sign-in paint contrast and visible bounds at both supported widths.

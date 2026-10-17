@@ -86,6 +86,20 @@ public final class NativeUiQa {
         AtomicBoolean navigated=new AtomicBoolean();
         edt(()->{ref.set(new frm_Login((username,password)->{submitted.set("90001".equals(username)&&"NativeProof123".equals(new String(password)));return auth.issue("Employee",false);},(a,b,c)->null,result->navigated.set(true)));ref.get().setVisible(true);ref.get().setLocation(50,50);});
         settle();frm_Login f=ref.get();nameFields(f);capture(f,"login-desktop");
+        for(int width:new int[]{940,800}){
+            edt(()->{f.setSize(width,650);f.validate();});settle();
+            edt(()->{
+                JButton button=f.getRootPane().getDefaultButton();
+                Rectangle bounds=SwingUtilities.convertRectangle(button.getParent(),button.getBounds(),f.getContentPane());
+                check(button.isShowing()&&button.isEnabled()&&bounds.width>100&&bounds.height>=32
+                        &&f.getContentPane().contains(bounds.x,bounds.y)&&f.getContentPane().contains(bounds.x+bounds.width-1,bounds.y+bounds.height-1),
+                        "Sign-in action visible and inside content at width "+width);
+                java.awt.image.BufferedImage image=new java.awt.image.BufferedImage(button.getWidth(),button.getHeight(),java.awt.image.BufferedImage.TYPE_INT_RGB);
+                Graphics2D g=image.createGraphics();g.setColor(Color.WHITE);g.fillRect(0,0,image.getWidth(),image.getHeight());button.paint(g);g.dispose();
+                check(new Color(image.getRGB(image.getWidth()/2,5)).getGreen()<160,"Sign-in background paints against white at width "+width);
+            });
+            capture(f,width==940?"login-desktop":"login-laptop");
+        }
         type(named(f,"username"),"90001");type(named(f,"password"),"NativeProof123");
         edt(()->f.getRootPane().getDefaultButton().doClick());settle();
         long end=System.nanoTime()+TimeUnit.SECONDS.toNanos(8);while(!navigated.get()&&System.nanoTime()<end){Thread.sleep(50);}
@@ -118,7 +132,9 @@ public final class NativeUiQa {
     public static void main(String[] args)throws Exception{
         output=Path.of(args[0]);Files.createDirectories(output);robot=new Robot();robot.setAutoDelay(30);
         try{
-            for(UIManager.LookAndFeelInfo look:UIManager.getInstalledLookAndFeels())if("Nimbus".equals(look.getName()))UIManager.setLookAndFeel(look.getClassName());
+            UIManager.setLookAndFeel(new javax.swing.plaf.metal.MetalLookAndFeel());
+            AppTheme.install();
+            check(UIManager.getLookAndFeel() instanceof javax.swing.plaf.nimbus.NimbusLookAndFeel,"Production bootstrap selects Nimbus from default Java theme");
             auth=new UiAuthFixture();installMetadataBridge();
             if(args.length>1&&"attendance-only".equals(args[1])){
                 frame("attendance",frm_EmpAttLeave::new,"Employee");

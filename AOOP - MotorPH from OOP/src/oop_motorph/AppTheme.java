@@ -22,6 +22,13 @@ public final class AppTheme {
 
     public static synchronized void install() {
         if (installed) return;
+        // The custom control painters use Nimbus. Select it at the shared
+        // production bootstrap, rather than relying on individual form mains.
+        try {
+            UIManager.setLookAndFeel(new javax.swing.plaf.nimbus.NimbusLookAndFeel());
+        } catch (UnsupportedLookAndFeelException failure) {
+            throw new IllegalStateException("The MotorPH interface requires Nimbus", failure);
+        }
         installed = true;
         Font body = new Font("Segoe UI", Font.PLAIN, 13);
         for (String key : new String[]{"Button.font", "Label.font", "TextField.font",

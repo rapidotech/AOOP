@@ -17,9 +17,11 @@ public final class UiRegressionTest {
     public static void main(String[] args) throws Exception {
         try {
             AUTH = new UiAuthFixture();
-            for (UIManager.LookAndFeelInfo look : UIManager.getInstalledLookAndFeels()) {
-                if ("Nimbus".equals(look.getName())) { UIManager.setLookAndFeel(look.getClassName()); break; }
-            }
+            // Exercise the production startup path from Java's default theme.
+            UIManager.setLookAndFeel(new javax.swing.plaf.metal.MetalLookAndFeel());
+            AppTheme.install();
+            check(UIManager.getLookAndFeel() instanceof javax.swing.plaf.nimbus.NimbusLookAndFeel,
+                    "Production theme installation must select the painter-compatible look and feel");
             guardedConstructors();
             lazyLoginAndKeyboard();
             asynchronousAuthentication();
@@ -57,6 +59,15 @@ public final class UiRegressionTest {
             JPasswordField password = find(login, "password", JPasswordField.class);
             check(login.getRootPane().getDefaultButton() == signIn, "Enter must activate Sign in");
             check(signIn.isFocusPainted(), "Keyboard focus must remain visible");
+            java.awt.image.BufferedImage buttonImage = new java.awt.image.BufferedImage(
+                    signIn.getWidth(), signIn.getHeight(), java.awt.image.BufferedImage.TYPE_INT_RGB);
+            Graphics2D buttonGraphics = buttonImage.createGraphics();
+            buttonGraphics.setColor(Color.WHITE);
+            buttonGraphics.fillRect(0, 0, buttonImage.getWidth(), buttonImage.getHeight());
+            signIn.paint(buttonGraphics);
+            buttonGraphics.dispose();
+            check(contrast(Color.WHITE, new Color(buttonImage.getRGB(buttonImage.getWidth() / 2, 5))) >= 4.5,
+                    "Production sign-in button must paint a visible contrasting background");
             login.validate();
             JLabel company = find(login, "companyName", JLabel.class);
             check(company.getWidth() >= company.getFontMetrics(company.getFont()).stringWidth(company.getText()),
