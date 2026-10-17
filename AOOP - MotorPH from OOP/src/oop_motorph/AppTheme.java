@@ -36,6 +36,9 @@ public final class AppTheme {
         UIManager.put("Table.selectionForeground", INK);
         UIManager.put("ComboBox.disabledForeground", INK);
         UIManager.put("ComboBox.disabledText", INK);
+        UIManager.put("ComboBox.background", Color.WHITE);
+        UIManager.put("ComboBox.disabledBackground", SURFACE);
+        UIManager.put("ComboBox.foreground", INK);
         Toolkit.getDefaultToolkit().getSystemEventQueue().push(new EventQueue() {
             @Override protected void dispatchEvent(AWTEvent event) {
                 try {
@@ -106,12 +109,25 @@ public final class AppTheme {
             input.setSelectedTextColor(Color.WHITE);
             input.setDisabledTextColor(MUTED);
             input.setBackground(input.isEditable() ? Color.WHITE : SURFACE);
+            flattenInput(input);
             installFocus(input);
         } else if (component instanceof JComboBox) {
             component.setForeground(INK);
             JComboBox<?> combo = (JComboBox<?>) component;
+            combo.setUI(new javax.swing.plaf.basic.BasicComboBoxUI() {
+                @Override protected JButton createArrowButton() {
+                    return new javax.swing.plaf.basic.BasicArrowButton(SwingConstants.SOUTH, Color.WHITE, LINE, MUTED, Color.WHITE);
+                }
+            });
+            combo.setBackground(Color.WHITE);
+            combo.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(LINE),BorderFactory.createEmptyBorder(3,7,3,3)));
             combo.setRenderer(new ReadableComboRenderer(combo));
             installFocus((JComponent) component);
+        } else if (component instanceof JScrollPane) {
+            JScrollPane pane=(JScrollPane)component;
+            pane.setUI(new javax.swing.plaf.basic.BasicScrollPaneUI());
+        } else if (component instanceof JScrollBar) {
+            flattenScrollbar((JScrollBar)component);
         } else if (component instanceof JLabel) {
             JLabel label = (JLabel) component;
             if ("Phone Number:".equals(label.getText())) {
@@ -129,6 +145,14 @@ public final class AppTheme {
             table.setFillsViewportHeight(true);
             table.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 12));
             table.getTableHeader().setForeground(INK);
+            table.getTableHeader().setBackground(SURFACE);
+            table.getTableHeader().setDefaultRenderer(new javax.swing.table.DefaultTableCellRenderer() {
+                @Override public Component getTableCellRendererComponent(JTable owner,Object value,boolean selected,boolean focus,int row,int column) {
+                    super.getTableCellRendererComponent(owner,value,selected,focus,row,column);
+                    setFont(new Font("Segoe UI",Font.BOLD,12));setForeground(INK);setBackground(SURFACE);
+                    setBorder(BorderFactory.createCompoundBorder(BorderFactory.createMatteBorder(0,0,1,0,LINE),BorderFactory.createEmptyBorder(8,10,8,10)));return this;
+                }
+            });
             table.getTableHeader().setPreferredSize(new Dimension(0, 38));
             table.getTableHeader().setToolTipText("Scroll horizontally to see all columns.");
             table.getAccessibleContext().setAccessibleDescription("Use arrow keys to select a record. Column headers identify each value.");
@@ -155,7 +179,32 @@ public final class AppTheme {
         }
     }
 
+    private static void flattenInput(JTextComponent input) {
+        String prefix=input instanceof JPasswordField?"PasswordField":"TextField";
+        UIDefaults defaults=new UIDefaults();
+        javax.swing.Painter<JComponent> fill=(g,c,w,h)->{g.setColor(input.isEditable()&&input.isEnabled()?Color.WHITE:SURFACE);g.fillRect(0,0,w,h);};
+        javax.swing.Painter<JComponent> noBorder=(g,c,w,h)->{};
+        for(String state:new String[]{"Enabled","Disabled","Focused","Selected"}){
+            defaults.put(prefix+"["+state+"].backgroundPainter",fill);defaults.put(prefix+"["+state+"].borderPainter",noBorder);
+            defaults.put(prefix+"["+state+"].textForeground",input.isEnabled()?INK:MUTED);
+        }
+        input.putClientProperty("Nimbus.Overrides",defaults);input.putClientProperty("Nimbus.Overrides.InheritDefaults",true);
+        input.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(LINE),BorderFactory.createEmptyBorder(7,9,7,9)));
+    }
+    private static void flattenScrollbar(JScrollBar bar){
+        bar.setPreferredSize(bar.getOrientation()==SwingConstants.VERTICAL?new Dimension(10,40):new Dimension(40,10));
+        bar.setUI(new javax.swing.plaf.basic.BasicScrollBarUI(){
+            @Override protected void configureScrollBarColors(){thumbColor=new Color(163,181,168);trackColor=SURFACE;}
+            @Override protected JButton createDecreaseButton(int direction){return noArrow();}
+            @Override protected JButton createIncreaseButton(int direction){return noArrow();}
+            private JButton noArrow(){JButton button=new JButton();button.putClientProperty("motorph.nativeArrow",true);button.setPreferredSize(new Dimension(0,0));button.setMinimumSize(new Dimension(0,0));button.setMaximumSize(new Dimension(0,0));return button;}
+            @Override protected void paintTrack(Graphics g,JComponent c,Rectangle r){g.setColor(trackColor);g.fillRect(r.x,r.y,r.width,r.height);}
+            @Override protected void paintThumb(Graphics g,JComponent c,Rectangle r){if(r.isEmpty()||!scrollbar.isEnabled())return;g.setColor(isDragging?GREEN:thumbColor);g.fillRect(r.x+2,r.y+2,Math.max(2,r.width-4),Math.max(2,r.height-4));}
+        });
+    }
+
     private static void styleButton(JButton button) {
+        if(button instanceof javax.swing.plaf.basic.BasicArrowButton || Boolean.TRUE.equals(button.getClientProperty("motorph.nativeArrow")))return;
         String role = String.valueOf(button.getClientProperty("motorph.buttonRole"));
         boolean sidebar = role.startsWith("sidebar");
         boolean solid = "primary".equals(role) || "danger".equals(role) || sidebar;
@@ -163,10 +212,18 @@ public final class AppTheme {
                 : "danger".equals(role) ? new Color(165, 46, 43) : "primary".equals(role) ? GREEN : Color.WHITE;
         Color foreground = solid ? Color.WHITE : INK;
         button.setFont(new Font("Segoe UI", sidebar ? Font.PLAIN : Font.BOLD, 13));
-        button.setBackground(base); button.setForeground(foreground);
-        button.setPreferredSize(null); button.setMinimumSize(new Dimension(32, 36));
+        button.setBackground(base); button.setForeground(button.isEnabled() || sidebar ? foreground : MUTED);
+        if (!Boolean.TRUE.equals(button.getClientProperty("motorph.enabledStyle"))) {
+            button.putClientProperty("motorph.enabledStyle",Boolean.TRUE);
+            button.addPropertyChangeListener("enabled",event->{
+                String currentRole=String.valueOf(button.getClientProperty("motorph.buttonRole"));
+                boolean onRail=currentRole.startsWith("sidebar");
+                button.setForeground(onRail || button.isEnabled() && ("primary".equals(currentRole)||"danger".equals(currentRole)) ? Color.WHITE : !button.isEnabled()?MUTED:INK);
+            });
+        }
+        button.setPreferredSize(null); button.setMinimumSize(new Dimension(sidebar?0:32, 36));
         button.setMargin(new Insets(9, 13, 9, 13));
-        button.setBorder(BorderFactory.createEmptyBorder(sidebar ? 11 : 9, 13, sidebar ? 11 : 9, 13));
+        button.setBorder(BorderFactory.createEmptyBorder(sidebar ? 7 : 9, 13, sidebar ? 7 : 9, 13));
         button.setFocusPainted(true); button.setContentAreaFilled(true); button.setOpaque(false);
         button.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         button.setToolTipText(button.getText());
@@ -175,7 +232,7 @@ public final class AppTheme {
             Graphics2D graphics = (Graphics2D) g.create();
             graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
             ButtonModel model = ((JButton)c).getModel();
-            Color fill = !c.isEnabled() ? (sidebar ? FOREST : new Color(232, 236, 230))
+            Color fill = !c.isEnabled() ? (sidebar ? base : new Color(232, 236, 230))
                     : model.isPressed() ? base.darker() : model.isRollover() ? (solid ? base.brighter() : SURFACE) : base;
             graphics.setColor(fill); graphics.fillRoundRect(1, 1, w-2, h-2, 8, 8);
             if (!sidebar) { graphics.setColor(solid ? base : LINE); graphics.drawRoundRect(1, 1, w-3, h-3, 8, 8); }
@@ -184,7 +241,7 @@ public final class AppTheme {
         };
         for (String state : new String[]{"Enabled", "Focused", "MouseOver", "Pressed", "Default", "Default+Focused", "Default+MouseOver", "Default+Pressed", "Disabled", "Focused+MouseOver", "Focused+Pressed"}) {
             overrides.put("Button["+state+"].backgroundPainter", painter);
-            overrides.put("Button["+state+"].textForeground", "Disabled".equals(state) ? MUTED : foreground);
+            overrides.put("Button["+state+"].textForeground", "Disabled".equals(state) && !sidebar ? MUTED : foreground);
         }
         button.putClientProperty("Nimbus.Overrides", overrides);
         button.putClientProperty("Nimbus.Overrides.InheritDefaults", true);

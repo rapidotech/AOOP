@@ -66,6 +66,16 @@ public final class WorkspaceUI {
         JScrollPane pane=new JScrollPane(table);pane.setBorder(BorderFactory.createLineBorder(AppTheme.LINE));pane.getViewport().setBackground(Color.WHITE);pane.setMinimumSize(new Dimension(0,180));return pane;
     }
 
+    /** Re-evaluate row-dependent controls after selection, edits, reloads or filtering. */
+    public static void bindSelection(JTable table,Runnable update){
+        table.getSelectionModel().addListSelectionListener(event->{if(!event.getValueIsAdjusting())update.run();});
+        javax.swing.event.TableModelListener changed=event->update.run();
+        table.getModel().addTableModelListener(changed);
+        table.addPropertyChangeListener("model",event->{if(event.getOldValue() instanceof javax.swing.table.TableModel)((javax.swing.table.TableModel)event.getOldValue()).removeTableModelListener(changed);table.getModel().addTableModelListener(changed);update.run();});
+        update.run();
+    }
+    public static boolean hasSelection(JTable table){int row=table.getSelectedRow();return row>=0&&row<table.getRowCount();}
+
     private static final class FieldsPanel extends JPanel{
         private final JPanel[] fields;private int columns=0;
         FieldsPanel(JPanel[] fields){super(new GridBagLayout());this.fields=fields;setOpaque(false);configure(2);addComponentListener(new ComponentAdapter(){@Override public void componentResized(ComponentEvent event){configure(getWidth()<600?1:2);}});}
