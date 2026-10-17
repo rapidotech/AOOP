@@ -167,7 +167,11 @@ public final class AppTheme {
                             Object emptyMessage = table.getClientProperty("motorph.emptyMessage");
                             String message = emptyMessage == null ? "No records to display." : String.valueOf(emptyMessage);
                             int width = graphics.getFontMetrics().stringWidth(message);
-                            graphics.drawString(message, Math.max(16, (viewport.getWidth() - width) / 2), 70);
+                            FontMetrics metrics = graphics.getFontMetrics();
+                            int visibleHeight = viewport.getExtentSize().height;
+                            int centeredBaseline = (visibleHeight - metrics.getHeight()) / 2 + metrics.getAscent();
+                            int baseline = Math.max(metrics.getAscent(), Math.min(70, centeredBaseline));
+                            graphics.drawString(message, Math.max(16, (viewport.getWidth() - width) / 2), baseline);
                         }
                     }
                 });
