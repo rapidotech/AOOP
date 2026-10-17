@@ -17,20 +17,8 @@ public class frm_EmpAttLeave extends javax.swing.JFrame {
         AuthorizationService.requireAuthenticated();
         initComponents();
         AppTheme.finish(this);
-        
-        // Set window properties - larger size to show all content
-        setResizable(true);
-        setTitle("Employee Attendance");
-        setSize(1400, 950); // Increased size to accommodate all content
-        setMinimumSize(new java.awt.Dimension(1150, 800));
-        setLocationRelativeTo(null); // Center the window after setting size
-        
-        // Apply modern styling after components are initialized
-        applyModernStyling();
-        addHoverEffects();
-        
-        // Icons are already properly positioned by the form designer - no need to reposition
-        
+
+
         displayLoggedInEmployeeAttendance();
     
         EmpDetails employee = EmpUserSession.getInstance().getCurrentUser();
@@ -41,37 +29,11 @@ public class frm_EmpAttLeave extends javax.swing.JFrame {
         } else {
             JOptionPane.showMessageDialog(this, "User not logged in!", "Error", JOptionPane.ERROR_MESSAGE);
         }
-        
-        // Force button sizes after everything is fully initialized
-        forceButtonSizes();
+
+        composeWorkspace();
     }
 
-    @Override
-    public void doLayout() {
-        super.doLayout();
-        
-        // Force navigation button sizes after layout
-        java.awt.Dimension navButtonSize = new java.awt.Dimension(200, 45);
-        
-        if (btn_Profile != null) {
-            btn_Profile.setSize(navButtonSize);
-            btn_Profile.setPreferredSize(navButtonSize);
-        }
-        if (btn_LeaveMgt != null) {
-            btn_LeaveMgt.setSize(navButtonSize);
-            btn_LeaveMgt.setPreferredSize(navButtonSize);
-        }
-        if (btn_SalaryAndStatutory != null) {
-            btn_SalaryAndStatutory.setSize(navButtonSize);
-            btn_SalaryAndStatutory.setPreferredSize(navButtonSize);
-        }
-        if (btn_PayrollSummary != null) {
-            btn_PayrollSummary.setSize(navButtonSize);
-            btn_PayrollSummary.setPreferredSize(navButtonSize);
-        }
-    }
-
-    public void setRoleBasedAccess(String role) {
+public void setRoleBasedAccess(String role) {
         // Disable all by default
         btn_MyRecords.setEnabled(false);
         btn_SalaryAndStatutory.setEnabled(false);
@@ -113,38 +75,7 @@ public class frm_EmpAttLeave extends javax.swing.JFrame {
             }
         }
     }
-    
-    private void forceButtonSizes() {
-        // Use SwingUtilities.invokeLater to ensure this runs after layout is complete
-        javax.swing.SwingUtilities.invokeLater(() -> {
-            // Force navigation button sizes to ensure they match the profile form
-            java.awt.Dimension navButtonSize = new java.awt.Dimension(200, 45);
-            
-            // Set sizes for all navigation buttons
-            javax.swing.JButton[] navButtons = {btn_Profile, btn_LeaveMgt, btn_SalaryAndStatutory, btn_PayrollSummary};
-            
-            for (javax.swing.JButton button : navButtons) {
-                button.setPreferredSize(navButtonSize);
-                button.setMinimumSize(navButtonSize);
-                button.setMaximumSize(navButtonSize);
-                button.setSize(navButtonSize);
-                
-                // Force the button to maintain its size
-                button.putClientProperty("JComponent.sizeVariant", "regular");
-            }
-            
-            // Force the entire form to revalidate and repaint
-            this.revalidate();
-            this.repaint();
-            
-            // Also force each button to revalidate
-            for (javax.swing.JButton button : navButtons) {
-                button.revalidate();
-                button.repaint();
-            }
-        });
-    }
-    
+
 // To display the data of the logged in User
     private void displayLoggedInEmployeeAttendance() {
         List<EmpAttLeave> attendanceList = CSVHandler.getAttendanceData();
@@ -199,13 +130,35 @@ public class frm_EmpAttLeave extends javax.swing.JFrame {
         txt_slBal.setText(String.valueOf(slBalance));
     }
 
+    /** Source-owned responsive composition; legacy fixed layout is retired. */
+    private void composeWorkspace() {
+        WorkspaceShell.bindNavigation(this, "profile", btn_Profile);
+        WorkspaceShell.bindNavigation(this, "salary", btn_SalaryAndStatutory);
+        WorkspaceShell.bindNavigation(this, "attendance", btn_LeaveMgt);
+        WorkspaceShell.bindNavigation(this, "payroll", btn_PayrollSummary);
+        WorkspaceShell.bindNavigation(this, "employees", btn_EmpRecords);
+        WorkspaceShell.bindNavigation(this, "logout", btn_Logout);
+        javax.swing.JPanel content = new javax.swing.JPanel(new java.awt.BorderLayout(0, 20));
+        content.setOpaque(false);
+        javax.swing.JComponent balances = WorkspaceUI.section("Leave balances", "Values from your attendance and leave record", WorkspaceUI.fields(
+            "Vacation leave allocation", txt_vlCount, "Sick leave allocation", txt_slCount,
+            "Vacation leave used", txt_vlUsed, "Sick leave used", txt_slUsed,
+            "Vacation leave balance", txt_vlBal, "Sick leave balance", txt_slBal));
+        content.add(balances, java.awt.BorderLayout.NORTH);
+        content.add(WorkspaceUI.table(tbl_Attendance), java.awt.BorderLayout.CENTER);
+        WorkspaceUI.primary(btn_LeaveRequest, "Leave / attendance request");
+        btn_LeaveApproval.setText("Review requests");
+        WorkspaceShell.mount(this, "Attendance & leave", "Time logs and submitted requests", "attendance", content,
+            WorkspaceUI.actions(btn_LeaveRequest, btn_LeaveApproval));
+    }
+
     /**
      * This method is called from within the constructor to initialize the form.
-     * WARNING: Do NOT modify this code. The content of this method is always
-     * regenerated by the Form Editor.
+     * Control construction retained for handler compatibility.
+     * The generated fixed layout is retired; composition is maintained in source.
      */
     @SuppressWarnings("unchecked")
-    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
+    // <editor-fold defaultstate="collapsed" desc="Control construction - generated layout retired">
     private void initComponents() {
 
         jPanel1 = new javax.swing.JPanel();
@@ -314,92 +267,12 @@ public class frm_EmpAttLeave extends javax.swing.JFrame {
 
         jLabel11.setText("SL Balance:");
 
-        javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
-        jPanel2.setLayout(jPanel2Layout);
-        jPanel2Layout.setHorizontalGroup(
-            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel2Layout.createSequentialGroup()
-                .addGap(189, 189, 189)
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
-                    .addComponent(btn_LeaveRequest, javax.swing.GroupLayout.PREFERRED_SIZE, 160, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addGroup(jPanel2Layout.createSequentialGroup()
-                        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jLabel6, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(jLabel7, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(jLabel8, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                            .addComponent(txt_vlBal, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 82, Short.MAX_VALUE)
-                            .addComponent(txt_vlUsed, javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addComponent(txt_vlCount))))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 173, Short.MAX_VALUE)
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(btn_LeaveApproval, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 160, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel2Layout.createSequentialGroup()
-                        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jLabel9, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(jLabel10, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel2Layout.createSequentialGroup()
-                                .addGap(0, 0, Short.MAX_VALUE)
-                                .addComponent(jLabel11)))
-                        .addGap(18, 18, 18)
-                        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(txt_slUsed, javax.swing.GroupLayout.PREFERRED_SIZE, 82, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(txt_slCount, javax.swing.GroupLayout.PREFERRED_SIZE, 82, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(txt_slBal, javax.swing.GroupLayout.PREFERRED_SIZE, 82, javax.swing.GroupLayout.PREFERRED_SIZE))))
-                .addGap(173, 173, 173))
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel2Layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(jScrollPane1)
-                .addContainerGap())
-        );
-        jPanel2Layout.setVerticalGroup(
-            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel2Layout.createSequentialGroup()
-                .addGap(24, 24, 24)
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(btn_LeaveRequest)
-                    .addComponent(btn_LeaveApproval))
-                .addGap(18, 18, 18)
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel9)
-                    .addComponent(txt_slCount, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(txt_vlCount, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel6))
-                .addGap(18, 18, 18)
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                        .addComponent(jLabel10)
-                        .addComponent(txt_slUsed, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                        .addComponent(txt_vlUsed, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addComponent(jLabel7)))
-                .addGap(21, 21, 21)
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(txt_slBal, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel11)
-                    .addComponent(txt_vlBal, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel8))
-                .addGap(18, 18, 18)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 318, Short.MAX_VALUE)
-                .addContainerGap())
-        );
 
         jLabel2.setFont(new java.awt.Font("Arial Rounded MT Bold", 1, 18)); // NOI18N
         jLabel2.setText("MotorPH");
 
         jPanel3.setBackground(new java.awt.Color(255, 255, 102));
 
-        javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
-        jPanel3.setLayout(jPanel3Layout);
-        jPanel3Layout.setHorizontalGroup(
-            jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 0, Short.MAX_VALUE)
-        );
-        jPanel3Layout.setVerticalGroup(
-            jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 17, Short.MAX_VALUE)
-        );
 
         btn_Profile.setBackground(new java.awt.Color(51, 51, 255));
         btn_Profile.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
@@ -443,16 +316,6 @@ public class frm_EmpAttLeave extends javax.swing.JFrame {
 
         jPanel4.setBackground(new java.awt.Color(245, 28, 71));
 
-        javax.swing.GroupLayout jPanel4Layout = new javax.swing.GroupLayout(jPanel4);
-        jPanel4.setLayout(jPanel4Layout);
-        jPanel4Layout.setHorizontalGroup(
-            jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 1032, Short.MAX_VALUE)
-        );
-        jPanel4Layout.setVerticalGroup(
-            jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 21, Short.MAX_VALUE)
-        );
 
         btn_MyRecords.setBackground(new java.awt.Color(51, 51, 255));
         btn_MyRecords.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
@@ -484,147 +347,19 @@ public class frm_EmpAttLeave extends javax.swing.JFrame {
             }
         });
 
-        jLabel1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/oop_motorph/img/img_myrecord.png"))); // NOI18N
-
-        jLabel3.setIcon(new javax.swing.ImageIcon(getClass().getResource("/oop_motorph/img/img_emprecords.png"))); // NOI18N
-
-        jLabel4.setIcon(new javax.swing.ImageIcon(getClass().getResource("/oop_motorph/img/img_logout.png"))); // NOI18N
-
         jPanel5.setBackground(new java.awt.Color(255, 255, 102));
 
-        javax.swing.GroupLayout jPanel5Layout = new javax.swing.GroupLayout(jPanel5);
-        jPanel5.setLayout(jPanel5Layout);
-        jPanel5Layout.setHorizontalGroup(
-            jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 40, Short.MAX_VALUE)
-        );
-        jPanel5Layout.setVerticalGroup(
-            jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 0, Short.MAX_VALUE)
-        );
 
         jPanel6.setBackground(new java.awt.Color(255, 255, 102));
 
-        javax.swing.GroupLayout jPanel6Layout = new javax.swing.GroupLayout(jPanel6);
-        jPanel6.setLayout(jPanel6Layout);
-        jPanel6Layout.setHorizontalGroup(
-            jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 40, Short.MAX_VALUE)
-        );
-        jPanel6Layout.setVerticalGroup(
-            jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 0, Short.MAX_VALUE)
-        );
 
         jLabel5.setFont(new java.awt.Font("Segoe UI", 0, 10)); // NOI18N
         jLabel5.setText("Version 1.30");
 
-        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
-        jPanel1.setLayout(jPanel1Layout);
-        jPanel1Layout.setHorizontalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jPanel3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-            .addGroup(jPanel1Layout.createSequentialGroup()
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
-                        .addGap(0, 0, Short.MAX_VALUE)
-                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
-                                .addComponent(jLabel2)
-                                .addGap(56, 56, 56))
-                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
-                                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(jLabel1)
-                                    .addComponent(jLabel5))
-                                .addGap(67, 67, 67))))
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jPanel5, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addGroup(jPanel1Layout.createSequentialGroup()
-                                .addGap(72, 72, 72)
-                                .addComponent(jLabel4)))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
-                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
-                                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(btn_EmpRecords, javax.swing.GroupLayout.PREFERRED_SIZE, 170, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addComponent(btn_MyRecords, javax.swing.GroupLayout.PREFERRED_SIZE, 170, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addComponent(btn_Logout, javax.swing.GroupLayout.PREFERRED_SIZE, 170, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                .addGap(31, 31, 31))
-                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
-                                .addComponent(jLabel3)
-                                .addGap(55, 55, 55)))))
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addComponent(btn_Profile, javax.swing.GroupLayout.PREFERRED_SIZE, 185, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(55, 55, 55)
-                        .addComponent(btn_LeaveMgt, javax.swing.GroupLayout.PREFERRED_SIZE, 185, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(42, 42, 42)
-                        .addComponent(btn_SalaryAndStatutory, javax.swing.GroupLayout.PREFERRED_SIZE, 185, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(45, 45, 45)
-                        .addComponent(btn_PayrollSummary, javax.swing.GroupLayout.PREFERRED_SIZE, 185, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-            .addGroup(jPanel1Layout.createSequentialGroup()
-                .addGap(45, 45, 45)
-                .addComponent(jPanel4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 16, Short.MAX_VALUE)
-                .addComponent(jPanel6, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-        );
-        jPanel1Layout.setVerticalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel1Layout.createSequentialGroup()
-                .addComponent(jPanel3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(btn_Profile)
-                    .addComponent(jLabel2, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(btn_LeaveMgt)
-                    .addComponent(btn_SalaryAndStatutory)
-                    .addComponent(btn_PayrollSummary))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addComponent(jLabel5)
-                        .addGap(37, 37, 37)
-                        .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 65, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(btn_MyRecords)
-                        .addGap(36, 36, 36)
-                        .addComponent(jLabel3, javax.swing.GroupLayout.PREFERRED_SIZE, 68, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(btn_EmpRecords)
-                        .addGap(42, 42, 42)
-                        .addComponent(jLabel4, javax.swing.GroupLayout.PREFERRED_SIZE, 54, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(btn_Logout))
-                    .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(18, 18, 18)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jPanel5, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addComponent(jPanel4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(0, 0, Short.MAX_VALUE))
-                    .addComponent(jPanel6, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
-        );
-
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
-        getContentPane().setLayout(layout);
-        layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-        );
-        layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-        );
 
         jPanel1.getAccessibleContext().setAccessibleName("Profile");
 
-        pack();
-    }// </editor-fold>//GEN-END:initComponents
+    }// </editor-fold>
 
     private void btn_PayrollSummaryActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_PayrollSummaryActionPerformed
         
@@ -842,267 +577,5 @@ public class frm_EmpAttLeave extends javax.swing.JFrame {
     private javax.swing.JTextField txt_vlCount;
     private javax.swing.JTextField txt_vlUsed;
     // End of variables declaration//GEN-END:variables
-    
-    private void applyModernStyling() {
-        // Style the main container to match Profile page layout
-        jPanel1.setLayout(new java.awt.BorderLayout());
-        jPanel1.setBackground(new Color(249, 250, 251));
-        jPanel1.setBorder(javax.swing.BorderFactory.createEmptyBorder(15, 15, 15, 15));
-        
-        // Main content area styling
-        jPanel2.setBackground(new Color(255, 255, 255));
-        jPanel2.setBorder(javax.swing.BorderFactory.createCompoundBorder(
-            javax.swing.BorderFactory.createLineBorder(new Color(229, 231, 235), 1),
-            javax.swing.BorderFactory.createEmptyBorder(20, 25, 20, 25)
-        ));
-        
-        // Ensure navigation panel has proper styling
-        jPanel3.setBackground(new Color(255, 255, 255));
-        jPanel3.setBorder(javax.swing.BorderFactory.createEmptyBorder(10, 15, 10, 15));
-        
-        // Style sidebar container with proper background and layout
-        if (jPanel4 != null) {
-            jPanel4.setBackground(new Color(255, 255, 255));
-            jPanel4.setBorder(javax.swing.BorderFactory.createEmptyBorder(20, 15, 20, 15));
-        }
-        if (jPanel5 != null) {
-            jPanel5.setBackground(new Color(255, 255, 255));
-        }
-        if (jPanel6 != null) {
-            jPanel6.setBackground(new Color(255, 255, 255));
-        }
-        
-        // Hide MotorPH logo and version text to match profile page
-        if (jLabel2 != null) {
-            jLabel2.setVisible(false); // MotorPH logo
-        }
-        if (jLabel5 != null) {
-            jLabel5.setVisible(false); // Version text
-        }
-        
-        // Style text fields with enhanced modern borders
-        styleTextFieldEnhanced(txt_vlCount);
-        styleTextFieldEnhanced(txt_vlUsed);
-        styleTextFieldEnhanced(txt_vlBal);
-        styleTextFieldEnhanced(txt_slCount);
-        styleTextFieldEnhanced(txt_slUsed);
-        styleTextFieldEnhanced(txt_slBal);
-        
-        // Style labels with enhanced modern typography
-        styleLabelEnhanced(jLabel6, false);
-        styleLabelEnhanced(jLabel7, false);
-        styleLabelEnhanced(jLabel8, false);
-        styleLabelEnhanced(jLabel9, false);
-        styleLabelEnhanced(jLabel10, false);
-        styleLabelEnhanced(jLabel11, false);
-        
-        // Style attendance table
-        styleTableEnhanced();
-        
-        // Style action buttons
-        styleActionButtonEnhanced(btn_LeaveRequest, new Color(59, 130, 246));
-        styleActionButtonEnhanced(btn_LeaveApproval, new Color(59, 130, 246));
-        
-        // Style navigation buttons with enhanced modern design and better spacing
-        styleNavigationButtonEnhanced(btn_Profile, new Color(107, 114, 128), false);
-        styleNavigationButtonEnhanced(btn_LeaveMgt, new Color(34, 197, 94), true); // Active green for attendance
-        styleNavigationButtonEnhanced(btn_SalaryAndStatutory, new Color(107, 114, 128), false);
-        styleNavigationButtonEnhanced(btn_PayrollSummary, new Color(107, 114, 128), false);
-        
-        // Style left sidebar buttons to match Profile page exactly
-        styleSidebarButtonEnhanced(btn_MyRecords, new Color(107, 114, 128), false);
-        styleSidebarButtonEnhanced(btn_EmpRecords, new Color(107, 114, 128), false);
-        styleSidebarButtonEnhanced(btn_Logout, new Color(239, 68, 68), false); // Red for logout
-    }
-    
-    private void styleTextFieldEnhanced(javax.swing.JTextField field) {
-        field.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        field.setBackground(new Color(249, 250, 251));
-        field.setBorder(javax.swing.BorderFactory.createCompoundBorder(
-            javax.swing.BorderFactory.createCompoundBorder(
-                javax.swing.BorderFactory.createEmptyBorder(1, 1, 2, 2),
-                javax.swing.BorderFactory.createLineBorder(new Color(0, 0, 0, 6), 1)
-            ),
-            javax.swing.BorderFactory.createCompoundBorder(
-                javax.swing.BorderFactory.createLineBorder(new Color(209, 213, 219), 1),
-                javax.swing.BorderFactory.createEmptyBorder(10, 16, 10, 16)
-            )
-        ));
-        field.setForeground(new Color(55, 65, 81));
-    }
-    
-    private void styleLabelEnhanced(javax.swing.JLabel label, boolean isTitle) {
-        if (isTitle) {
-            label.setFont(new Font("Segoe UI", Font.BOLD, 22));
-            label.setForeground(new Color(17, 24, 39));
-        } else {
-            label.setFont(new Font("Segoe UI", Font.BOLD, 14));
-            label.setForeground(new Color(75, 85, 99));
-            label.setBorder(javax.swing.BorderFactory.createEmptyBorder(0, 0, 4, 0));
-            // Add right alignment for consistent label positioning
-            label.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
-        }
-    }
-    
-    private void styleTableEnhanced() {
-        // Style the table with modern appearance to match profile page
-        tbl_Attendance.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-        tbl_Attendance.setRowHeight(38);
-        tbl_Attendance.setGridColor(new Color(229, 231, 235));
-        tbl_Attendance.setSelectionBackground(new Color(219, 234, 254));
-        tbl_Attendance.setSelectionForeground(new Color(30, 64, 175));
-        tbl_Attendance.setBackground(new Color(255, 255, 255));
-        tbl_Attendance.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 13));
-        tbl_Attendance.getTableHeader().setBackground(new Color(249, 250, 251));
-        tbl_Attendance.getTableHeader().setForeground(new Color(55, 65, 81));
-        tbl_Attendance.getTableHeader().setBorder(javax.swing.BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(209, 213, 219)));
-        tbl_Attendance.getTableHeader().setPreferredSize(new java.awt.Dimension(0, 40));
-        
-        // Style the scroll pane to match profile page
-        jScrollPane1.setBorder(javax.swing.BorderFactory.createCompoundBorder(
-            javax.swing.BorderFactory.createCompoundBorder(
-                javax.swing.BorderFactory.createEmptyBorder(2, 2, 4, 4),
-                javax.swing.BorderFactory.createLineBorder(new Color(0, 0, 0, 8), 1)
-            ),
-            javax.swing.BorderFactory.createCompoundBorder(
-                javax.swing.BorderFactory.createLineBorder(new Color(229, 231, 235), 1),
-                javax.swing.BorderFactory.createEmptyBorder(2, 2, 2, 2)
-            )
-        ));
-        jScrollPane1.setBackground(new Color(255, 255, 255));
-        jScrollPane1.getViewport().setBackground(new Color(255, 255, 255));
-    }
-    
-    private void styleActionButtonEnhanced(javax.swing.JButton button, Color backgroundColor) {
-        button.setFont(new Font("Segoe UI", Font.BOLD, 13));
-        button.setBackground(backgroundColor);
-        button.setForeground(new Color(255, 255, 255));
-        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        button.setFocusPainted(false);
-        button.setBorderPainted(false);
-        
-        // Make buttons larger to match profile page styling
-        button.setPreferredSize(new java.awt.Dimension(150, 45));
-        button.setMinimumSize(new java.awt.Dimension(150, 45));
-        
-        button.setBorder(javax.swing.BorderFactory.createCompoundBorder(
-            javax.swing.BorderFactory.createCompoundBorder(
-                javax.swing.BorderFactory.createEmptyBorder(2, 2, 4, 4),
-                javax.swing.BorderFactory.createLineBorder(new Color(0, 0, 0, 8), 1)
-            ),
-            javax.swing.BorderFactory.createCompoundBorder(
-                javax.swing.BorderFactory.createLineBorder(backgroundColor.darker(), 1),
-                javax.swing.BorderFactory.createEmptyBorder(10, 18, 10, 18)
-            )
-        ));
-    }
-    
-    private void styleNavigationButtonEnhanced(javax.swing.JButton button, Color backgroundColor, boolean isActive) {
-        button.setFont(new Font("Segoe UI", Font.BOLD, 12));
-        button.setBackground(backgroundColor);
-        button.setForeground(new Color(255, 255, 255));
-        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        button.setFocusPainted(false);
-        button.setBorderPainted(false);
-        
-        // Set consistent preferred size for all navigation buttons - wider for better text display
-        button.setPreferredSize(new java.awt.Dimension(200, 45));
-        button.setMinimumSize(new java.awt.Dimension(200, 45));
-        button.setMaximumSize(new java.awt.Dimension(200, 45));
-        
-        // Ensure text is centered and properly aligned
-        button.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        button.setVerticalAlignment(javax.swing.SwingConstants.CENTER);
-        
-        if (isActive) {
-            // Active button with enhanced border highlight and shadow
-            button.setBorder(javax.swing.BorderFactory.createCompoundBorder(
-                javax.swing.BorderFactory.createCompoundBorder(
-                    javax.swing.BorderFactory.createEmptyBorder(1, 1, 3, 3),
-                    javax.swing.BorderFactory.createLineBorder(new Color(34, 197, 94, 40), 1)
-                ),
-                javax.swing.BorderFactory.createCompoundBorder(
-                    javax.swing.BorderFactory.createLineBorder(new Color(34, 197, 94), 2),
-                    javax.swing.BorderFactory.createEmptyBorder(10, 16, 10, 16)
-                )
-            ));
-        } else {
-            // Regular button with subtle shadow and generous padding
-            button.setBorder(javax.swing.BorderFactory.createCompoundBorder(
-                javax.swing.BorderFactory.createEmptyBorder(1, 1, 3, 3),
-                javax.swing.BorderFactory.createCompoundBorder(
-                    javax.swing.BorderFactory.createLineBorder(new Color(0, 0, 0, 8), 1),
-                    javax.swing.BorderFactory.createEmptyBorder(12, 18, 12, 18)
-                )
-            ));
-        }
-    }
-    
-    private void styleSidebarButtonEnhanced(javax.swing.JButton button, Color backgroundColor, boolean isActive) {
-        button.setFont(new Font("Segoe UI", Font.BOLD, 13)); // Match Profile page font exactly
-        button.setBackground(backgroundColor);
-        button.setForeground(new Color(255, 255, 255));
-        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        button.setFocusPainted(false);
-        button.setBorderPainted(false);
-        
-        // Force exact uniform size for ALL sidebar buttons - exactly like Profile page
-        button.setPreferredSize(new java.awt.Dimension(170, 45));
-        button.setMinimumSize(new java.awt.Dimension(170, 45));
-        button.setMaximumSize(new java.awt.Dimension(170, 45));
-        button.setSize(170, 45);
-        
-        // Perfect alignment and spacing for sidebar buttons - exactly like Profile page
-        button.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        button.setVerticalAlignment(javax.swing.SwingConstants.CENTER);
-        button.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-        button.setVerticalTextPosition(javax.swing.SwingConstants.CENTER);
-        button.setMargin(new java.awt.Insets(0, 0, 0, 0));
-        
-        // Clean, uniform styling for all sidebar buttons - exactly matching Profile page
-        button.setBorder(javax.swing.BorderFactory.createCompoundBorder(
-            javax.swing.BorderFactory.createCompoundBorder(
-                javax.swing.BorderFactory.createEmptyBorder(2, 2, 4, 4),
-                javax.swing.BorderFactory.createLineBorder(new Color(0, 0, 0, 8), 1)
-            ),
-            javax.swing.BorderFactory.createCompoundBorder(
-                javax.swing.BorderFactory.createLineBorder(new Color(156, 163, 175), 1),
-                javax.swing.BorderFactory.createEmptyBorder(10, 12, 10, 12)
-            )
-        ));
-    }
-    
-    private void addHoverEffects() {
-        addButtonHoverEnhanced(btn_Profile, new Color(107, 114, 128), new Color(75, 85, 99));
-        addButtonHoverEnhanced(btn_LeaveMgt, new Color(34, 197, 94), new Color(22, 163, 74));
-        addButtonHoverEnhanced(btn_SalaryAndStatutory, new Color(107, 114, 128), new Color(75, 85, 99));
-        addButtonHoverEnhanced(btn_PayrollSummary, new Color(107, 114, 128), new Color(75, 85, 99));
-        
-        // Add hover effects for sidebar buttons
-        addButtonHoverEnhanced(btn_MyRecords, new Color(107, 114, 128), new Color(75, 85, 99));
-        addButtonHoverEnhanced(btn_EmpRecords, new Color(107, 114, 128), new Color(75, 85, 99));
-        addButtonHoverEnhanced(btn_Logout, new Color(239, 68, 68), new Color(220, 38, 38));
-        
-        // Add hover effects for action buttons
-        addButtonHoverEnhanced(btn_LeaveRequest, new Color(59, 130, 246), new Color(37, 99, 235));
-        addButtonHoverEnhanced(btn_LeaveApproval, new Color(59, 130, 246), new Color(37, 99, 235));
-    }
-    
-    private void addButtonHoverEnhanced(javax.swing.JButton button, Color normalColor, Color hoverColor) {
-        button.addMouseListener(new java.awt.event.MouseAdapter() {
-            @Override
-            public void mouseEntered(java.awt.event.MouseEvent evt) {
-                if (button.isEnabled()) {
-                    button.setBackground(hoverColor);
-                }
-            }
-            
-            @Override
-            public void mouseExited(java.awt.event.MouseEvent evt) {
-                if (button.isEnabled()) {
-                    button.setBackground(normalColor);
-                }
-            }
-        });
-    }
+
 }

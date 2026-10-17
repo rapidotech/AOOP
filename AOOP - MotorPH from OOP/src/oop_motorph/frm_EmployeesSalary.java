@@ -6,30 +6,42 @@ import javax.swing.JOptionPane;
 import java.awt.*;
 import java.awt.Cursor;
 
-public class frm_EmployeesSalary extends javax.swing.JFrame {
+public class frm_EmployeesSalary extends javax.swing.JFrame implements WorkspaceScreen {
+
+    /** Code-led layout. The archived NetBeans .form layout is retired. */
+    @Override public void composeWorkspace() {
+        WorkspaceShell.bindNavigation(this,"profile",btn_MyRecords);
+        WorkspaceShell.bindNavigation(this,"employees",btn_EmpRecords);
+        WorkspaceShell.bindNavigation(this,"compensation",btn_SalaryAndStatutory);
+        WorkspaceShell.bindNavigation(this,"requests",btn_LeaveMgt);
+        WorkspaceShell.bindNavigation(this,"processing",btn_PayrollSummary);
+        WorkspaceShell.bindNavigation(this,"logout",btn_Logout);
+        WorkspaceShell.mount(this,"Compensation","Review salary, allowances and statutory identifiers.","compensation",WorkspaceUI.table(tbl_Salary),
+            WorkspaceUI.actions(WorkspaceUI.primary(btn_AddEmp,"Add compensation"),WorkspaceUI.secondary(btn_ViewEmp,"Open compensation"),WorkspaceUI.danger(btn_DelEmp,"Delete"),WorkspaceUI.secondary(btn_refresh,"Refresh")));
+    }
 
     public frm_EmployeesSalary() {
         AuthorizationService.requireHr();
         initComponents();
         AppTheme.finish(this);
-        
-        // Set window properties - larger size to show all content
+
+        // Initial bounds; the responsive workspace owns the mounted layout.
         setResizable(true);
         setTitle("Employees Salary & Statutory");
-        setSize(1400, 950); // Increased size to accommodate all content
-        setMinimumSize(new java.awt.Dimension(1150, 800));
+        setSize(1180, 800);
+        setMinimumSize(new java.awt.Dimension(800, 600));
         setLocationRelativeTo(null); // Center the window after setting size
-        
+
         // Apply modern styling after components are initialized
-        applyModernStyling();
-        addHoverEffects();
+
+
 
         // Display salary data in table
         displaySalaryData();
-        
+
         EmpDetails employee = EmpUserSession.getInstance().getCurrentUser();
         String role = EmpUserSession.getInstance().getRole();
-        
+
         if (employee != null && role != null) {
             // Set role-based access
             setRoleBasedAccess(role);
@@ -41,191 +53,25 @@ public class frm_EmployeesSalary extends javax.swing.JFrame {
     private void displaySalaryData() {
         List<EmpSalaryDetails> salaries = CSVHandler.getSalaryData();
         DefaultTableModel model = (DefaultTableModel) tbl_Salary.getModel();
-        
+
         // Disable table editing
         tbl_Salary.setDefaultEditor(Object.class, null);
-        
+
         // Clear existing rows
         model.setRowCount(0);
 
         // Add all salary records to the table
         for (EmpSalaryDetails salary : salaries) {
             model.addRow(new Object[]{
-                salary.getEmpID(), salary.getFirstName(), salary.getLastName(), 
+                salary.getEmpID(), salary.getFirstName(), salary.getLastName(),
                 salary.getSssNo(), salary.getPhilhealthNo(), salary.getTinNo(), salary.getPagibigNo(),
                 salary.getBasicSalary(), salary.getRiceSubsidy(), salary.getPhoneAllowance(),
                 salary.getClothingAllowance(), salary.getGrossSemi(), salary.getHourlyRate()
             });
         }
-        model.fireTableDataChanged();  
+        model.fireTableDataChanged();
     }
 
-    private void applyModernStyling() {
-        // Style the main panels with clean background
-        jPanel1.setBackground(new Color(249, 250, 251));
-        jPanel2.setBackground(new Color(255, 255, 255));
-        jPanel3.setBackground(new Color(255, 255, 255));
-        
-        // Style navigation panel
-        if (jPanel4 != null) {
-            jPanel4.setBackground(new Color(255, 255, 255));
-        }
-        if (jPanel5 != null) {
-            jPanel5.setBackground(new Color(255, 255, 255));
-        }
-        if (jPanel6 != null) {
-            jPanel6.setBackground(new Color(255, 255, 255));
-        }
-        
-        // Add enhanced card-like styling to main content panel - reduced padding for more space
-        jPanel2.setBorder(javax.swing.BorderFactory.createCompoundBorder(
-            javax.swing.BorderFactory.createCompoundBorder(
-                javax.swing.BorderFactory.createEmptyBorder(4, 4, 8, 8),
-                javax.swing.BorderFactory.createLineBorder(new Color(0, 0, 0, 8), 1)
-            ),
-            javax.swing.BorderFactory.createCompoundBorder(
-                javax.swing.BorderFactory.createLineBorder(new Color(229, 231, 235), 1),
-                javax.swing.BorderFactory.createEmptyBorder(16, 20, 16, 20)            )
-        ));
-        
-        // Style the navigation area with minimal border - reduced padding since title is removed
-        jPanel3.setBorder(javax.swing.BorderFactory.createCompoundBorder(
-            javax.swing.BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(229, 231, 235)),
-            javax.swing.BorderFactory.createEmptyBorder(4, 8, 4, 8)
-        ));
-        
-        // Style the table with enhanced styling
-        styleTableEnhanced();
-        
-        // Style action buttons with enhanced styling
-        styleActionButtonEnhanced(btn_ViewEmp, new Color(59, 130, 246));
-        styleActionButtonEnhanced(btn_AddEmp, new Color(34, 197, 94));
-        styleActionButtonEnhanced(btn_DelEmp, new Color(239, 68, 68));
-        styleActionButtonEnhanced(btn_refresh, new Color(107, 114, 128));
-        
-        // Style navigation buttons with enhanced modern design and better spacing
-        styleNavigationButtonEnhanced(btn_Profile, new Color(107, 114, 128), false);
-        styleNavigationButtonEnhanced(btn_LeaveMgt, new Color(107, 114, 128), false);
-        styleNavigationButtonEnhanced(btn_SalaryAndStatutory, new Color(34, 197, 94), true); // Active green - this is the Salary page
-        styleNavigationButtonEnhanced(btn_PayrollSummary, new Color(107, 114, 128), false);
-        
-        // Style left sidebar buttons with different sizing
-        styleSidebarButtonEnhanced(btn_MyRecords, new Color(107, 114, 128), false);
-        styleSidebarButtonEnhanced(btn_EmpRecords, new Color(107, 114, 128), false);
-        styleSidebarButtonEnhanced(btn_Logout, new Color(239, 68, 68), false); // Red for logout
-        
-        // Add minimal spacing improvements to the overall layout - reduced top padding
-        jPanel1.setBorder(javax.swing.BorderFactory.createEmptyBorder(4, 12, 12, 12));
-    }
-    
-    private void styleTableEnhanced() {
-        tbl_Salary.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        tbl_Salary.setBackground(new Color(255, 255, 255));
-        tbl_Salary.setForeground(new Color(55, 65, 81));
-        tbl_Salary.setGridColor(new Color(229, 231, 235));
-        tbl_Salary.setRowHeight(40);
-        tbl_Salary.setShowVerticalLines(true);
-        tbl_Salary.setShowHorizontalLines(true);
-        tbl_Salary.setIntercellSpacing(new java.awt.Dimension(1, 1));
-        
-        // Style table header
-        if (tbl_Salary.getTableHeader() != null) {
-            tbl_Salary.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 12));
-            tbl_Salary.getTableHeader().setBackground(new Color(249, 250, 251));
-            tbl_Salary.getTableHeader().setForeground(new Color(75, 85, 99));
-            tbl_Salary.getTableHeader().setBorder(javax.swing.BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(229, 231, 235)));
-        }
-        
-        // Style scroll pane
-        if (jScrollPane1 != null) {
-            jScrollPane1.setBorder(javax.swing.BorderFactory.createCompoundBorder(
-                javax.swing.BorderFactory.createLineBorder(new Color(229, 231, 235), 1),
-                javax.swing.BorderFactory.createEmptyBorder(8, 8, 8, 8)
-            ));
-        }
-    }
-    
-    private void styleActionButtonEnhanced(javax.swing.JButton button, Color backgroundColor) {
-        button.setFont(new Font("Segoe UI", Font.BOLD, 11));
-        button.setBackground(backgroundColor);
-        button.setForeground(new Color(255, 255, 255));
-        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        button.setFocusPainted(false);
-        button.setBorderPainted(false);
-        
-        // Set consistent preferred size for action buttons
-        button.setPreferredSize(new java.awt.Dimension(80, 30));
-        button.setMinimumSize(new java.awt.Dimension(80, 30));
-        
-        button.setBorder(javax.swing.BorderFactory.createCompoundBorder(
-            javax.swing.BorderFactory.createEmptyBorder(1, 1, 2, 2),
-            javax.swing.BorderFactory.createCompoundBorder(
-                javax.swing.BorderFactory.createLineBorder(new Color(0, 0, 0, 8), 1),
-                javax.swing.BorderFactory.createEmptyBorder(6, 12, 6, 12)
-            )
-        ));
-    }
-    
-    private void styleNavigationButtonEnhanced(javax.swing.JButton button, Color backgroundColor, boolean isActive) {
-        button.setFont(new Font("Segoe UI", Font.BOLD, 12));
-        button.setBackground(backgroundColor);
-        button.setForeground(new Color(255, 255, 255));
-        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        button.setFocusPainted(false);
-        button.setBorderPainted(false);
-        
-        // Set consistent preferred size for all navigation buttons - wider for better text display
-        button.setPreferredSize(new java.awt.Dimension(220, 45));
-        button.setMinimumSize(new java.awt.Dimension(220, 45));
-    }
-    
-    private void styleSidebarButtonEnhanced(javax.swing.JButton button, Color backgroundColor, boolean isActive) {
-        button.setFont(new Font("Segoe UI", Font.BOLD, 12));
-        button.setBackground(backgroundColor);
-        button.setForeground(new Color(255, 255, 255));
-        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        button.setFocusPainted(false);
-        button.setBorderPainted(false);
-        
-        // Set consistent preferred size for all sidebar buttons
-        button.setPreferredSize(new java.awt.Dimension(170, 45));
-        button.setMinimumSize(new java.awt.Dimension(170, 45));
-    }
-    
-    private void addHoverEffects() {
-        // Add hover effects to navigation buttons
-        addButtonHoverEnhanced(btn_Profile, new Color(107, 114, 128), new Color(75, 85, 99));
-        addButtonHoverEnhanced(btn_LeaveMgt, new Color(107, 114, 128), new Color(75, 85, 99));
-        addButtonHoverEnhanced(btn_SalaryAndStatutory, new Color(34, 197, 94), new Color(22, 163, 74)); // Different hover for active
-        addButtonHoverEnhanced(btn_PayrollSummary, new Color(107, 114, 128), new Color(75, 85, 99));
-        
-        // Add hover effects to sidebar buttons
-        addButtonHoverEnhanced(btn_MyRecords, new Color(107, 114, 128), new Color(75, 85, 99));
-        addButtonHoverEnhanced(btn_EmpRecords, new Color(34, 197, 94), new Color(22, 163, 74));
-        addButtonHoverEnhanced(btn_Logout, new Color(239, 68, 68), new Color(220, 38, 38));
-        
-        // Add hover effects to action buttons
-        addButtonHoverEnhanced(btn_ViewEmp, new Color(59, 130, 246), new Color(37, 99, 235));
-        addButtonHoverEnhanced(btn_AddEmp, new Color(34, 197, 94), new Color(22, 163, 74));
-        addButtonHoverEnhanced(btn_DelEmp, new Color(239, 68, 68), new Color(220, 38, 38));
-        addButtonHoverEnhanced(btn_refresh, new Color(107, 114, 128), new Color(75, 85, 99));
-    }
-    
-    private void addButtonHoverEnhanced(javax.swing.JButton button, Color normalColor, Color hoverColor) {
-        button.addMouseListener(new java.awt.event.MouseAdapter() {
-            @Override
-            public void mouseEntered(java.awt.event.MouseEvent evt) {
-                button.setBackground(hoverColor);
-            }
-            
-            @Override
-            public void mouseExited(java.awt.event.MouseEvent evt) {
-                button.setBackground(normalColor);
-            }
-        });
-    }
-
-    // Set role-based access controls
     private void setRoleBasedAccess(String role) {
         // Set role-based access controls for salary management
         switch (role.toUpperCase()) {
@@ -345,54 +191,14 @@ public class frm_EmployeesSalary extends javax.swing.JFrame {
             }
         });
 
-        javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
-        jPanel2.setLayout(jPanel2Layout);
-        jPanel2Layout.setHorizontalGroup(
-            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel2Layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 882, Short.MAX_VALUE)
-                .addContainerGap())
-            .addGroup(jPanel2Layout.createSequentialGroup()
-                .addGap(50, 50, 50)
-                .addComponent(btn_ViewEmp)
-                .addGap(50, 50, 50)
-                .addComponent(btn_AddEmp)
-                .addGap(50, 50, 50)
-                .addComponent(btn_DelEmp)
-                .addGap(50, 50, 50)
-                .addComponent(btn_refresh)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-        );
-        jPanel2Layout.setVerticalGroup(
-            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel2Layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 457, Short.MAX_VALUE)
-                .addGap(18, 18, 18)
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(btn_ViewEmp)
-                    .addComponent(btn_AddEmp)
-                    .addComponent(btn_DelEmp)
-                    .addComponent(btn_refresh))
-                .addContainerGap())
-        );
+
 
         jLabel2.setFont(new java.awt.Font("Segoe UI", 1, 16)); // NOI18N
         jLabel2.setText("MotorPH");
 
         jPanel3.setBackground(new java.awt.Color(255, 255, 255));
 
-        javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
-        jPanel3.setLayout(jPanel3Layout);
-        jPanel3Layout.setHorizontalGroup(
-            jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 0, Short.MAX_VALUE)
-        );
-        jPanel3Layout.setVerticalGroup(
-            jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 20, Short.MAX_VALUE)
-        );
+
 
         btn_Profile.setBackground(new java.awt.Color(0, 0, 204));
         btn_Profile.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
@@ -434,16 +240,7 @@ public class frm_EmployeesSalary extends javax.swing.JFrame {
             }
         });
 
-        javax.swing.GroupLayout jPanel4Layout = new javax.swing.GroupLayout(jPanel4);
-        jPanel4.setLayout(jPanel4Layout);
-        jPanel4Layout.setHorizontalGroup(
-            jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 100, Short.MAX_VALUE)
-        );
-        jPanel4Layout.setVerticalGroup(
-            jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 100, Short.MAX_VALUE)
-        );
+
 
         btn_MyRecords.setBackground(new java.awt.Color(102, 102, 102));
         btn_MyRecords.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
@@ -481,127 +278,16 @@ public class frm_EmployeesSalary extends javax.swing.JFrame {
 
         jLabel4.setIcon(new javax.swing.ImageIcon(getClass().getResource("/oop_motorph/img/img_logout.png"))); // NOI18N
 
-        javax.swing.GroupLayout jPanel5Layout = new javax.swing.GroupLayout(jPanel5);
-        jPanel5.setLayout(jPanel5Layout);
-        jPanel5Layout.setHorizontalGroup(
-            jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 100, Short.MAX_VALUE)
-        );
-        jPanel5Layout.setVerticalGroup(
-            jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 100, Short.MAX_VALUE)
-        );
 
-        javax.swing.GroupLayout jPanel6Layout = new javax.swing.GroupLayout(jPanel6);
-        jPanel6.setLayout(jPanel6Layout);
-        jPanel6Layout.setHorizontalGroup(
-            jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 100, Short.MAX_VALUE)
-        );
-        jPanel6Layout.setVerticalGroup(
-            jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 100, Short.MAX_VALUE)
-        );
 
         jLabel5.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
         jLabel5.setText("Version 1.30");
 
-        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
-        jPanel1.setLayout(jPanel1Layout);
-        jPanel1Layout.setHorizontalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jPanel3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-            .addGroup(jPanel1Layout.createSequentialGroup()
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addGap(45, 45, 45)
-                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(jPanel1Layout.createSequentialGroup()
-                                .addGap(27, 27, 27)
-                                .addComponent(jLabel1))))
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addGap(45, 45, 45)
-                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                            .addComponent(btn_MyRecords, javax.swing.GroupLayout.PREFERRED_SIZE, 170, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addGroup(jPanel1Layout.createSequentialGroup()
-                                .addGap(27, 27, 27)
-                                .addComponent(jLabel3))))
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addGap(45, 45, 45)
-                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(btn_EmpRecords, javax.swing.GroupLayout.PREFERRED_SIZE, 170, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addGroup(jPanel1Layout.createSequentialGroup()
-                                .addGap(27, 27, 27)
-                                .addComponent(jLabel4))))
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addGap(45, 45, 45)
-                        .addComponent(btn_Logout, javax.swing.GroupLayout.PREFERRED_SIZE, 170, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addComponent(jPanel5, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(35, 35, 35)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addComponent(btn_Profile, javax.swing.GroupLayout.PREFERRED_SIZE, 185, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(55, 55, 55)
-                        .addComponent(btn_LeaveMgt, javax.swing.GroupLayout.PREFERRED_SIZE, 185, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(42, 42, 42)
-                        .addComponent(btn_SalaryAndStatutory, javax.swing.GroupLayout.PREFERRED_SIZE, 185, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(45, 45, 45)
-                        .addComponent(btn_PayrollSummary, javax.swing.GroupLayout.PREFERRED_SIZE, 185, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-            .addGroup(jPanel1Layout.createSequentialGroup()
-                .addGap(45, 45, 45)
-                .addComponent(jPanel4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(jPanel6, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-        );
-        jPanel1Layout.setVerticalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel1Layout.createSequentialGroup()
-                .addComponent(jPanel3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(btn_Profile)
-                    .addComponent(btn_LeaveMgt)
-                    .addComponent(btn_SalaryAndStatutory)
-                    .addComponent(btn_PayrollSummary))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addGap(25, 25, 25)
-                        .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 65, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(5, 5, 5)
-                        .addComponent(btn_MyRecords, javax.swing.GroupLayout.PREFERRED_SIZE, 45, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(25, 25, 25)
-                        .addComponent(jLabel3, javax.swing.GroupLayout.PREFERRED_SIZE, 68, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(5, 5, 5)
-                        .addComponent(btn_EmpRecords, javax.swing.GroupLayout.PREFERRED_SIZE, 45, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(25, 25, 25)
-                        .addComponent(jLabel4, javax.swing.GroupLayout.PREFERRED_SIZE, 54, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(5, 5, 5)
-                        .addComponent(btn_Logout, javax.swing.GroupLayout.PREFERRED_SIZE, 45, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addGap(18, 18, 18)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jPanel5, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addComponent(jPanel4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(0, 0, Short.MAX_VALUE))
-                    .addComponent(jPanel6, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
-        );
+
 
         jPanel1.getAccessibleContext().setAccessibleName("Employee Records");
 
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
-        getContentPane().setLayout(layout);
-        layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-        );
-        layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-        );
+
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
@@ -650,7 +336,7 @@ public class frm_EmployeesSalary extends javax.swing.JFrame {
                 String philhealthNo = String.valueOf(tbl_Salary.getValueAt(selectedRow, 4));
                 String tinNo = String.valueOf(tbl_Salary.getValueAt(selectedRow, 5));
                 String pagibigNo = String.valueOf(tbl_Salary.getValueAt(selectedRow, 6));
-                
+
                 // These are numeric values that need proper conversion
                 String basicSalary = String.valueOf(tbl_Salary.getValueAt(selectedRow, 7));
                 String riceAllow = String.valueOf(tbl_Salary.getValueAt(selectedRow, 8));
@@ -658,20 +344,20 @@ public class frm_EmployeesSalary extends javax.swing.JFrame {
                 String clothingAllow = String.valueOf(tbl_Salary.getValueAt(selectedRow, 10));
                 String grossSemi = String.valueOf(tbl_Salary.getValueAt(selectedRow, 11));
                 String hourlyRate = String.valueOf(tbl_Salary.getValueAt(selectedRow, 12));
-                
+
                 System.out.println("Opening salary details for: " + empID + " - " + firstName + " " + lastName);
-                
+
                 // Open salary details view
-                new frm_EmployeesSalary2(empID, firstName, lastName, sssNo, philhealthNo, pagibigNo, tinNo, 
+                new frm_EmployeesSalary2(empID, firstName, lastName, sssNo, philhealthNo, pagibigNo, tinNo,
                                        basicSalary, riceAllow, phoneAllow, clothingAllow, grossSemi, hourlyRate).setVisible(true);
             } catch (Exception e) {
                 System.out.println("Error opening salary details: " + e.getMessage());
                 e.printStackTrace();
-                JOptionPane.showMessageDialog(this, "Error opening salary details: " + e.getMessage(), 
+                JOptionPane.showMessageDialog(this, "Error opening salary details: " + e.getMessage(),
                                             "Error", JOptionPane.ERROR_MESSAGE);
             }
         } else {
-            JOptionPane.showMessageDialog(this, "Please select an employee to view salary details.", 
+            JOptionPane.showMessageDialog(this, "Please select an employee to view salary details.",
                                         "No Selection", JOptionPane.WARNING_MESSAGE);
         }
     }//GEN-LAST:event_btn_ViewEmpActionPerformed
@@ -682,15 +368,15 @@ public class frm_EmployeesSalary extends javax.swing.JFrame {
             // Open add salary dialog in add mode
             frm_EmployeesSalary2 addForm = new frm_EmployeesSalary2();
             addForm.setVisible(true);
-            
+
             // Refresh data after dialog is closed (in case data was added)
             displaySalaryData();
         } catch (Exception e) {
             System.out.println("Error opening add salary dialog: " + e.getMessage());
             e.printStackTrace();
-            JOptionPane.showMessageDialog(this, 
-                "Error opening add salary dialog: " + e.getMessage(), 
-                "Error", 
+            JOptionPane.showMessageDialog(this,
+                "Error opening add salary dialog: " + e.getMessage(),
+                "Error",
                 JOptionPane.ERROR_MESSAGE);
         }
     }//GEN-LAST:event_btn_AddEmpActionPerformed
@@ -702,35 +388,35 @@ public class frm_EmployeesSalary extends javax.swing.JFrame {
             String empID = String.valueOf(tbl_Salary.getValueAt(selectedRow, 0));
             String firstName = String.valueOf(tbl_Salary.getValueAt(selectedRow, 1));
             String lastName = String.valueOf(tbl_Salary.getValueAt(selectedRow, 2));
-            
+
             // Confirm deletion
-            int confirm = JOptionPane.showConfirmDialog(this, 
-                "Are you sure you want to delete salary record for: " + firstName + " " + lastName + " (ID: " + empID + ")?", 
-                "Confirm Delete", 
+            int confirm = JOptionPane.showConfirmDialog(this,
+                "Are you sure you want to delete salary record for: " + firstName + " " + lastName + " (ID: " + empID + ")?",
+                "Confirm Delete",
                 JOptionPane.YES_NO_OPTION,
                 JOptionPane.WARNING_MESSAGE);
-            
+
             if (confirm == JOptionPane.YES_OPTION) {
                 try {
                     // Delete the employee salary record
                     CSVHandler.deleteEmployee(empID);
-                    
+
                     // Refresh the table
                     displaySalaryData();
-                    
-                    JOptionPane.showMessageDialog(this, 
-                        "Salary record for " + firstName + " " + lastName + " has been deleted successfully.", 
-                        "Delete Success", 
+
+                    JOptionPane.showMessageDialog(this,
+                        "Salary record for " + firstName + " " + lastName + " has been deleted successfully.",
+                        "Delete Success",
                         JOptionPane.INFORMATION_MESSAGE);
                 } catch (Exception e) {
-                    JOptionPane.showMessageDialog(this, 
-                        "Error deleting salary record: " + e.getMessage(), 
-                        "Delete Error", 
+                    JOptionPane.showMessageDialog(this,
+                        "Error deleting salary record: " + e.getMessage(),
+                        "Delete Error",
                         JOptionPane.ERROR_MESSAGE);
                 }
             }
         } else {
-            JOptionPane.showMessageDialog(this, "Please select a salary record to delete.", 
+            JOptionPane.showMessageDialog(this, "Please select a salary record to delete.",
                                         "No Selection", JOptionPane.WARNING_MESSAGE);
         }
     }//GEN-LAST:event_btn_DelEmpActionPerformed
@@ -746,7 +432,7 @@ public class frm_EmployeesSalary extends javax.swing.JFrame {
         /* Set the Nimbus look and feel */
         //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
         /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
-         * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
+         * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html
          */
         try {
             for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {

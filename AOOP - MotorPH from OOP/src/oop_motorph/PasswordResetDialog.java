@@ -48,12 +48,12 @@ public final class PasswordResetDialog extends JDialog {
         c.gridx = 0; c.gridy = 0; c.weightx = 1; c.fill = GridBagConstraints.HORIZONTAL;
         c.insets = new Insets(0, 0, 10, 0);
         JLabel heading = new JLabel("Change your password");
-        heading.setFont(new Font("Segoe UI", Font.BOLD, 24));
-        heading.setForeground(AppTheme.INK);
+        heading.setFont(new Font("Segoe UI", Font.BOLD, 27));
+        heading.setForeground(Color.WHITE);
         body.add(heading, c);
         c.gridy++;
         JLabel reason = new JLabel("<html>Your account needs a new password before you can continue.<br>Use the temporary password provided by your administrator.</html>");
-        reason.setForeground(AppTheme.MUTED);
+        reason.setForeground(new Color(219, 235, 226));
         reason.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         c.insets = new Insets(0, 0, 20, 0); body.add(reason, c);
         addField(body, c, "Current / temporary password", 'T', current);
@@ -79,7 +79,7 @@ public final class PasswordResetDialog extends JDialog {
         status.getAccessibleContext().setAccessibleName("Password change status");
         body.add(status, c);
         c.gridy++;
-        JPanel actions = new JPanel(new BorderLayout(12, 0));
+        JPanel actions = new JPanel(new GridLayout(2, 1, 0, 8));
         actions.setOpaque(false);
         save.setName("savePassword"); save.setMnemonic('S');
         save.setBackground(AppTheme.GREEN); save.setForeground(Color.WHITE);
@@ -88,15 +88,28 @@ public final class PasswordResetDialog extends JDialog {
         cancel.setBackground(new Color(229, 231, 235)); cancel.setForeground(AppTheme.INK);
         save.addActionListener(event -> savePassword());
         cancel.addActionListener(event -> cancelReset());
-        actions.add(cancel, BorderLayout.WEST); actions.add(save, BorderLayout.CENTER);
+        actions.add(save); actions.add(cancel);
         c.insets = new Insets(0, 0, 0, 0); body.add(actions, c);
-        setContentPane(body);
-        AppTheme.apply(body);
+        WorkspaceUI.primary(save, "Save password and sign in");
+        WorkspaceUI.secondary(cancel, "Back to sign in");
+        JPanel band = new JPanel(new BorderLayout(0, 12));
+        band.setBackground(AppTheme.FOREST);
+        band.setBorder(BorderFactory.createEmptyBorder(26, 28, 26, 28));
+        band.add(heading, BorderLayout.NORTH); band.add(reason, BorderLayout.CENTER);
+        JPanel surface = new JPanel(new BorderLayout()); surface.setBackground(Color.WHITE);
+        surface.add(band, BorderLayout.NORTH);
+        JScrollPane scroll = new JScrollPane(body, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        scroll.setBorder(BorderFactory.createEmptyBorder()); scroll.getVerticalScrollBar().setUnitIncrement(24);
+        surface.add(scroll, BorderLayout.CENTER);
+        setContentPane(surface);
+        AppTheme.apply(surface);
         getRootPane().setDefaultButton(save);
         getRootPane().registerKeyboardAction(event -> cancelReset(), KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0),
                 JComponent.WHEN_IN_FOCUSED_WINDOW);
         pack();
-        setResizable(false);
+        setSize(540, Math.min(760, GraphicsEnvironment.getLocalGraphicsEnvironment().getMaximumWindowBounds().height - 40));
+        setMinimumSize(new Dimension(500, 650));
+        setResizable(true);
         setLocationRelativeTo(owner);
     }
 

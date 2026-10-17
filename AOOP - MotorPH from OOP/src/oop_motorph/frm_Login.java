@@ -39,92 +39,88 @@ public class frm_Login extends javax.swing.JFrame {
         initComponents();
         configureLogin();
         setLocationRelativeTo(null);
-        setResizable(false);
+        setResizable(true);
         setTitle("Welcome to MotorPH");
         AppTheme.finish(this);
     }
 
+    /** Source-owned authentication composition; the generated fixed layout is retired. */
     private void configureLogin() {
         passwordEcho = jPasswordField.getEchoChar();
-        jLabel1.setFont(new Font("Arial Rounded MT Bold", Font.BOLD, 40));
-        jLabel3.setForeground(AppTheme.MUTED);
+        jLabel1.setFont(new Font("Segoe UI", Font.BOLD, 48));
+        jLabel1.setForeground(Color.WHITE);
         jLabel3.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-        jLabel1.setAlignmentX(Component.LEFT_ALIGNMENT);
-        jLabel3.setAlignmentX(Component.LEFT_ALIGNMENT);
+        jLabel3.setForeground(new Color(209, 229, 218));
         jLabel3.setName("companyName");
         Dimension companySize = jLabel3.getPreferredSize();
-        companySize.width = jLabel3.getFontMetrics(jLabel3.getFont()).stringWidth(jLabel3.getText()) + 4;
-        jLabel3.setMinimumSize(companySize);
-        jLabel3.setPreferredSize(companySize);
-        jLabel3.setMaximumSize(companySize);
-        jLabel2.setText("");
-        jLabel2.getAccessibleContext().setAccessibleName("MotorPH brand artwork");
-        jLabel6.getAccessibleContext().setAccessibleName("MotorPH motorcycle logo");
-        ImageIcon logo = (ImageIcon) jLabel6.getIcon();
-        jLabel6.setIcon(new ImageIcon(logo.getImage().getScaledInstance(112, 112, Image.SCALE_SMOOTH)));
-        jLabel6.setPreferredSize(new Dimension(112, 112));
-        jLabel4.setLabelFor(txt_Login);
-        jLabel5.setLabelFor(jPasswordField);
-        jLabel4.setDisplayedMnemonic('U');
-        jLabel5.setDisplayedMnemonic('P');
-        txt_Login.setName("username");
-        jPasswordField.setName("password");
-        btn_Login.setName("signIn");
-        loginStatus.setName("loginStatus");
-        loginStatus.setForeground(AppTheme.MUTED);
+        companySize.width = jLabel3.getFontMetrics(jLabel3.getFont()).stringWidth(jLabel3.getText()) + 8;
+        jLabel3.setMinimumSize(companySize); jLabel3.setPreferredSize(companySize); jLabel3.setMaximumSize(companySize);
+        jLabel1.setAlignmentX(Component.LEFT_ALIGNMENT); jLabel3.setAlignmentX(Component.LEFT_ALIGNMENT);
+        jLabel2.setIcon(null); jLabel6.setIcon(null);
+        jLabel4.setText("Username"); jLabel4.setLabelFor(txt_Login); jLabel4.setDisplayedMnemonic('U');
+        jLabel5.setText("Password"); jLabel5.setLabelFor(jPasswordField); jLabel5.setDisplayedMnemonic('P');
+        txt_Login.setName("username"); jPasswordField.setName("password"); btn_Login.setName("signIn");
+        loginStatus.setName("loginStatus"); loginStatus.setForeground(AppTheme.MUTED);
         loginStatus.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-        loginStatus.setPreferredSize(new Dimension(402, 34));
+        loginStatus.setPreferredSize(new Dimension(350, 54));
         loginStatus.getAccessibleContext().setAccessibleName("Sign in status");
-        btn_Login.setText("Sign in");
-        btn_Login.setBackground(AppTheme.GREEN);
-        btn_Login.setMnemonic('S');
-        jCheckBox1.setText("Show password");
-        jCheckBox1.setMnemonic('H');
-        JPanel header = new JPanel(new BorderLayout(12, 0));
-        header.setOpaque(false);
-        JPanel brand = new JPanel();
-        brand.setOpaque(false);
-        brand.setLayout(new BoxLayout(brand, BoxLayout.Y_AXIS));
-        brand.add(Box.createVerticalStrut(20));
-        brand.add(jLabel1);
-        brand.add(Box.createVerticalStrut(5));
-        brand.add(jLabel3);
-        header.add(brand, BorderLayout.CENTER);
-        header.add(jLabel6, BorderLayout.EAST);
-        JPanel fields = new JPanel(new GridBagLayout());
-        fields.setOpaque(false);
+        WorkspaceUI.primary(btn_Login, "Sign in"); btn_Login.setBackground(AppTheme.GREEN); btn_Login.setMnemonic('S');
+        btn_Login.setFocusPainted(true);
+        jCheckBox1.setText("Show password"); jCheckBox1.setMnemonic('H'); jCheckBox1.setOpaque(false);
+
+        JPanel brand = new JPanel(new BorderLayout(0, 32));
+        brand.setName("signInBrand"); brand.setBackground(AppTheme.FOREST);
+        brand.setBorder(BorderFactory.createEmptyBorder(42, 32, 32, 28));
+        brand.setPreferredSize(new Dimension(330, 580));
+        brand.add(jLabel1, BorderLayout.NORTH);
+        JPanel message = new JPanel(); message.setOpaque(false);
+        message.setLayout(new BoxLayout(message, BoxLayout.Y_AXIS));
+        for (String line : new String[]{"People.", "Attendance.", "Payroll."}) {
+            JLabel text = new JLabel(line); text.setForeground(new Color(222, 238, 229));
+            text.setFont(new Font("Segoe UI", Font.PLAIN, 31));
+            message.add(text); message.add(Box.createVerticalStrut(10));
+        }
+        JPanel centeredMessage = new JPanel(new GridBagLayout()); centeredMessage.setOpaque(false);
+        GridBagConstraints brandConstraint = new GridBagConstraints(); brandConstraint.anchor = GridBagConstraints.WEST; brandConstraint.weightx = 1;
+        centeredMessage.add(message, brandConstraint); brand.add(centeredMessage, BorderLayout.CENTER);
+        brand.add(jLabel3, BorderLayout.SOUTH);
+
+        JPanel form = new JPanel(new GridBagLayout()); form.setBackground(Color.WHITE);
+        form.setBorder(BorderFactory.createEmptyBorder(36, 40, 36, 40));
+        JPanel fields = new JPanel(new GridBagLayout()); fields.setOpaque(false);
         GridBagConstraints c = new GridBagConstraints();
-        c.gridx = 0; c.gridy = 0; c.fill = GridBagConstraints.HORIZONTAL;
-        c.weightx = 1; c.insets = new Insets(0, 0, 7, 0);
-        fields.add(jLabel4, c);
-        c.gridy++; c.insets = new Insets(0, 0, 18, 0); fields.add(txt_Login, c);
+        c.gridx = 0; c.gridy = 0; c.weightx = 1; c.fill = GridBagConstraints.HORIZONTAL;
+        c.insets = new Insets(0, 0, 8, 0);
+        JLabel heading = new JLabel("Welcome back"); heading.setFont(new Font("Segoe UI", Font.BOLD, 29)); heading.setForeground(AppTheme.INK);
+        fields.add(heading, c);
+        JLabel introduction = new JLabel("Sign in to your MotorPH workspace."); introduction.setForeground(AppTheme.MUTED);
+        c.gridy++; c.insets = new Insets(0, 0, 30, 0); fields.add(introduction, c);
+        c.gridy++; c.insets = new Insets(0, 0, 7, 0); fields.add(jLabel4, c);
+        c.gridy++; c.insets = new Insets(0, 0, 20, 0); fields.add(txt_Login, c);
         c.gridy++; c.insets = new Insets(0, 0, 7, 0); fields.add(jLabel5, c);
-        c.gridy++; c.insets = new Insets(0, 0, 10, 0); fields.add(jPasswordField, c);
-        c.gridy++; c.insets = new Insets(0, 0, 16, 0); fields.add(jCheckBox1, c);
+        c.gridy++; c.insets = new Insets(0, 0, 12, 0); fields.add(jPasswordField, c);
+        c.gridy++; c.insets = new Insets(0, 0, 24, 0); fields.add(jCheckBox1, c);
         c.gridy++; c.insets = new Insets(0, 0, 12, 0); fields.add(btn_Login, c);
         c.gridy++; c.insets = new Insets(0, 0, 0, 0); fields.add(loginStatus, c);
-        JPanel body = new JPanel(new BorderLayout(0, 20));
-        body.setOpaque(false);
-        body.setBorder(BorderFactory.createEmptyBorder(20, 32, 16, 32));
-        body.add(header, BorderLayout.NORTH);
-        body.add(fields, BorderLayout.CENTER);
-        jPanel1.removeAll();
-        jPanel1.setLayout(new BorderLayout());
-        jPanel1.add(body, BorderLayout.CENTER);
-        jPanel1.add(jLabel2, BorderLayout.SOUTH);
-        getContentPane().setLayout(new BorderLayout());
-        getContentPane().add(jPanel1, BorderLayout.CENTER);
+        GridBagConstraints centered = new GridBagConstraints(); centered.fill = GridBagConstraints.HORIZONTAL; centered.weightx = 1;
+        form.add(fields, centered);
+        jPanel1.removeAll(); jPanel1.setLayout(new BorderLayout());
+        jPanel1.add(brand, BorderLayout.WEST); jPanel1.add(form, BorderLayout.CENTER);
+        setContentPane(jPanel1);
         getRootPane().setDefaultButton(btn_Login);
-        setSize(480, 700);
+        // Establish the native peer and initial component geometry before applying the workspace bounds.
+        pack();
+        setSize(940, 650); setMinimumSize(new Dimension(800, 610));
+        validate();
     }
 
     /**
      * This method is called from within the constructor to initialize the form.
-     * WARNING: Do NOT modify this code. The content of this method is always
-     * regenerated by the Form Editor.
+     * Control construction retained for handler compatibility.
+     * The generated fixed layout is retired; composition is maintained in source.
      */
     @SuppressWarnings("unchecked")
-    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
+    // <editor-fold defaultstate="collapsed" desc="Control construction - generated layout retired">
     private void initComponents() {
 
         jPanel1 = new javax.swing.JPanel();
@@ -168,7 +164,6 @@ public class frm_Login extends javax.swing.JFrame {
             }
         });
 
-        jLabel2.setIcon(new javax.swing.ImageIcon(getClass().getResource("/oop_motorph/img/img_Login.png"))); // NOI18N
         jLabel2.setText("jLabel2");
 
         jLabel1.setFont(new java.awt.Font("Arial Rounded MT Bold", 1, 48)); // NOI18N
@@ -198,7 +193,6 @@ public class frm_Login extends javax.swing.JFrame {
             }
         });
 
-        jLabel6.setIcon(new javax.swing.ImageIcon(getClass().getResource("/oop_motorph/img/img_Logo_XS.png"))); // NOI18N
 
         jPasswordField.setBackground(new java.awt.Color(255, 255, 255));
         jPasswordField.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
@@ -212,82 +206,7 @@ public class frm_Login extends javax.swing.JFrame {
             }
         });
 
-        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
-        jPanel1.setLayout(jPanel1Layout);
-        jPanel1Layout.setHorizontalGroup(
-                jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                        .addComponent(jLabel2, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
-                        .addGroup(jPanel1Layout.createSequentialGroup()
-                                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                        .addGroup(jPanel1Layout.createSequentialGroup()
-                                                .addGap(120, 120, 120)
-                                                .addComponent(jCheckBox1, javax.swing.GroupLayout.PREFERRED_SIZE, 140, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                        .addGroup(jPanel1Layout.createSequentialGroup()
-                                                .addGap(40, 40, 40)
-                                                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                                        .addComponent(jLabel3)
-                                                        .addGroup(jPanel1Layout.createSequentialGroup()
-                                                                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                                                        .addComponent(jLabel4)
-                                                                        .addComponent(jLabel5))
-                                                                .addGap(18, 18, 18)
-                                                                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                                                                        .addComponent(txt_Login, javax.swing.GroupLayout.DEFAULT_SIZE, 250, Short.MAX_VALUE)
-                                                                        .addComponent(jPasswordField, javax.swing.GroupLayout.DEFAULT_SIZE, 250, Short.MAX_VALUE)
-                                                                        .addComponent(btn_Login, javax.swing.GroupLayout.DEFAULT_SIZE, 250, Short.MAX_VALUE))))))
-                                .addContainerGap(40, Short.MAX_VALUE))
-                        .addGroup(jPanel1Layout.createSequentialGroup()
-                                .addGap(40, 40, 40)
-                                .addComponent(jLabel1)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(jLabel6, javax.swing.GroupLayout.PREFERRED_SIZE, 120, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-        );
-        jPanel1Layout.setVerticalGroup(
-                jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                        .addGroup(jPanel1Layout.createSequentialGroup()
-                                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                        .addGroup(jPanel1Layout.createSequentialGroup()
-                                                .addGap(53, 53, 53)
-                                                .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 33, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                                .addComponent(jLabel3))
-                                        .addGroup(jPanel1Layout.createSequentialGroup()
-                                                .addGap(18, 18, 18)
-                                                .addComponent(jLabel6)))
-                                .addGap(55, 55, 55)
-                                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                                        .addComponent(txt_Login, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                        .addComponent(jLabel4))
-                                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                        .addGroup(jPanel1Layout.createSequentialGroup()
-                                                .addGap(24, 24, 24)
-                                                .addComponent(jLabel5, javax.swing.GroupLayout.PREFERRED_SIZE, 16, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                                .addGap(21, 21, 21))
-                                        .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
-                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                                .addComponent(jPasswordField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                                .addGap(18, 18, 18)))
-                                .addComponent(jCheckBox1)
-                                .addGap(18, 18, 18)
-                                .addComponent(btn_Login)
-                                .addGap(18, 18, 18)
-                                .addComponent(jLabel2, javax.swing.GroupLayout.PREFERRED_SIZE, 152, javax.swing.GroupLayout.PREFERRED_SIZE))
-        );
-
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
-        getContentPane().setLayout(layout);
-        layout.setHorizontalGroup(
-                layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                        .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-        );
-        layout.setVerticalGroup(
-                layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                        .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-        );
-
-        pack();
-    }// </editor-fold>//GEN-END:initComponents
+    }// </editor-fold>
 
     //mikko start
     private void btn_LoginActionPerformed(java.awt.event.ActionEvent evt) {

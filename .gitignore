@@ -11,3 +11,7 @@ __pycache__/
 .env
 .env.*
 !.env.example
+
+# Native UI QA captures remain local; reports and design contracts are tracked.
+.impeccable/review/
+.gstack/qa-reports/screenshots/

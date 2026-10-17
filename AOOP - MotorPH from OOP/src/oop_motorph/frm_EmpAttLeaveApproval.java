@@ -11,32 +11,39 @@ import javax.swing.table.DefaultTableModel;
 import java.util.List;
 import javax.swing.JOptionPane;
 
-public class frm_EmpAttLeaveApproval extends javax.swing.JFrame {
+public class frm_EmpAttLeaveApproval extends javax.swing.JFrame implements WorkspaceScreen {
 
-   
+
+    /** Code-led layout. The archived NetBeans .form layout is retired. */
+    @Override public void composeWorkspace() {
+        javax.swing.JButton back=new javax.swing.JButton("Back to attendance");back.addActionListener(e->WorkspaceShell.open(this,"requests"));
+        WorkspaceShell.mount(this,"Review leave requests","Select a pending request to approve or reject it.","requests",WorkspaceUI.table(tbl_Attendance),
+            WorkspaceUI.actions(WorkspaceUI.primary(btn_attApprove,"Approve request"),WorkspaceUI.danger(btn_attReject,"Reject request"),WorkspaceUI.secondary(back,"Back to attendance")));
+    }
+
     public frm_EmpAttLeaveApproval() {
         AuthorizationService.requireHr();
         initComponents();
         AppTheme.finish(this);
         displayAttendanceData();
-        
+
         //JBF: Sets the windown to center and disable resizable
         setLocationRelativeTo(null);
         setResizable(false);
         setTitle("Employees Attendance");
-        
+
         // Retrieve current employee details
         EmpDetails employee = EmpUserSession.getInstance().getCurrentUser();
-        
+
         // Reuse the authenticated session without loading every user's credentials.
         String role = EmpUserSession.getInstance().getRole();
         if (employee == null || role == null) role = "EMPLOYEE";
-        
+
         // Set role-based access
         setRoleBasedAccess(role);
-        
+
     }
-    
+
         public void setRoleBasedAccess(String role) {
         // Default: Disable all buttons
         btn_attApprove.setEnabled(false);
@@ -82,26 +89,26 @@ public class frm_EmpAttLeaveApproval extends javax.swing.JFrame {
                 JOptionPane.showMessageDialog(this, "Invalid role: " + role, "Error", JOptionPane.ERROR_MESSAGE);
                 break;
         }
-    }   
-    
-    
-    
+    }
+
+
+
 
     private void displayAttendanceData() {
-        // get current user login 
+        // get current user login
         EmpDetails employee = EmpUserSession.getInstance().getCurrentUser();
 
         if (employee == null) {
             JOptionPane.showMessageDialog(this, "No employee data found!", "Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
-        
+
          List<EmpAttLeave> attendanceList = CSVHandler.getAttendanceData();
     DefaultTableModel model = (DefaultTableModel) tbl_Attendance.getModel();
 
     //to disable tbl edit
     tbl_Attendance.setDefaultEditor(Object.class, null);
-    
+
     // Clear existing data
     model.setRowCount(0);
 
@@ -110,9 +117,9 @@ public class frm_EmpAttLeaveApproval extends javax.swing.JFrame {
         if ("Pending".equalsIgnoreCase(att.getAttendanceStatus())) {
             model.addRow(new Object[]{
                 att.getEmpID(), att.getFirstName(), att.getLastName(), att.getEmployeeStatus(),
-                att.getPosition(), att.getImmediateSupervisor(), att.getAttDateFrom(), att.getAttDateTo(), 
-                att.getTimeIn(), att.getTimeOut(), att.getHoursWorked(), att.getDuration(), 
-                att.getAttendanceType(), att.getAttendanceStatus(), att.getVlCount(), 
+                att.getPosition(), att.getImmediateSupervisor(), att.getAttDateFrom(), att.getAttDateTo(),
+                att.getTimeIn(), att.getTimeOut(), att.getHoursWorked(), att.getDuration(),
+                att.getAttendanceType(), att.getAttendanceStatus(), att.getVlCount(),
                 att.getVlUsed(), att.getVlBalance(), att.getSlCount(), att.getSlUsed(), att.getSlBalance()
             });
         }
@@ -173,126 +180,23 @@ public class frm_EmpAttLeaveApproval extends javax.swing.JFrame {
             }
         });
 
-        javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
-        jPanel2.setLayout(jPanel2Layout);
-        jPanel2Layout.setHorizontalGroup(
-            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel2Layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 981, Short.MAX_VALUE)
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel2Layout.createSequentialGroup()
-                        .addGap(0, 0, Short.MAX_VALUE)
-                        .addComponent(btn_attApprove, javax.swing.GroupLayout.PREFERRED_SIZE, 125, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(42, 42, 42)
-                        .addComponent(btn_attReject, javax.swing.GroupLayout.PREFERRED_SIZE, 120, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addContainerGap())
-        );
-        jPanel2Layout.setVerticalGroup(
-            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel2Layout.createSequentialGroup()
-                .addGap(18, 18, 18)
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(btn_attApprove)
-                    .addComponent(btn_attReject))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 458, Short.MAX_VALUE)
-                .addContainerGap())
-        );
+
 
         jPanel3.setBackground(new java.awt.Color(255, 255, 102));
 
-        javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
-        jPanel3.setLayout(jPanel3Layout);
-        jPanel3Layout.setHorizontalGroup(
-            jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 0, Short.MAX_VALUE)
-        );
-        jPanel3Layout.setVerticalGroup(
-            jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 17, Short.MAX_VALUE)
-        );
+
 
         jPanel4.setBackground(new java.awt.Color(245, 28, 71));
 
-        javax.swing.GroupLayout jPanel4Layout = new javax.swing.GroupLayout(jPanel4);
-        jPanel4.setLayout(jPanel4Layout);
-        jPanel4Layout.setHorizontalGroup(
-            jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 0, Short.MAX_VALUE)
-        );
-        jPanel4Layout.setVerticalGroup(
-            jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 21, Short.MAX_VALUE)
-        );
+
 
         jPanel5.setBackground(new java.awt.Color(255, 255, 102));
 
-        javax.swing.GroupLayout jPanel5Layout = new javax.swing.GroupLayout(jPanel5);
-        jPanel5.setLayout(jPanel5Layout);
-        jPanel5Layout.setHorizontalGroup(
-            jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 40, Short.MAX_VALUE)
-        );
-        jPanel5Layout.setVerticalGroup(
-            jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 0, Short.MAX_VALUE)
-        );
+
 
         jPanel6.setBackground(new java.awt.Color(255, 255, 102));
 
-        javax.swing.GroupLayout jPanel6Layout = new javax.swing.GroupLayout(jPanel6);
-        jPanel6.setLayout(jPanel6Layout);
-        jPanel6Layout.setHorizontalGroup(
-            jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 40, Short.MAX_VALUE)
-        );
-        jPanel6Layout.setVerticalGroup(
-            jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 0, Short.MAX_VALUE)
-        );
 
-        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
-        jPanel1.setLayout(jPanel1Layout);
-        jPanel1Layout.setHorizontalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jPanel3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
-                .addComponent(jPanel5, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(5, 5, 5)
-                .addComponent(jPanel4, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jPanel6, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-            .addGroup(jPanel1Layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addContainerGap())
-        );
-        jPanel1Layout.setVerticalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel1Layout.createSequentialGroup()
-                .addComponent(jPanel3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(47, 47, 47)
-                .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(18, 18, 18)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jPanel5, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addComponent(jPanel4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(0, 4, Short.MAX_VALUE))
-                    .addComponent(jPanel6, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
-        );
-
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
-        getContentPane().setLayout(layout);
-        layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-        );
-        layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-        );
 
         jPanel1.getAccessibleContext().setAccessibleName("Profile");
 
@@ -306,10 +210,10 @@ public class frm_EmpAttLeaveApproval extends javax.swing.JFrame {
     if (selectedRow != -1) { // Ensure a row is selected
         // Get the Employee ID (assuming Employee ID is in column 0)
         String empID = (String) tbl_Attendance.getValueAt(selectedRow, 0);
-  
+
         // Get the current attendance status (assuming it's in column 12)
         String currentAttendanceStatus = (String) tbl_Attendance.getValueAt(selectedRow, 13);
- 
+
         // Check if the current attendance status is "Pending" before approving
         if ("Pending".equalsIgnoreCase(currentAttendanceStatus)) {
             // Update attendance status to "Approved"
@@ -323,14 +227,14 @@ public class frm_EmpAttLeaveApproval extends javax.swing.JFrame {
             JOptionPane.showMessageDialog(null, "Attendance approved successfully!");
              this.dispose();
         } else {
-            JOptionPane.showMessageDialog(null, "Only entries with 'Pending' status can be approved.", 
+            JOptionPane.showMessageDialog(null, "Only entries with 'Pending' status can be approved.",
                                           "Approval Denied", JOptionPane.WARNING_MESSAGE);
            this.dispose();
-        } 
+        }
     } else {
         JOptionPane.showMessageDialog(null, "Please select an attendance entry to approve.");
     }
-        
+
     }//GEN-LAST:event_btn_attApproveActionPerformed
 
     private void btn_attRejectActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_attRejectActionPerformed
@@ -340,10 +244,10 @@ public class frm_EmpAttLeaveApproval extends javax.swing.JFrame {
     if (selectedRow != -1) { // Ensure a row is selected
         // Get the Employee ID (assuming Employee ID is in column 0)
         String empID = (String) tbl_Attendance.getValueAt(selectedRow, 0);
-  
+
         // Get the current attendance status (assuming it's in column 13)
         String currentAttendanceStatus = (String) tbl_Attendance.getValueAt(selectedRow, 13);
- 
+
         // Check if the current attendance status is "Pending" before rejecting
         if ("Pending".equalsIgnoreCase(currentAttendanceStatus)) {
             // Update attendance status to "Rejected"
@@ -357,14 +261,14 @@ public class frm_EmpAttLeaveApproval extends javax.swing.JFrame {
             JOptionPane.showMessageDialog(null, "Attendance rejected successfully!");
             this.dispose();
         } else {
-            JOptionPane.showMessageDialog(null, "Only entries with 'Pending' status can be rejected.", 
+            JOptionPane.showMessageDialog(null, "Only entries with 'Pending' status can be rejected.",
                                           "Rejection Denied", JOptionPane.WARNING_MESSAGE);
             this.dispose();
-        } 
+        }
     } else {
         JOptionPane.showMessageDialog(null, "Please select an attendance entry to reject.");
     }
-    
+
     }//GEN-LAST:event_btn_attRejectActionPerformed
 
     /**
@@ -374,7 +278,7 @@ public class frm_EmpAttLeaveApproval extends javax.swing.JFrame {
         /* Set the Nimbus look and feel */
         //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
         /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
-         * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
+         * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html
          */
         try {
             for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
@@ -396,10 +300,10 @@ public class frm_EmpAttLeaveApproval extends javax.swing.JFrame {
         //</editor-fold>
         //</editor-fold>
         //</editor-fold>
-        
 
 
-      
+
+
 
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(new Runnable() {

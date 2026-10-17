@@ -9,12 +9,13 @@ import javax.swing.text.JTextComponent;
 
 /** Shared, native Swing presentation and recoverable persistence errors. */
 public final class AppTheme {
-    public static final Color INK = new Color(31, 41, 55);
-    public static final Color MUTED = new Color(75, 85, 99);
-    public static final Color GREEN = new Color(21, 128, 61);
-    public static final Color GREEN_HOVER = new Color(22, 101, 52);
-    public static final Color LINE = new Color(209, 213, 219);
-    public static final Color SURFACE = new Color(249, 250, 251);
+    public static final Color INK = new Color(27, 45, 38);
+    public static final Color MUTED = new Color(89, 106, 97);
+    public static final Color GREEN = new Color(22, 112, 76);
+    public static final Color GREEN_HOVER = new Color(16, 89, 59);
+    public static final Color LINE = new Color(214, 224, 215);
+    public static final Color SURFACE = new Color(244, 246, 240);
+    public static final Color FOREST = new Color(20, 57, 43);
     private static boolean installed;
 
     private AppTheme() { }
@@ -80,8 +81,10 @@ public final class AppTheme {
         install();
         SwingUtilities.invokeLater(() -> {
             if (!frame.isDisplayable()) return;
+            if (frame instanceof WorkspaceScreen && !Boolean.TRUE.equals(frame.getRootPane().getClientProperty("motorph.workspace"))) {
+                ((WorkspaceScreen) frame).composeWorkspace();
+            }
             apply(frame.getContentPane());
-            if (!(frame instanceof frm_Login)) makeContentReachable(frame);
         });
     }
 
@@ -109,16 +112,14 @@ public final class AppTheme {
             JComboBox<?> combo = (JComboBox<?>) component;
             combo.setRenderer(new ReadableComboRenderer(combo));
             installFocus((JComponent) component);
-        } else if (component instanceof JLabel || component instanceof JCheckBox) {
-            if (component instanceof JLabel && "Phone Number:".equals(((JLabel) component).getText())) {
-                ((JLabel) component).setText("Phone:");
+        } else if (component instanceof JLabel) {
+            JLabel label = (JLabel) component;
+            if ("Phone Number:".equals(label.getText())) {
+                label.setText("Phone:");
             }
-            Color fg = component.getForeground();
-            if (fg != null && fg.getRed() > 85 && fg.getRed() < 200
-                    && Math.abs(fg.getRed() - fg.getGreen()) < 35) component.setForeground(MUTED);
         } else if (component instanceof JTable) {
             JTable table = (JTable) component;
-            table.setRowHeight(30);
+            table.setRowHeight(34);
             table.setForeground(INK);
             table.setBackground(Color.WHITE);
             table.setSelectionBackground(new Color(220, 252, 231));
@@ -128,7 +129,7 @@ public final class AppTheme {
             table.setFillsViewportHeight(true);
             table.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 12));
             table.getTableHeader().setForeground(INK);
-            table.getTableHeader().setPreferredSize(new Dimension(0, 36));
+            table.getTableHeader().setPreferredSize(new Dimension(0, 38));
             table.getTableHeader().setToolTipText("Scroll horizontally to see all columns.");
             table.getAccessibleContext().setAccessibleDescription("Use arrow keys to select a record. Column headers identify each value.");
             if (table.getParent() instanceof JViewport) {
@@ -155,31 +156,39 @@ public final class AppTheme {
     }
 
     private static void styleButton(JButton button) {
-        if (Boolean.TRUE.equals(button.getClientProperty("motorph.themed"))) return;
-        button.putClientProperty("motorph.themed", Boolean.TRUE);
-        Color old = button.getBackground();
-        String text = button.getText();
-        if (text != null) {
-            if (text.startsWith("Employees Attendance")) button.setText("Attendance & Leave");
-            else if (text.startsWith("Employees Salary")) button.setText("Salary & Statutory");
-            else if ("ADD".equals(text)) button.setText("Add");
-            else if ("DEL".equals(text)) button.setText("Delete");
-            else if ("REF".equals(text)) button.setText("Refresh");
-            button.setToolTipText(button.getText());
-        }
-        Color base = old;
-        if (old.getGreen() > old.getRed() + 35 && old.getGreen() > old.getBlue() + 25) base = GREEN;
-        else if (old.getRed() > 180 && old.getGreen() < 110) base = new Color(185, 28, 28);
-        else if (old.getBlue() > old.getRed() + 50 && old.getRed() < 120) base = new Color(29, 78, 216);
-        button.setBackground(base);
-        button.setFocusPainted(true);
+        String role = String.valueOf(button.getClientProperty("motorph.buttonRole"));
+        boolean sidebar = role.startsWith("sidebar");
+        boolean solid = "primary".equals(role) || "danger".equals(role) || sidebar;
+        Color base = sidebar ? ("sidebar-active".equals(role) ? new Color(39, 86, 63) : FOREST)
+                : "danger".equals(role) ? new Color(165, 46, 43) : "primary".equals(role) ? GREEN : Color.WHITE;
+        Color foreground = solid ? Color.WHITE : INK;
+        button.setFont(new Font("Segoe UI", sidebar ? Font.PLAIN : Font.BOLD, 13));
+        button.setBackground(base); button.setForeground(foreground);
+        button.setPreferredSize(null); button.setMinimumSize(new Dimension(32, 36));
+        button.setMargin(new Insets(9, 13, 9, 13));
+        button.setBorder(BorderFactory.createEmptyBorder(sidebar ? 11 : 9, 13, sidebar ? 11 : 9, 13));
+        button.setFocusPainted(true); button.setContentAreaFilled(true); button.setOpaque(false);
         button.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        final Color normal = base;
-        button.addMouseListener(new MouseAdapter() {
-            @Override public void mouseEntered(MouseEvent e) { if (button.isEnabled()) button.setBackground(normal.darker()); }
-            @Override public void mouseExited(MouseEvent e) { button.setBackground(normal); }
-        });
-        installFocus(button);
+        button.setToolTipText(button.getText());
+        UIDefaults overrides = new UIDefaults();
+        javax.swing.Painter<JComponent> painter = (g, c, w, h) -> {
+            Graphics2D graphics = (Graphics2D) g.create();
+            graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            ButtonModel model = ((JButton)c).getModel();
+            Color fill = !c.isEnabled() ? (sidebar ? FOREST : new Color(232, 236, 230))
+                    : model.isPressed() ? base.darker() : model.isRollover() ? (solid ? base.brighter() : SURFACE) : base;
+            graphics.setColor(fill); graphics.fillRoundRect(1, 1, w-2, h-2, 8, 8);
+            if (!sidebar) { graphics.setColor(solid ? base : LINE); graphics.drawRoundRect(1, 1, w-3, h-3, 8, 8); }
+            if (c.isFocusOwner()) { graphics.setColor(sidebar ? new Color(174, 216, 189) : GREEN); graphics.setStroke(new BasicStroke(2)); graphics.drawRoundRect(2, 2, w-5, h-5, 8, 8); }
+            graphics.dispose();
+        };
+        for (String state : new String[]{"Enabled", "Focused", "MouseOver", "Pressed", "Default", "Default+Focused", "Default+MouseOver", "Default+Pressed", "Disabled", "Focused+MouseOver", "Focused+Pressed"}) {
+            overrides.put("Button["+state+"].backgroundPainter", painter);
+            overrides.put("Button["+state+"].textForeground", "Disabled".equals(state) ? MUTED : foreground);
+        }
+        button.putClientProperty("Nimbus.Overrides", overrides);
+        button.putClientProperty("Nimbus.Overrides.InheritDefaults", true);
+        button.putClientProperty("motorph.themed", Boolean.TRUE);
     }
 
     private static void installFocus(JComponent control) {
@@ -199,58 +208,6 @@ public final class AppTheme {
             }
             @Override public void focusLost(FocusEvent e) { control.setBorder(original); }
         });
-    }
-
-    private static void makeContentReachable(JFrame frame) {
-        Rectangle usable = GraphicsEnvironment.getLocalGraphicsEnvironment().getMaximumWindowBounds();
-        Container content = frame.getContentPane();
-        Dimension preferred = content.getPreferredSize();
-        int contentWidth = preferred.width;
-        int contentHeight = preferred.height;
-        String form = frame.getClass().getSimpleName();
-        String sourceMessage = form.contains("AttLeave")
-                ? "Attendance and requests: database  |  Changes recorded in the audit trail"
-                : form.equals("frm_EmployeesPayrollPaid") ? "Payroll approvals: database  |  Changes recorded in the audit trail"
-                : form.contains("Payroll") ? "Calculated payroll and approvals: database" : null;
-        if (contentWidth > 950 || contentHeight > 650 || sourceMessage != null) {
-            FormCanvas canvas = new FormCanvas(content);
-            if (sourceMessage != null) {
-                JLabel source = new JLabel(sourceMessage);
-                source.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-                source.setForeground(MUTED);
-                source.setBorder(BorderFactory.createEmptyBorder(8, 16, 8, 16));
-                canvas.add(source, BorderLayout.NORTH);
-            }
-            JScrollPane scroll = new JScrollPane(canvas);
-            scroll.setBorder(BorderFactory.createEmptyBorder());
-            scroll.getVerticalScrollBar().setUnitIncrement(24);
-            scroll.getHorizontalScrollBar().setUnitIncrement(24);
-            frame.setContentPane(scroll);
-        }
-        frame.setResizable(true);
-        frame.setMinimumSize(new Dimension(Math.min(800, usable.width), Math.min(540, usable.height)));
-        frame.setSize(Math.min(frame.getWidth(), usable.width), Math.min(frame.getHeight(), usable.height));
-        frame.setLocationRelativeTo(null);
-        frame.validate();
-    }
-
-    private static final class FormCanvas extends JPanel implements Scrollable {
-        FormCanvas(Container content) {
-            super(new BorderLayout());
-            setBackground(SURFACE);
-            add(content, BorderLayout.CENTER);
-        }
-        @Override public Dimension getPreferredScrollableViewportSize() { return getPreferredSize(); }
-        @Override public int getScrollableUnitIncrement(Rectangle visible, int orientation, int direction) { return 24; }
-        @Override public int getScrollableBlockIncrement(Rectangle visible, int orientation, int direction) {
-            return orientation == SwingConstants.VERTICAL ? Math.max(24, visible.height - 24) : Math.max(24, visible.width - 24);
-        }
-        @Override public boolean getScrollableTracksViewportWidth() {
-            return getParent() instanceof JViewport && getParent().getWidth() >= getMinimumSize().width;
-        }
-        @Override public boolean getScrollableTracksViewportHeight() {
-            return getParent() instanceof JViewport && getParent().getHeight() >= getMinimumSize().height;
-        }
     }
 
     /** ComboBox UI delegates can reset renderer colors after configuration. */

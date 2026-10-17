@@ -5,13 +5,25 @@ import javax.swing.JOptionPane;
 import javax.swing.JTextField;
 
 
-public class frm_EmployeesSalary2 extends javax.swing.JFrame {
-    
+public class frm_EmployeesSalary2 extends javax.swing.JFrame implements WorkspaceScreen {
+
     private EmpSalaryDetails empSalaryDetails;
     private boolean isEditMode; // To determine if we are in edit mode or add mode
     private String originalEmpID; // To store the original empID for editing
 
     // Constructor for Edit Mode (with employee details)
+    /** Code-led layout. The archived NetBeans .form layout is retired. */
+    @Override public void composeWorkspace() {
+        javax.swing.JButton back=new javax.swing.JButton("Back to compensation");back.addActionListener(e->WorkspaceShell.open(this,"compensation"));
+        javax.swing.JComponent content=WorkspaceUI.scroll(WorkspaceUI.column(
+            WorkspaceUI.section("Employee","",WorkspaceUI.fields("Employee ID",txt_empID,"First name",txt_firstName,"Last name",txt_lastName)),
+            WorkspaceUI.section("Salary & allowances","Enter amounts in Philippine pesos.",WorkspaceUI.fields("Basic salary",txt_basicSalary,"Rice subsidy",txt_riceAllow,"Phone allowance",txt_phoneAllow,"Clothing allowance",txt_clothingAllow)),
+            WorkspaceUI.section("Statutory identifiers","",WorkspaceUI.fields("SSS number",txt_sssNo,"PhilHealth number",txt_philhealthNo,"Pag-IBIG number",txt_pagibigNo,"TIN",txt_tinNo)),
+            WorkspaceUI.section("Calculated rates","Calculated from the saved basic salary.",WorkspaceUI.fields("Gross semi-monthly",txt_grossSemi,"Hourly rate",txt_hourlyRate))));
+        WorkspaceShell.mount(this,isEditMode?"Compensation details":"Add compensation","Maintain salary, allowances and statutory identifiers.","compensation",content,
+            WorkspaceUI.actions(WorkspaceUI.primary(btn_SavePayInfo,"Save compensation"),WorkspaceUI.secondary(btn_EditPayInfo,"Edit compensation"),WorkspaceUI.secondary(back,"Back to compensation")));
+    }
+
     public frm_EmployeesSalary2(String empID, String firstName, String lastName, String sssNo, String philhealthNo,
                                 String pagibigNo, String tinNo, String basicSalary, String riceSubsidy,
                                 String phoneAllowance, String clothingAllowance, String grossSemi, String hourlyRate) {
@@ -23,7 +35,7 @@ public class frm_EmployeesSalary2 extends javax.swing.JFrame {
         setTitle("Profile");
 
         // Initialize fields with the provided data (Edit Mode)
-        setFieldsForEdit(empID, firstName, lastName, sssNo, philhealthNo, pagibigNo, tinNo, 
+        setFieldsForEdit(empID, firstName, lastName, sssNo, philhealthNo, pagibigNo, tinNo,
                          basicSalary, riceSubsidy, phoneAllowance, clothingAllowance, grossSemi, hourlyRate);
 
         isEditMode = true;  // This is in edit mode
@@ -102,7 +114,7 @@ public class frm_EmployeesSalary2 extends javax.swing.JFrame {
             double hourlyRate = Double.parseDouble(txt_hourlyRate.getText());
 
             // Create an EmpSalaryDetails object with the data
-            EmpSalaryDetails newSalary = new EmpSalaryDetails(empID, firstName, lastName, sssNo, philhealthNo, 
+            EmpSalaryDetails newSalary = new EmpSalaryDetails(empID, firstName, lastName, sssNo, philhealthNo,
                 pagibigNo, tinNo, basicSalary, riceAllow, phoneAllow, clothingAllow, grossSemi, hourlyRate);
             return newSalary;  // Return the newly created EmpSalaryDetails object
         } catch (NumberFormatException e) {
@@ -114,7 +126,7 @@ public class frm_EmployeesSalary2 extends javax.swing.JFrame {
 
     // Method to toggle the editability of the fields
     public void setFieldsEditable(boolean editable) {
-        txt_empID.setEditable(editable);  
+        txt_empID.setEditable(editable);
         txt_firstName.setEditable(editable);
         txt_lastName.setEditable(editable);
         txt_sssNo.setEditable(editable);
@@ -129,7 +141,7 @@ public class frm_EmployeesSalary2 extends javax.swing.JFrame {
         txt_hourlyRate.setEditable(editable);
     }
 
-    
+
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -281,241 +293,23 @@ public class frm_EmployeesSalary2 extends javax.swing.JFrame {
         jLabel18.setFont(new java.awt.Font("Segoe UI", 1, 9)); // NOI18N
         jLabel18.setText(" X X X - X X X - X X X - X X X");
 
-        javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
-        jPanel2.setLayout(jPanel2Layout);
-        jPanel2Layout.setHorizontalGroup(
-            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel2Layout.createSequentialGroup()
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(btn_EditPayInfo, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel17, javax.swing.GroupLayout.PREFERRED_SIZE, 43, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(18, 18, 18)
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jLabel19)
-                    .addComponent(btn_SavePayInfo, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(68, 68, 68))
-            .addGroup(jPanel2Layout.createSequentialGroup()
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel2Layout.createSequentialGroup()
-                        .addGap(84, 84, 84)
-                        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 95, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                                    .addComponent(jLabel7)
-                                    .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                        .addComponent(jLabel2)
-                                        .addComponent(jLabel3))))
-                            .addGroup(jPanel2Layout.createSequentialGroup()
-                                .addComponent(jLabel8)
-                                .addGap(27, 27, 27)))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED))
-                    .addGroup(jPanel2Layout.createSequentialGroup()
-                        .addGap(89, 89, 89)
-                        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addComponent(jLabel9)
-                            .addComponent(jLabel6))
-                        .addGap(45, 45, 45)))
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel2Layout.createSequentialGroup()
-                        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                                .addComponent(txt_firstName)
-                                .addComponent(txt_empID, javax.swing.GroupLayout.PREFERRED_SIZE, 182, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
-                                .addComponent(txt_tinNo, javax.swing.GroupLayout.Alignment.LEADING)
-                                .addComponent(txt_pagibigNo, javax.swing.GroupLayout.Alignment.LEADING)
-                                .addComponent(txt_philhealthNo, javax.swing.GroupLayout.Alignment.LEADING)
-                                .addComponent(txt_sssNo, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.PREFERRED_SIZE, 178, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addComponent(txt_lastName))
-                        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(jPanel2Layout.createSequentialGroup()
-                                .addGap(89, 89, 89)
-                                .addComponent(jLabel15))
-                            .addGroup(jPanel2Layout.createSequentialGroup()
-                                .addGap(18, 18, 18)
-                                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                                    .addComponent(jLabel13)
-                                    .addComponent(jLabel14)
-                                    .addComponent(jLabel12)))
-                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel2Layout.createSequentialGroup()
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(jLabel11, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 128, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addComponent(jLabel10, javax.swing.GroupLayout.Alignment.TRAILING))))
-                        .addGap(27, 27, 27)
-                        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                            .addComponent(txt_hourlyRate)
-                            .addComponent(txt_grossSemi)
-                            .addComponent(txt_clothingAllow)
-                            .addComponent(txt_phoneAllow)
-                            .addComponent(txt_basicSalary)
-                            .addComponent(txt_riceAllow, javax.swing.GroupLayout.PREFERRED_SIZE, 178, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addGap(116, 116, 116))
-                    .addGroup(jPanel2Layout.createSequentialGroup()
-                        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jLabel18)
-                            .addComponent(jLabel16, javax.swing.GroupLayout.PREFERRED_SIZE, 76, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(jLabel5, javax.swing.GroupLayout.PREFERRED_SIZE, 78, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(jLabel4, javax.swing.GroupLayout.PREFERRED_SIZE, 105, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addGap(0, 0, Short.MAX_VALUE))))
-        );
-        jPanel2Layout.setVerticalGroup(
-            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel2Layout.createSequentialGroup()
-                .addGap(14, 14, 14)
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(jLabel17, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel19, javax.swing.GroupLayout.PREFERRED_SIZE, 41, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(btn_EditPayInfo)
-                    .addComponent(btn_SavePayInfo))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 78, Short.MAX_VALUE)
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel1)
-                    .addComponent(txt_empID, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(txt_basicSalary, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel10))
-                .addGap(14, 14, 14)
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(txt_firstName, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel2)
-                    .addComponent(txt_riceAllow, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel11))
-                .addGap(18, 18, 18)
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(txt_lastName, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(txt_phoneAllow, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel12)
-                    .addComponent(jLabel3))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jLabel4)
-                .addGap(1, 1, 1)
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(txt_sssNo, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel7)
-                    .addComponent(txt_clothingAllow, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel13))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(jLabel5, javax.swing.GroupLayout.PREFERRED_SIZE, 11, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(1, 1, 1)
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(txt_philhealthNo, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel8)
-                    .addComponent(txt_grossSemi, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel14))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(jLabel16)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(txt_pagibigNo, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel9)
-                    .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                        .addComponent(txt_hourlyRate, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addComponent(jLabel15)))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(jLabel18)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(txt_tinNo, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel6))
-                .addGap(62, 62, 62))
-        );
+
 
         jPanel3.setBackground(new java.awt.Color(255, 255, 102));
 
-        javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
-        jPanel3.setLayout(jPanel3Layout);
-        jPanel3Layout.setHorizontalGroup(
-            jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 0, Short.MAX_VALUE)
-        );
-        jPanel3Layout.setVerticalGroup(
-            jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 17, Short.MAX_VALUE)
-        );
+
 
         jPanel4.setBackground(new java.awt.Color(245, 28, 71));
 
-        javax.swing.GroupLayout jPanel4Layout = new javax.swing.GroupLayout(jPanel4);
-        jPanel4.setLayout(jPanel4Layout);
-        jPanel4Layout.setHorizontalGroup(
-            jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 810, Short.MAX_VALUE)
-        );
-        jPanel4Layout.setVerticalGroup(
-            jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 21, Short.MAX_VALUE)
-        );
+
 
         jPanel5.setBackground(new java.awt.Color(255, 255, 102));
 
-        javax.swing.GroupLayout jPanel5Layout = new javax.swing.GroupLayout(jPanel5);
-        jPanel5.setLayout(jPanel5Layout);
-        jPanel5Layout.setHorizontalGroup(
-            jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 40, Short.MAX_VALUE)
-        );
-        jPanel5Layout.setVerticalGroup(
-            jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 0, Short.MAX_VALUE)
-        );
+
 
         jPanel6.setBackground(new java.awt.Color(255, 255, 102));
 
-        javax.swing.GroupLayout jPanel6Layout = new javax.swing.GroupLayout(jPanel6);
-        jPanel6.setLayout(jPanel6Layout);
-        jPanel6Layout.setHorizontalGroup(
-            jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 40, Short.MAX_VALUE)
-        );
-        jPanel6Layout.setVerticalGroup(
-            jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 0, Short.MAX_VALUE)
-        );
 
-        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
-        jPanel1.setLayout(jPanel1Layout);
-        jPanel1Layout.setHorizontalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jPanel3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-            .addGroup(jPanel1Layout.createSequentialGroup()
-                .addComponent(jPanel5, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(jPanel4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jPanel6, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap())
-            .addGroup(jPanel1Layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-        );
-        jPanel1Layout.setVerticalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel1Layout.createSequentialGroup()
-                .addComponent(jPanel3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 8, Short.MAX_VALUE)
-                .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(jPanel6, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jPanel4, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jPanel5, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
-        );
-
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
-        getContentPane().setLayout(layout);
-        layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, 902, Short.MAX_VALUE)
-        );
-        layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-        );
 
         jPanel1.getAccessibleContext().setAccessibleName("Profile");
 
@@ -523,7 +317,7 @@ public class frm_EmployeesSalary2 extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void btn_SavePayInfoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_SavePayInfoActionPerformed
-   
+
     String empID = txt_empID.getText();
     String firstName = txt_firstName.getText();
     String lastName = txt_lastName.getText();
@@ -541,28 +335,28 @@ public class frm_EmployeesSalary2 extends javax.swing.JFrame {
 
     // Validate SSS Number
     if (!sssNo.matches(sssPattern)) {
-        JOptionPane.showMessageDialog(this, "Invalid SSS Number format! Format: XX-XXXXXXX-X", 
+        JOptionPane.showMessageDialog(this, "Invalid SSS Number format! Format: XX-XXXXXXX-X",
                                       "Input Error", JOptionPane.ERROR_MESSAGE);
         return;
     }
 
     // Validate PhilHealth Number
     if (!philhealthNo.matches(philhealthPattern)) {
-        JOptionPane.showMessageDialog(this, "Invalid PhilHealth Number! Must be 12 digits.", 
+        JOptionPane.showMessageDialog(this, "Invalid PhilHealth Number! Must be 12 digits.",
                                       "Input Error", JOptionPane.ERROR_MESSAGE);
         return;
     }
 
     // Validate Pag-IBIG Number
     if (!pagibigNo.matches(pagibigPattern)) {
-        JOptionPane.showMessageDialog(this, "Invalid Pag-IBIG Number! Must be 12 digits.", 
+        JOptionPane.showMessageDialog(this, "Invalid Pag-IBIG Number! Must be 12 digits.",
                                       "Input Error", JOptionPane.ERROR_MESSAGE);
         return;
     }
 
     // Validate TIN Number
     if (!tinNo.matches(tinPattern)) {
-        JOptionPane.showMessageDialog(this, "Invalid TIN Number format! Format: XXX-XXX-XXX-XXX", 
+        JOptionPane.showMessageDialog(this, "Invalid TIN Number format! Format: XXX-XXX-XXX-XXX",
                                       "Input Error", JOptionPane.ERROR_MESSAGE);
         return;
     }
@@ -574,8 +368,8 @@ public class frm_EmployeesSalary2 extends javax.swing.JFrame {
     for (JTextField field : salaryFields) {
         String input = field.getText().trim();
         if (!input.matches(salaryPattern)) {
-            JOptionPane.showMessageDialog(this, "Invalid input in " + field.getName() + 
-                                          "! Must be numeric, max 8 chars, up to 2 decimal places.", 
+            JOptionPane.showMessageDialog(this, "Invalid input in " + field.getName() +
+                                          "! Must be numeric, max 8 chars, up to 2 decimal places.",
                                           "Input Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
@@ -589,13 +383,13 @@ public class frm_EmployeesSalary2 extends javax.swing.JFrame {
         grossSemi = Double.parseDouble(txt_grossSemi.getText());
         hourlyRate = Double.parseDouble(txt_hourlyRate.getText());
     } catch (NumberFormatException e) {
-        JOptionPane.showMessageDialog(this, "Please enter valid numeric values for salary and allowances.", 
+        JOptionPane.showMessageDialog(this, "Please enter valid numeric values for salary and allowances.",
                                       "Invalid Input", JOptionPane.ERROR_MESSAGE);
         return;
     }
 
     // Create new EmpSalaryDetails object
-    EmpSalaryDetails updatedSalary = new EmpSalaryDetails(empID, firstName, lastName, sssNo, philhealthNo, tinNo, pagibigNo, 
+    EmpSalaryDetails updatedSalary = new EmpSalaryDetails(empID, firstName, lastName, sssNo, philhealthNo, tinNo, pagibigNo,
         basicSalary, riceAllow, phoneAllow, clothingAllow, grossSemi, hourlyRate);
 
     String existingEmpID = (isEditMode && empSalaryDetails != null) ? empSalaryDetails.getEmpID() : null;
@@ -615,13 +409,13 @@ public class frm_EmployeesSalary2 extends javax.swing.JFrame {
     }
 
     // Add new employee to Employees and Attendance files
-    EmpDetails newEmployee = new EmpDetails(empID, firstName, lastName, "", "", "", "", "", ""); 
-    CSVHandler.addOrUpdateEmployeeInSalary(newEmployee); 
+    EmpDetails newEmployee = new EmpDetails(empID, firstName, lastName, "", "", "", "", "", "");
+    CSVHandler.addOrUpdateEmployeeInSalary(newEmployee);
 
     JOptionPane.showMessageDialog(this, "Employee salary record successfully saved!");
     dispose();
 
-   
+
     }//GEN-LAST:event_btn_SavePayInfoActionPerformed
 
     private void txt_phoneAllowActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txt_phoneAllowActionPerformed
@@ -645,7 +439,7 @@ public class frm_EmployeesSalary2 extends javax.swing.JFrame {
 
 
     }//GEN-LAST:event_btn_EditPayInfoActionPerformed
- 
+
     /**
      * @param args the command line arguments
      */

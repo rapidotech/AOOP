@@ -15,11 +15,7 @@ final class SecurityActivityPanel extends JPanel {
 
     static void attach(JFrame frame) {
         AuthorizationService.requireHr();
-        Container existing = frame.getContentPane();
-        JPanel shell = new JPanel(new BorderLayout());
-        shell.add(new SecurityActivityPanel(() -> DatabaseHandler.getSecurityAlerts(0)), BorderLayout.NORTH);
-        shell.add(existing, BorderLayout.CENTER);
-        frame.setContentPane(shell);
+        WorkspaceShell.addNotice(frame, new SecurityActivityPanel(() -> DatabaseHandler.getSecurityAlerts(0)));
     }
 
     SecurityActivityPanel(Supplier<List<SecurityAlert>> alerts) {
@@ -28,15 +24,15 @@ final class SecurityActivityPanel extends JPanel {
         summary = new JLabel("Loading security activity\u2026");
         refresh = new JButton("Refresh alerts");
         setName("securityActivity");
-        setLayout(new BorderLayout(20, 0));
+        setLayout(new BorderLayout(0, 8));
         setBackground(Color.WHITE);
         setBorder(BorderFactory.createCompoundBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, AppTheme.LINE),
-                BorderFactory.createEmptyBorder(10, 16, 10, 16)));
+                BorderFactory.createEmptyBorder(14, 18, 12, 18)));
         summary.setName("securitySummary");
         summary.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         summary.setForeground(AppTheme.INK);
         summary.setToolTipText("Counts cover the latest 100 sign-in failures and account lockouts.");
-        JPanel actions = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
+        JPanel actions = WorkspaceUI.actions();
         actions.setOpaque(false);
         JButton review = new JButton("Review security activity");
         review.setName("reviewSecurityActivity");
@@ -49,7 +45,7 @@ final class SecurityActivityPanel extends JPanel {
         refresh.setName("refreshSecurityAlerts");
         refresh.addActionListener(event -> refresh());
         actions.add(refresh); actions.add(review); actions.add(audit);
-        add(summary, BorderLayout.CENTER); add(actions, BorderLayout.EAST);
+        add(summary, BorderLayout.NORTH); add(actions, BorderLayout.CENTER);
         AppTheme.apply(this);
         refresh();
     }
