@@ -8,6 +8,8 @@ import javax.swing.JOptionPane;
 import javax.swing.JTextArea;
 
 public class frm_EmployeesPayrollPaid extends javax.swing.JFrame implements WorkspaceScreen {
+    private final boolean[] payrollPermissions=new boolean[6];
+    private Runnable refreshActionState=()->{};
 
 
     /** Code-led layout. The archived NetBeans .form layout is retired. */
@@ -22,6 +24,19 @@ public class frm_EmployeesPayrollPaid extends javax.swing.JFrame implements Work
         content.add(WorkspaceUI.section("Reports","Choose a date range for the payroll report.",report),java.awt.BorderLayout.SOUTH);
         WorkspaceShell.mount(this,"Payroll approvals","Verify payroll, approve payment and review recorded decisions.","approvals",content,
             WorkspaceUI.actions(WorkspaceUI.primary(btn_werifyPay,"Verify payroll"),WorkspaceUI.secondary(btn_AppPay,"Approve payment"),WorkspaceUI.secondary(btn_undoVerify,"Undo verification"),WorkspaceUI.secondary(btn_undoApp,"Undo approval")));
+        tbl_Payroll.putClientProperty("motorph.emptyMessage","No payroll awaits review. Recorded payroll will appear here for verification.");
+        refreshActionState=()->{
+            boolean selected=WorkspaceUI.hasSelection(tbl_Payroll);
+            String status=selected?String.valueOf(tbl_Payroll.getValueAt(tbl_Payroll.getSelectedRow(),21)):"";
+            btn_werifyPay.setEnabled(payrollPermissions[0]&&"Pending".equalsIgnoreCase(status));
+            btn_AppPay.setEnabled(payrollPermissions[1]&&"Verified".equalsIgnoreCase(status));
+            btn_undoVerify.setEnabled(payrollPermissions[2]&&"Verified".equalsIgnoreCase(status));
+            btn_undoApp.setEnabled(payrollPermissions[3]&&"Approved".equalsIgnoreCase(status));
+            btn_printPayslip.setEnabled(payrollPermissions[4]&&selected);
+            btn_printPayReport.setEnabled(payrollPermissions[5]&&tbl_Payroll.getRowCount()>0);
+        };
+        WorkspaceUI.bindSelection(tbl_Payroll,refreshActionState);
+
     }
 
     public frm_EmployeesPayrollPaid() {
@@ -105,15 +120,15 @@ public class frm_EmployeesPayrollPaid extends javax.swing.JFrame implements Work
              + "Name: " + firstName + " " + lastName + "\n"
              + "Pay Period: " + payDateFrom + " to " + payDateTo + "\n"
              + "---------------------------------\n"
-             + "Monthly Basic Salary: ₱" + basicSalary + "\n"
+             + "Monthly Basic Salary: â‚±" + basicSalary + "\n"
              + "\n"
-             + "Hourly Rate: ₱" + hourlyRate + "\n"
+             + "Hourly Rate: â‚±" + hourlyRate + "\n"
              + "Hours Worked: " + totalHoursWorked + " hrs\n"
-             + "Allowances: ₱" + totalAllow + "\n"
-             + "Total Earnings: ₱" + totalEarnings + "\n"
-             + "Total Deductions: ₱" + totalDeductions + "\n"
+             + "Allowances: â‚±" + totalAllow + "\n"
+             + "Total Earnings: â‚±" + totalEarnings + "\n"
+             + "Total Deductions: â‚±" + totalDeductions + "\n"
              + "---------------------------------\n"
-             + "NET PAY: ₱" + netPay + "\n"
+             + "NET PAY: â‚±" + netPay + "\n"
              + "=================================\n";
     }
 
@@ -185,6 +200,11 @@ public class frm_EmployeesPayrollPaid extends javax.swing.JFrame implements Work
                 JOptionPane.showMessageDialog(this, "Invalid role: " + role, "Error", JOptionPane.ERROR_MESSAGE);
                 break;
         }
+        payrollPermissions[0]=btn_werifyPay.isEnabled();payrollPermissions[1]=btn_AppPay.isEnabled();
+        payrollPermissions[2]=btn_undoVerify.isEnabled();payrollPermissions[3]=btn_undoApp.isEnabled();
+        payrollPermissions[4]=btn_printPayslip.isEnabled();payrollPermissions[5]=btn_printPayReport.isEnabled();
+        refreshActionState.run();
+
     }
 
 

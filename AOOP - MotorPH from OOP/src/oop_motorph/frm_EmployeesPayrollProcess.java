@@ -31,6 +31,14 @@ public class frm_EmployeesPayrollProcess extends javax.swing.JFrame implements W
         content.add(WorkspaceUI.table(tbl_Employees),java.awt.BorderLayout.CENTER);
         WorkspaceShell.mount(this,"Payroll processing","Review payroll periods and prepare employee reports.","processing",content,
             WorkspaceUI.actions(WorkspaceUI.primary(btn_ViewEmp,"Print payroll summary"),WorkspaceUI.secondary(btn_printPayslip,"Print payslip")));
+        tbl_Employees.putClientProperty("motorph.emptyMessage","No payroll records match this period. Choose another month or record payroll first.");
+        final boolean allowed0=btn_printPayslip.isEnabled();
+        WorkspaceUI.bindSelection(tbl_Employees,()->{
+            boolean selected=WorkspaceUI.hasSelection(tbl_Employees);
+            btn_printPayslip.setEnabled(allowed0&&selected);
+            btn_ViewEmp.setEnabled(tbl_Employees.getRowCount()>0);
+        });
+
     }
 
     public frm_EmployeesPayrollProcess() {
@@ -617,29 +625,29 @@ public class frm_EmployeesPayrollProcess extends javax.swing.JFrame implements W
             </tr>
             <tr class='section'><td colspan='6'>Earnings & Allowances</td></tr>
             <tr>
-                <td><strong>Basic Salary</strong></td><td>₱%s</td>
-                <td><strong>Rice Allowance</strong></td><td>₱%s</td>
-                <td><strong>Phone Allowance</strong></td><td>₱%s</td>
+                <td><strong>Basic Salary</strong></td><td>â‚±%s</td>
+                <td><strong>Rice Allowance</strong></td><td>â‚±%s</td>
+                <td><strong>Phone Allowance</strong></td><td>â‚±%s</td>
             </tr>
             <tr>
-                <td><strong>Clothing Allowance</strong></td><td>₱%s</td>
-                <td><strong>Total Allowances</strong></td><td colspan='3'>₱%s</td>
+                <td><strong>Clothing Allowance</strong></td><td>â‚±%s</td>
+                <td><strong>Total Allowances</strong></td><td colspan='3'>â‚±%s</td>
             </tr>
             <tr class='section'><td colspan='6'>Deductions</td></tr>
             <tr>
-                <td><strong>SSS</strong></td><td>₱%s</td>
-                <td><strong>PhilHealth</strong></td><td>₱%s</td>
-                <td><strong>Pag-IBIG</strong></td><td>₱%s</td>
+                <td><strong>SSS</strong></td><td>â‚±%s</td>
+                <td><strong>PhilHealth</strong></td><td>â‚±%s</td>
+                <td><strong>Pag-IBIG</strong></td><td>â‚±%s</td>
             </tr>
             <tr>
-                <td><strong>Tax Withheld</strong></td><td>₱%s</td>
-                <td><strong>Total Deductions</strong></td><td colspan='3'>₱%s</td>
+                <td><strong>Tax Withheld</strong></td><td>â‚±%s</td>
+                <td><strong>Total Deductions</strong></td><td colspan='3'>â‚±%s</td>
             </tr>
             <tr class='section'><td colspan='6'>Summary</td></tr>
             <tr>
-                <td><strong>Gross Pay</strong></td><td>₱%s</td>
-                <td><strong>Taxable Income</strong></td><td>₱%s</td>
-                <td class='highlight'><strong>NET PAY</strong></td><td class='highlight'>₱%s</td>
+                <td><strong>Gross Pay</strong></td><td>â‚±%s</td>
+                <td><strong>Taxable Income</strong></td><td>â‚±%s</td>
+                <td class='highlight'><strong>NET PAY</strong></td><td class='highlight'>â‚±%s</td>
             </tr>
         </table>
         <p style='text-align:center; font-size:11px; color:#777; margin-top:15px;'>
@@ -863,7 +871,7 @@ public class frm_EmployeesPayrollProcess extends javax.swing.JFrame implements W
                         columnNameLower.contains("tax") || columnNameLower.contains("net pay")) {
                         double numValue = parseDouble(cellValue);
                         columnTotals[colIndex] += numValue;
-                        employeeRows.append(String.format("<td class='amount'>₱%,.2f</td>", numValue));
+                        employeeRows.append(String.format("<td class='amount'>â‚±%,.2f</td>", numValue));
                     } else {
                         employeeRows.append(String.format("<td>%s</td>", escapeHtml(cellValue)));
                     }
@@ -887,7 +895,7 @@ public class frm_EmployeesPayrollProcess extends javax.swing.JFrame implements W
                     totalsRow.append("<td></td>");
                 } else if (columnNameLower.contains("contribution") || columnNameLower.contains("income") ||
                           columnNameLower.contains("tax") || columnNameLower.contains("net pay")) {
-                    totalsRow.append(String.format("<td class='amount'>₱%,.2f</td>", columnTotals[colIndex]));
+                    totalsRow.append(String.format("<td class='amount'>â‚±%,.2f</td>", columnTotals[colIndex]));
                 } else {
                     totalsRow.append("<td></td>");
                 }
@@ -1294,30 +1302,30 @@ public class frm_EmployeesPayrollProcess extends javax.swing.JFrame implements W
                             </div>
                             <div class="stat-card">
                                 <div class="stat-label">Total Gross Pay</div>
-                                <div class="stat-value">₱%,.2f</div>
+                                <div class="stat-value">â‚±%,.2f</div>
                             </div>
                             <div class="stat-card">
                                 <div class="stat-label">Total Deductions</div>
-                                <div class="stat-value">₱%,.2f</div>
+                                <div class="stat-value">â‚±%,.2f</div>
                             </div>
                             <div class="stat-card">
                                 <div class="stat-label">Total Net Pay</div>
-                                <div class="stat-value">₱%,.2f</div>
+                                <div class="stat-value">â‚±%,.2f</div>
                             </div>
                             <div class="stat-card">
                                 <div class="stat-label">Average Gross Pay</div>
-                                <div class="stat-value">₱%,.2f</div>
+                                <div class="stat-value">â‚±%,.2f</div>
                             </div>
                             <div class="stat-card">
                                 <div class="stat-label">Average Net Pay</div>
-                                <div class="stat-value">₱%,.2f</div>
+                                <div class="stat-value">â‚±%,.2f</div>
                             </div>
                         </div>
                     </div>
 
                     <div class="footer">
                         <p>This is a system-generated payroll summary report from MotorPH Payroll System.</p>
-                        <p>Report contains %d employee payroll records. All amounts are in Philippine Pesos (₱).</p>
+                        <p>Report contains %d employee payroll records. All amounts are in Philippine Pesos (â‚±).</p>
                     </div>
                 </body>
                 </html>
@@ -1407,7 +1415,7 @@ public class frm_EmployeesPayrollProcess extends javax.swing.JFrame implements W
 
     private double parseDouble(String value) {
         try {
-            return Double.parseDouble(value.replaceAll("[₱,]", ""));
+            return Double.parseDouble(value.replaceAll("[â‚±,]", ""));
         } catch (NumberFormatException e) {
             return 0.0;
         }
@@ -1531,11 +1539,11 @@ public class frm_EmployeesPayrollProcess extends javax.swing.JFrame implements W
             "1. Press Ctrl+P (or Cmd+P on Mac) to open print dialog\n" +
             "2. Select 'Save as PDF' or 'Microsoft Print to PDF' as destination\n" +
             "3. IMPORTANT: Set these print settings:\n" +
-            "   • Paper size: A4\n" +
-            "   • Orientation: Landscape\n" +
-            "   • Margins: None (or Minimum)\n" +
-            "   • Scale: 100% (Default)\n" +
-            "   • Background graphics: ON (Enable)\n" +
+            "   â€¢ Paper size: A4\n" +
+            "   â€¢ Orientation: Landscape\n" +
+            "   â€¢ Margins: None (or Minimum)\n" +
+            "   â€¢ Scale: 100% (Default)\n" +
+            "   â€¢ Background graphics: ON (Enable)\n" +
             "4. Use the suggested filename or create your own\n" +
             "5. Click 'Save' and choose your desired location\n\n" +
             "Note: These settings ensure the PDF matches the browser display exactly.\n\n" +

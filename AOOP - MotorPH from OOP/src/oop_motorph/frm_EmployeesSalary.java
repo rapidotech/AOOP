@@ -18,6 +18,15 @@ public class frm_EmployeesSalary extends javax.swing.JFrame implements Workspace
         WorkspaceShell.bindNavigation(this,"logout",btn_Logout);
         WorkspaceShell.mount(this,"Compensation","Review salary, allowances and statutory identifiers.","compensation",WorkspaceUI.table(tbl_Salary),
             WorkspaceUI.actions(WorkspaceUI.primary(btn_AddEmp,"Add compensation"),WorkspaceUI.secondary(btn_ViewEmp,"Open compensation"),WorkspaceUI.danger(btn_DelEmp,"Delete"),WorkspaceUI.secondary(btn_refresh,"Refresh")));
+        tbl_Salary.putClientProperty("motorph.emptyMessage","No compensation records found. Add an employee or complete an existing employee profile.");
+        final boolean allowed0=btn_ViewEmp.isEnabled();
+        final boolean allowed1=btn_DelEmp.isEnabled();
+        WorkspaceUI.bindSelection(tbl_Salary,()->{
+            boolean selected=WorkspaceUI.hasSelection(tbl_Salary);
+            btn_ViewEmp.setEnabled(allowed0&&selected);
+            btn_DelEmp.setEnabled(allowed1&&selected);
+        });
+
     }
 
     public frm_EmployeesSalary() {

@@ -145,7 +145,7 @@ public class frm_EmpPayroll extends javax.swing.JFrame {
         btn_SalaryAndStatutory.setEnabled(false);
         btn_Profile.setEnabled(false);
         btn_EmpRecords.setEnabled(false);
-        btn_printPayslip.setEnabled(true); // Still enabled by default
+        btn_printPayslip.setEnabled(false); // A valid payroll period must be selected first.
         btn_Logout.setEnabled(false);
 
         switch (role.toUpperCase()) {
@@ -572,9 +572,22 @@ public class frm_EmpPayroll extends javax.swing.JFrame {
         WorkspaceShell.bindNavigation(this, "logout", btn_Logout);
         tbl_Payroll.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_OFF);
         configurePayrollValues();
+        tbl_Payroll.putClientProperty("motorph.emptyMessage", "No payroll periods available. Contact HR if you expect a payslip.");
         WorkspaceUI.primary(btn_printPayslip, "Print payslip");
+        tbl_Payroll.getSelectionModel().addListSelectionListener(event -> updatePrintAction());
+        tbl_Payroll.getModel().addTableModelListener(event -> updatePrintAction());
+        updatePrintAction();
         WorkspaceShell.mount(this, "Payroll summary", "Review a payroll period and print its payslip", "payroll",
             WorkspaceUI.table(tbl_Payroll), WorkspaceUI.actions(btn_printPayslip));
+    }
+
+    private void updatePrintAction() {
+        int row = tbl_Payroll.getSelectedRow();
+        String role = EmpUserSession.getInstance().getRole();
+        boolean authorized = "EMPLOYEE".equalsIgnoreCase(role) || "HR".equalsIgnoreCase(role);
+        boolean selected = row >= 0 && row < tbl_Payroll.getRowCount() && tbl_Payroll.getColumnCount() >= 20;
+        btn_printPayslip.setEnabled(authorized && selected);
+        btn_printPayslip.setToolTipText(selected ? "Print the selected payroll period" : "Select a payroll period to print its payslip");
     }
 
     /**

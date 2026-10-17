@@ -146,10 +146,23 @@ public void setRoleBasedAccess(String role) {
             "Vacation leave balance", txt_vlBal, "Sick leave balance", txt_slBal));
         content.add(balances, java.awt.BorderLayout.NORTH);
         content.add(WorkspaceUI.table(tbl_Attendance), java.awt.BorderLayout.CENTER);
+        tbl_Attendance.putClientProperty("motorph.emptyMessage", "No attendance or leave records yet. Contact HR if you expect a time log.");
         WorkspaceUI.primary(btn_LeaveRequest, "Leave / attendance request");
+        tbl_Attendance.getSelectionModel().addListSelectionListener(event -> updateRequestAction());
+        tbl_Attendance.getModel().addTableModelListener(event -> updateRequestAction());
+        updateRequestAction();
         btn_LeaveApproval.setText("Review requests");
         WorkspaceShell.mount(this, "Attendance & leave", "Time logs and submitted requests", "attendance", content,
             WorkspaceUI.actions(btn_LeaveRequest, btn_LeaveApproval));
+    }
+
+    private void updateRequestAction() {
+        int row = tbl_Attendance.getSelectedRow();
+        String role = EmpUserSession.getInstance().getRole();
+        boolean authorized = "EMPLOYEE".equalsIgnoreCase(role) || "HR".equalsIgnoreCase(role);
+        boolean selected = row >= 0 && row < tbl_Attendance.getRowCount() && tbl_Attendance.getColumnCount() >= 20;
+        btn_LeaveRequest.setEnabled(authorized && selected);
+        btn_LeaveRequest.setToolTipText(selected ? "Prepare a request using the selected record" : "Select an attendance record to prepare a request");
     }
 
     /**

@@ -27,9 +27,13 @@ public class frm_EmpBlank extends javax.swing.JFrame {
         WorkspaceShell.bindNavigation(this, "payroll", btn_PayrollSummary);
         WorkspaceShell.bindNavigation(this, "employees", btn_EmpRecords);
         WorkspaceShell.bindNavigation(this, "logout", btn_Logout);
-        WorkspaceShell.mount(this, "My workspace", "Choose a section to review your employee records", "profile",
-            WorkspaceUI.section("Employee records", "Your profile, attendance, salary and payroll are available from the navigation.",
-                WorkspaceUI.note("Select a section to continue.")), null);
+        WorkspaceShell.mount(this, "My workspace", "Choose a section to review your employee records", "home",
+            WorkspaceUI.column(WorkspaceUI.section("Start with a section", "Use the navigation to open your records.",
+                WorkspaceUI.column(
+                    WorkspaceUI.note("My profile: personal and employment information."),
+                    WorkspaceUI.note("Attendance & leave: time logs, leave balances and requests."),
+                    WorkspaceUI.note("My compensation: salary, allowances and statutory references."),
+                    WorkspaceUI.note("My payroll: payroll periods and payslips.")))), null);
     }
 
     /**

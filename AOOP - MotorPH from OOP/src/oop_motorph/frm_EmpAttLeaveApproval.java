@@ -19,6 +19,15 @@ public class frm_EmpAttLeaveApproval extends javax.swing.JFrame implements Works
         javax.swing.JButton back=new javax.swing.JButton("Back to attendance");back.addActionListener(e->WorkspaceShell.open(this,"requests"));
         WorkspaceShell.mount(this,"Review leave requests","Select a pending request to approve or reject it.","requests",WorkspaceUI.table(tbl_Attendance),
             WorkspaceUI.actions(WorkspaceUI.primary(btn_attApprove,"Approve request"),WorkspaceUI.danger(btn_attReject,"Reject request"),WorkspaceUI.secondary(back,"Back to attendance")));
+        tbl_Attendance.putClientProperty("motorph.emptyMessage","No pending requests to review. New leave requests will appear here.");
+        final boolean allowed0=btn_attApprove.isEnabled();
+        final boolean allowed1=btn_attReject.isEnabled();
+        WorkspaceUI.bindSelection(tbl_Attendance,()->{
+            boolean selected=WorkspaceUI.hasSelection(tbl_Attendance);
+            btn_attApprove.setEnabled(allowed0&&selected&&"Pending".equalsIgnoreCase(String.valueOf(tbl_Attendance.getValueAt(tbl_Attendance.getSelectedRow(),13))));
+            btn_attReject.setEnabled(allowed1&&selected&&"Pending".equalsIgnoreCase(String.valueOf(tbl_Attendance.getValueAt(tbl_Attendance.getSelectedRow(),13))));
+        });
+
     }
 
     public frm_EmpAttLeaveApproval() {

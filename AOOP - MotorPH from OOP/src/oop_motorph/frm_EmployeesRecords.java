@@ -18,6 +18,15 @@ public class frm_EmployeesRecords extends javax.swing.JFrame implements Workspac
         WorkspaceShell.bindNavigation(this,"logout",btn_Logout);
         WorkspaceShell.mount(this,"Employee records","Find an employee, review their details, or maintain their record.","employees",WorkspaceUI.table(tbl_Employees),
             WorkspaceUI.actions(WorkspaceUI.primary(btn_AddEmp,"Add employee"),WorkspaceUI.secondary(btn_ViewEmp,"Open employee"),WorkspaceUI.danger(btn_DelEmp,"Delete"),WorkspaceUI.secondary(btn_refresh,"Refresh")));
+        tbl_Employees.putClientProperty("motorph.emptyMessage","No employee records found. Add an employee to get started.");
+        final boolean allowed0=btn_ViewEmp.isEnabled();
+        final boolean allowed1=btn_DelEmp.isEnabled();
+        WorkspaceUI.bindSelection(tbl_Employees,()->{
+            boolean selected=WorkspaceUI.hasSelection(tbl_Employees);
+            btn_ViewEmp.setEnabled(allowed0&&selected);
+            btn_DelEmp.setEnabled(allowed1&&selected);
+        });
+
     }
 
     public frm_EmployeesRecords() {

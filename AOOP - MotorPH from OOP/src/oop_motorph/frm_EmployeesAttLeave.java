@@ -24,6 +24,15 @@ public class frm_EmployeesAttLeave extends javax.swing.JFrame implements Workspa
         review.addActionListener(e->WorkspaceShell.open(this,"request-review"));
         WorkspaceShell.mount(this,"Attendance & leave","Review employee time logs and leave requests.","requests",WorkspaceUI.table(tbl_Employees),
             WorkspaceUI.actions(WorkspaceUI.primary(btn_AddEmp,"Add request"),WorkspaceUI.secondary(btn_ViewEmp,"Open request"),WorkspaceUI.danger(btn_DelEmp,"Delete"),WorkspaceUI.secondary(btn_refresh,"Refresh"),WorkspaceUI.secondary(review,"Review requests")));
+        tbl_Employees.putClientProperty("motorph.emptyMessage","No time logs or leave requests found. Add a request or refresh after attendance is recorded.");
+        final boolean allowed0=btn_ViewEmp.isEnabled();
+        final boolean allowed1=btn_DelEmp.isEnabled();
+        WorkspaceUI.bindSelection(tbl_Employees,()->{
+            boolean selected=WorkspaceUI.hasSelection(tbl_Employees);
+            btn_ViewEmp.setEnabled(allowed0&&selected);
+            btn_DelEmp.setEnabled(allowed1&&selected&&"Pending".equalsIgnoreCase(String.valueOf(tbl_Employees.getValueAt(tbl_Employees.getSelectedRow(),13))));
+        });
+
     }
 
     public frm_EmployeesAttLeave() {
