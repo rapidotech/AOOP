@@ -16,6 +16,7 @@ import javax.swing.JOptionPane;
 public class frm_EmpAddAttLeave extends javax.swing.JFrame {
     private EmpAttLeave empAttLeave;
     private boolean isEditMode;
+    private final boolean updatingExisting;
 
     public frm_EmpAddAttLeave() {
         this(null, false);
@@ -29,9 +30,13 @@ public class frm_EmpAddAttLeave extends javax.swing.JFrame {
         setLocationRelativeTo(null);
         setResizable(false);
         setTitle("Add Leave/Attendance");
-        this.empAttLeave = empAttLeave;
-        this.isEditMode = isEditMode;
+        updatingExisting = isEditMode && empAttLeave != null;
+        this.empAttLeave = empAttLeave == null ? initialRequest() : empAttLeave;
+        this.isEditMode = updatingExisting;
         populateFields();
+        setFieldsEditable(true);
+        if (!updatingExisting) { cbox_attendanceStat.setModel(new javax.swing.DefaultComboBoxModel<>(new String[]{"Pending"})); }
+
 
         composeWorkspace();
     }
@@ -41,19 +46,101 @@ public class frm_EmpAddAttLeave extends javax.swing.JFrame {
         WorkspaceUI.primary(btn_SubmitLeaveAtt, "Submit request");
         WorkspaceUI.secondary(btn_AddLeaveAtt, "New request");
         javax.swing.JComponent content = WorkspaceUI.column(
-            WorkspaceUI.section("Employee", "The employee associated with this request", WorkspaceUI.fields(
+            employeeContext(),
+            WorkspaceUI.section("Request details", "Dates, time and request classification", WorkspaceUI.fields(
+                "From", dc_dateFrom, "To", dc_dateTo, "Attendance type", cbox_attendanceType, "Request status", cbox_attendanceStat,
+                "Time in (HH:mm)", txt_timeIn, "Time out (HH:mm)", txt_timeOut,
+                "Hours worked", txt_hoursWorked, "Duration", txt_duration)),
+            WorkspaceUI.section("Employee record", "Read-only employee and reporting details", WorkspaceUI.fields(
                 "Employee ID", txt_empID, "First name", txt_firstName, "Last name", txt_lastName,
                 "Employment status", txt_status, "Position", txt_position, "Immediate supervisor", cbox_immSupervisor)),
-            WorkspaceUI.section("Request details", "Dates, time and request classification", WorkspaceUI.fields(
-                "From", dc_dateFrom, "To", dc_dateTo, "Time in (HH:mm)", txt_timeIn, "Time out (HH:mm)", txt_timeOut,
-                "Hours worked", txt_hoursWorked, "Duration", txt_duration,
-                "Attendance type", cbox_attendanceType, "Request status", cbox_attendanceStat)),
             WorkspaceUI.section("Leave record", "Allocation, use and remaining balance", WorkspaceUI.fields(
                 "Vacation leave allocation", txt_vlCount, "Sick leave allocation", txt_slCount,
                 "Vacation leave used", txt_vlUsed, "Sick leave used", txt_slUsed,
                 "Vacation leave balance", txt_vlBal, "Sick leave balance", txt_slBal)));
-        WorkspaceShell.mount(this, "Add attendance / leave", "Review the details before submitting", "attendance", WorkspaceUI.scroll(content),
+        btn_AddLeaveAtt.setVisible(false); btn_AddLeaveAtt.setEnabled(false);
+        WorkspaceUI.primary(btn_SubmitLeaveAtt, updatingExisting ? "Save changes" : "Submit request");
+        WorkspaceShell.mount(this, updatingExisting ? "Edit attendance / leave" : "New attendance / leave request", "Review the details before submitting", "attendance", WorkspaceUI.scroll(content),
             WorkspaceUI.actions(btn_AddLeaveAtt, btn_SubmitLeaveAtt));
+        WorkspaceShell.setPageTitle(this, updatingExisting ? "Edit attendance / leave" : "New attendance / leave request");
+    }
+
+    private javax.swing.JComponent employeeContext() {
+        javax.swing.JPanel context = new javax.swing.JPanel(new java.awt.BorderLayout(0, 4));
+        context.setName("requestEmployeeContext"); context.setBackground(java.awt.Color.WHITE);
+        context.setBorder(javax.swing.BorderFactory.createEmptyBorder(14, 20, 14, 20));
+        javax.swing.JLabel identity = new javax.swing.JLabel(txt_firstName.getText() + " " + txt_lastName.getText()
+                + "  |  Employee " + txt_empID.getText());
+        identity.putClientProperty("html.disable", Boolean.TRUE);
+        identity.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 14)); identity.setForeground(AppTheme.INK);
+        javax.swing.JLabel role = WorkspaceUI.note(txt_position.getText() + "  |  " + txt_status.getText());
+        context.add(identity, java.awt.BorderLayout.NORTH); context.add(role, java.awt.BorderLayout.CENTER);
+        return context;
+    }
+
+    private static EmpAttLeave initialRequest() {
+        EmpDetails employee = EmpUserSession.getInstance().getCurrentUser();
+        return new EmpAttLeave(employee.getEmpID(), employee.getFirstName(), employee.getLastName(),
+            employee.getEmployeeStatus(), employee.getPosition(), employee.getImmediateSupervisor(),
+            null, null, null, null, 0, 0, "Select", "Pending", 0, 0, 0, 0, 0, 0);
+    }
+
+    /** Validate a detached candidate so a failed save cannot change the original request key. */
+    private EmpAttLeave validatedRequest() {
+        if (dc_dateFrom.getDate() == null || dc_dateTo.getDate() == null) {
+            throw new IllegalArgumentException("Choose both the From and To dates.");
+        }
+        LocalDate from = dc_dateFrom.getDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+        LocalDate to = dc_dateTo.getDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+        if (from.isAfter(to)) throw new IllegalArgumentException("From cannot be later than To.");
+        Object selected = cbox_attendanceType.getSelectedItem();
+        String type = selected == null ? "" : selected.toString();
+        if (type.isBlank() || "Select".equalsIgnoreCase(type)) throw new IllegalArgumentException("Choose an attendance type.");
+        LocalTime start, end;
+        try {
+            boolean leave = "SL Request".equals(type) || "VL Request".equals(type);
+            start = LocalTime.parse(leave ? "08:00" : txt_timeIn.getText().trim(), DateTimeFormatter.ofPattern("HH:mm"));
+            end = LocalTime.parse(leave ? "17:00" : txt_timeOut.getText().trim(), DateTimeFormatter.ofPattern("HH:mm"));
+        } catch (java.time.DateTimeException ex) {
+            throw new IllegalArgumentException("Enter valid time in and time out values in HH:mm format.");
+        }
+        if (!end.isAfter(start)) throw new IllegalArgumentException("Time out must be later than time in.");
+        long days = ChronoUnit.DAYS.between(from, to) + 1;
+        double hours = (Duration.between(start, end).toMinutes() / 60.0 - ("Overtime".equals(type) ? 0 : 1)) * days;
+        if (hours < 0) throw new IllegalArgumentException("The time range must include the one-hour break.");
+        hours = Math.round(hours * 100.0) / 100.0;
+        String status = updatingExisting ? empAttLeave.getAttendanceStatus() : "Pending";
+        return new EmpAttLeave(empAttLeave.getEmpID(), empAttLeave.getFirstName(), empAttLeave.getLastName(),
+            empAttLeave.getEmployeeStatus(), empAttLeave.getPosition(), empAttLeave.getImmediateSupervisor(),
+            from, to, start, end, hours, days, type, status,
+            empAttLeave.getVlCount(), empAttLeave.getVlUsed(), empAttLeave.getVlBalance(),
+            empAttLeave.getSlCount(), empAttLeave.getSlUsed(), empAttLeave.getSlBalance());
+    }
+
+    private void submitRequest() {
+        if (!btn_SubmitLeaveAtt.isEnabled()) return;
+        try {
+            EmpAttLeave candidate = validatedRequest();
+            if (updatingExisting) {
+                DateTimeFormatter keyDate = DateTimeFormatter.ofPattern("dd-MMM-yy", java.util.Locale.ENGLISH);
+                if (empAttLeave.getAttDateFrom() == null || empAttLeave.getAttDateTo() == null) {
+                    throw new IllegalArgumentException("The original request dates are missing. Reopen the request and try again.");
+                }
+                CSVHandler.saveEditAttendanceRequest(candidate, keyDate.format(empAttLeave.getAttDateFrom()), keyDate.format(empAttLeave.getAttDateTo()));
+            } else {
+                CSVHandler.saveAttendanceRequest(candidate);
+            }
+            empAttLeave = candidate;
+            javax.swing.JOptionPane.showMessageDialog(this, updatingExisting ? "Request changes saved." : "Attendance request submitted.",
+                "Request saved", javax.swing.JOptionPane.INFORMATION_MESSAGE);
+            dispose();
+        } catch (IllegalArgumentException ex) {
+            javax.swing.JOptionPane.showMessageDialog(this, ex.getMessage(), "Check request details", javax.swing.JOptionPane.WARNING_MESSAGE);
+        } catch (AuthorizationException | PersistenceException ex) {
+            javax.swing.JOptionPane.showMessageDialog(this, "Request was not saved. " + ex.getMessage(), "Request not saved", javax.swing.JOptionPane.ERROR_MESSAGE);
+        } catch (RuntimeException ex) {
+            javax.swing.JOptionPane.showMessageDialog(this, "Request was not saved. Check the details and try again.", "Request not saved", javax.swing.JOptionPane.ERROR_MESSAGE);
+        }
     }
 
     private void populateFields() {
@@ -90,9 +177,11 @@ public class frm_EmpAddAttLeave extends javax.swing.JFrame {
         txt_position.setText(empAttLeave.getPosition());
 
         // Set JComboBox values
-        cbox_immSupervisor.setSelectedItem(empAttLeave.getImmediateSupervisor());
+        cbox_immSupervisor.setModel(new javax.swing.DefaultComboBoxModel<>(new String[]{empAttLeave.getImmediateSupervisor()}));
+        javax.swing.DefaultComboBoxModel<String> types = (javax.swing.DefaultComboBoxModel<String>) cbox_attendanceType.getModel();
+        if (empAttLeave.getAttendanceType() != null && types.getIndexOf(empAttLeave.getAttendanceType()) < 0) types.addElement(empAttLeave.getAttendanceType());
         cbox_attendanceType.setSelectedItem(empAttLeave.getAttendanceType());
-        cbox_attendanceStat.setSelectedItem(empAttLeave.getAttendanceStatus());
+        cbox_attendanceStat.setModel(new javax.swing.DefaultComboBoxModel<>(new String[]{empAttLeave.getAttendanceStatus()}));
 
         // Convert LocalDate to Date for JDateChooser
         if (attDateFrom != null) {
@@ -137,31 +226,15 @@ public class frm_EmpAddAttLeave extends javax.swing.JFrame {
 
 
     private void setFieldsEditable(boolean editable) {
-    // These fields remain non-editable
-    txt_empID.setEditable(false);
-    txt_firstName.setEditable(false);
-    txt_lastName.setEditable(false);
-    txt_status.setEditable(false);
-    txt_position.setEditable(false);
-    txt_vlCount.setEditable(false);
-    txt_hoursWorked.setEditable(false);
-    txt_duration.setEditable(false);
-    cbox_attendanceStat.setEditable(false);
-    cbox_immSupervisor.setEditable(false);
-     cbox_attendanceType.setEnabled(false);
-
-    // Editable when in edit mode
-    cbox_immSupervisor.setEnabled(editable);
-
-    // cbox_attendanceStat.setEnabled(editable);
-    dc_dateFrom.setEnabled(editable);
-    dc_dateTo.setEnabled(editable);
-    txt_timeIn.setEditable(editable);
-    txt_timeOut.setEditable(editable);
-    txt_slCount.setEditable(editable);
-    txt_slUsed.setEditable(editable);
-    txt_slBal.setEditable(editable);
-}
+        for (javax.swing.JTextField field : new javax.swing.JTextField[]{txt_empID, txt_firstName, txt_lastName,
+                txt_status, txt_position, txt_vlCount, txt_vlUsed, txt_vlBal, txt_slCount, txt_slUsed, txt_slBal, txt_hoursWorked, txt_duration}) {
+            field.setEditable(false);
+        }
+        cbox_immSupervisor.setEnabled(false); cbox_attendanceStat.setEnabled(false);
+        cbox_attendanceType.setEnabled(editable);
+        dc_dateFrom.setEnabled(editable); dc_dateTo.setEnabled(editable);
+        txt_timeIn.setEditable(editable); txt_timeOut.setEditable(editable);
+    }
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -389,116 +462,15 @@ public class frm_EmpAddAttLeave extends javax.swing.JFrame {
 
     }// </editor-fold>
 
-    private void btn_SubmitLeaveAttActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_SubmitLeaveAttActionPerformed
-
-    if (empAttLeave != null) {
-        try {
-            empAttLeave.setImmediateSupervisor(cbox_immSupervisor.getSelectedItem().toString());
-            empAttLeave.setAttendanceType(cbox_attendanceType.getSelectedItem().toString());
-            empAttLeave.setAttendanceStatus("Pending");
-
-            // Get dates
-            LocalDate dateFrom = dc_dateFrom.getDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-            LocalDate dateTo = dc_dateTo.getDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-
-            // Validate date range
-            if (dateFrom.isAfter(dateTo)) {
-                JOptionPane.showMessageDialog(this, "'Date From' cannot be later than 'Date To'.", "Invalid Date Selection", JOptionPane.ERROR_MESSAGE);
-                return; // Stop execution
-            }
-
-            empAttLeave.setAttDateFrom(dateFrom);
-            empAttLeave.setAttDateTo(dateTo);
-
-            // Set default Time In and Time Out for SL/VL requests
-            String attendanceType = cbox_attendanceType.getSelectedItem().toString();
-            if (attendanceType.equals("SL Request") || attendanceType.equals("VL Request")) {
-                txt_timeIn.setText("08:00");
-                txt_timeOut.setText("17:00");
-            }
-
-            // Get and set time values
-            String timeInStr = txt_timeIn.getText().trim();
-            String timeOutStr = txt_timeOut.getText().trim();
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm");
-
-            if (!timeInStr.isEmpty() && !timeOutStr.isEmpty()) {
-                LocalTime timeIn = LocalTime.parse(timeInStr, formatter);
-                LocalTime timeOut = LocalTime.parse(timeOutStr, formatter);
-                empAttLeave.setTimeIn(timeIn);
-                empAttLeave.setTimeOut(timeOut);
-            } else {
-                System.err.println("Error: Time In/Out values are missing!");
-            }
-
-            // Compute duration
-            long duration = ChronoUnit.DAYS.between(dateFrom, dateTo) + 1;
-            txt_duration.setText(String.valueOf(duration));
-            empAttLeave.setDuration(duration);
-
-            // Compute hours worked
-            double hoursWorked = 0.0;
-            long minutesWorked = Duration.between(empAttLeave.getTimeIn(), empAttLeave.getTimeOut()).toMinutes();
-
-            // Special handling for Overtime & Unpaid Leave
-            if (attendanceType.equals("Overtime") /*|| attendanceType.equals("Unpaid Leave") */) {
-                hoursWorked = (minutesWorked / 60.0) * duration;
-            } else {
-                hoursWorked = ((minutesWorked / 60.0) - 1) * duration;
-            }
-
-            // Round to 2 decimal places
-            hoursWorked = Math.round(hoursWorked * 100.0) / 100.0;
-            txt_hoursWorked.setText(String.valueOf(hoursWorked));
-            empAttLeave.setHoursWorked(hoursWorked);
-
-             // Validate Attendance Type selection
-            if (attendanceType.equalsIgnoreCase("Select")) {
-                JOptionPane.showMessageDialog(this, "Please select a valid Attendance Type.", "Invalid Selection", JOptionPane.WARNING_MESSAGE);
-                return;
-            }
-
-            // Debugging output
-            System.out.println("Attendance Type: " + attendanceType);
-            System.out.println("Minutes Worked: " + minutesWorked);
-            System.out.println("Duration: " + duration);
-            System.out.println("Calculated Hours Worked: " + hoursWorked);
-
-            // Save attendance
-            CSVHandler.saveAttendanceRequest(empAttLeave);
-            System.out.println("Attendance request saved to CSV.");
-
-            JOptionPane.showMessageDialog(this, "Attendance request submitted successfully.", "Success", JOptionPane.INFORMATION_MESSAGE);
-            this.dispose();
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Error: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-            e.printStackTrace();
-        }
-    }
-
+    private void btn_SubmitLeaveAttActionPerformed(java.awt.event.ActionEvent evt) {
+        submitRequest();
     }//GEN-LAST:event_btn_SubmitLeaveAttActionPerformed
 
-    private void btn_AddLeaveAttActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_AddLeaveAttActionPerformed
-
-    dc_dateFrom.setEnabled(true);
-    dc_dateTo.setEnabled(true);
-    txt_timeIn.setEnabled(true);
-    txt_timeOut.setEnabled(true);
-    txt_timeIn.setEditable(true);
-    txt_timeOut.setEditable(true);
-    cbox_attendanceType.setEnabled(true);
-
-    // Set default value for attendance status
-    cbox_attendanceStat.setSelectedItem("Pending");
-
-    SimpleDateFormat sdf = new SimpleDateFormat("dd-MMM-yyyy"); // Ensure format is correct
-    try {
-        Date defaultDate = sdf.parse("01-Jan-2000");
-        dc_dateFrom.setDate(defaultDate);
-        dc_dateTo.setDate(defaultDate);
-    } catch (ParseException e) {
-        e.printStackTrace(); // Handle parsing exception
-    }
+    private void btn_AddLeaveAttActionPerformed(java.awt.event.ActionEvent evt) {
+        if (updatingExisting) return;
+        setFieldsEditable(true);
+        dc_dateFrom.setDate(null); dc_dateTo.setDate(null);
+        cbox_attendanceType.setSelectedItem("Select"); cbox_attendanceStat.setSelectedItem("Pending");
     }//GEN-LAST:event_btn_AddLeaveAttActionPerformed
 
     private void txt_positionActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txt_positionActionPerformed
