@@ -2,8 +2,11 @@
 
 This record describes the cleanup baseline before the added Milestone 2 work.
 The expanded implementation now includes C1-C5 local mechanisms and supporting
-gates. Current evidence:331 offline assertions,76 real isolated application
-checks and15 SQL/chain checks. See `security/EXPANDED_CONTROL_PLAN.md` and the
+gates. Recorded source CI passed352 offline assertions; separate prepared-machine
+evidence covers76 backend runtime and15 SQL/chain checks. The later native
+workflow rerun passed38 checks. Local RustFS Docker S3 passed18 checks and an
+actual scheduled upload. Independent off-host custody remains incomplete. See
+`security/EXPANDED_CONTROL_PLAN.md`, `security/object-storage/README.md` and the
 expanded Implementation Log for the current assessment. The sections below
 remain historical baseline notes, including their earlier file-storage limits.
 For the final BCrypt migration, protected configuration, isolated integration

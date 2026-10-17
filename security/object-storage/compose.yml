@@ -1,0 +1,30 @@
+name: motorph-m2-archive
+services:
+  storage:
+    image: rustfs/rustfs@sha256:7e948dad4748bda48f8985fda7195f8cf2e4259427011f6120acc2c9acf51587
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:19000:9000"
+      - "127.0.0.1:19001:9001"
+    environment:
+      RUSTFS_ACCESS_KEY: ${MOTORPH_STORAGE_ROOT_KEY:?Private storage profile required}
+      RUSTFS_SECRET_KEY: ${MOTORPH_STORAGE_ROOT_SECRET:?Private storage profile required}
+      RUSTFS_ADDRESS: ":9000"
+      RUSTFS_CONSOLE_ADDRESS: ":9001"
+      RUSTFS_CONSOLE_ENABLE: "true"
+      RUSTFS_OBS_LOGGER_LEVEL: "error"
+    command: ["/data"]
+    volumes:
+      - archive-data:/data
+    security_opt:
+      - no-new-privileges:true
+    cap_drop: [ALL]
+    mem_limit: 1g
+    cpus: 1.0
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "3"
+volumes:
+  archive-data:

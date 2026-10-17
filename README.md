@@ -91,6 +91,11 @@ ignored `output/pdf/` and a copy to Downloads. Temporary render previews belong
 in ignored `tmp/`; generated review files are kept out of source control.
 
 The expanded control assessment is [here](security/EXPANDED_CONTROL_PLAN.md).
+Private same-PC Docker S3 audit storage, its console/access procedure, retention
+and recovery tests are documented [here](security/object-storage/README.md).
+The current school-template Implementation Log is generated outside Git in the
+coursework portfolio. Its C5 notes distinguish local retained copies from the
+still-incomplete independent off-host requirement.
 HR can review the latest100 failure/lockout events in the security activity view.
 Supported-client authorization does not replace a trusted server against a
 modified desktop client holding the shared JDBC credential. Off-host audit

@@ -164,8 +164,8 @@
     {
       "id": "archive",
       "type": "external",
-      "label": "Verified local archive",
-      "sublabel": "Daily task; off-host not proven",
+      "label": "Local Docker S3",
+      "sublabel": "RustFS; 7-day retained versions",
       "pos": [
         1082.9,
         590
@@ -174,7 +174,7 @@
         227.5,
         90
       ],
-      "tag": "C5 PARTIAL CUSTODY"
+      "tag": "C5 OFF-HOST PENDING"
     }
   ],
   "connections": [

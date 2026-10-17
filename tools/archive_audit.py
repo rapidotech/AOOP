@@ -44,9 +44,10 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--verify', type=Path)
     parser.add_argument('--destination', type=Path, help='Explicit authorized external archive directory; no default external transfer')
+    parser.add_argument('--object-storage', action='store_true', help='Upload/retrieve/verify against the owned local Docker object store; not off-host proof')
     args = parser.parse_args()
     if args.verify:
-        print('Archive chain verified: ' + str(verify(json.loads(args.verify.read_text()))) + ' events.')
+        print('Archive chain verified: ' + str(verify(json.loads(args.verify.read_text(encoding='utf-8')))) + ' events.')
         return
     data = snapshot()
     count = verify(data)
@@ -62,6 +63,10 @@ def main():
     manifest = {'file': archive.name, 'bytes': len(raw), 'sha256': digest,
                 'head': data['head'], 'events': count, 'custody': 'local; not independent off-host proof'}
     archive.with_suffix('.manifest.json').write_text(json.dumps(manifest, indent=2))
+    if args.object_storage:
+        from object_storage import upload_archive
+        upload_archive(archive, manifest)
+        print('Local Docker S3 upload/retrieval and active retention verified. Same-PC custody; independent off-host storage remains unproven.')
     if args.destination:
         destination = args.destination.resolve()
         if not destination.is_dir():

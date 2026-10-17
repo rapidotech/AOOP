@@ -2,6 +2,12 @@
 
 ## Current authoritative scope
 
+Later authorized extension: self-host private audit object storage in Docker
+Desktop on this PC. Implemented RustFS1.0.2 with scoped credentials, versioning,
+seven-day COMPLIANCE API retention, exact-version recovery and the existing
+daily task. Eighteen real storage checks passed. Same-PC storage does not close
+the independent off-host custody boundary; keep that part incomplete in the log.
+
 Review the entire MotorPH system and improve it using Astra full mode and
 Impeccable for the Swing UI. Make the code consistent and maintainable, improve
 the architecture, organize the repository, and optimize it where evidence

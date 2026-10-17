@@ -9,7 +9,7 @@ form designer, launchers, and coursework references.
 | Layer | Code | Responsibility |
 | --- | --- | --- |
 | Startup | `OOP_MotorPH` | Start Swing on its event dispatch thread and install shared presentation defaults. |
-| Presentation | `frm_*.java`, matching `.form` files | Existing employee and HR workflows; generated layouts remain paired with their forms. |
+| Presentation | `frm_*.java`, `WorkspaceShell`, `WorkspaceUI` | Source-maintained responsive employee/HR workflows; `.form` layouts are historical. |
 | Presentation support | `AppTheme` | Shared colors, typography, focus, table defaults, reachable window content, and recoverable data errors. |
 | Session and models | `EmpUserSession`, `EmpDetails`, `EmpAttLeave`, `EmpSalaryDetails`, `PayrollProcessor` | Existing session and domain data contracts. |
 | Authentication | `AuthenticationService`, `PasswordService`, `PasswordResetDialog` | BCrypt12, persisted account/source throttles, restricted reset, committed failure audits and credential replacement. |
@@ -20,6 +20,7 @@ form designer, launchers, and coursework references.
 | Audit | `AuditService`, private append procedure | Append-last business transactions, serialized chain, complete snapshot verification, HR activity. |
 | Legacy files | `LocalRecordStore` | Read/parse historical files; writes are retired. Explicit HR import validates and reconciles into DB ledgers. |
 | Maintenance | `security/migrations`, `tools/` | Guarded clone provisioning, controlled enrollment, testing, archive/export and recovery. Obsolete raw-SQL DataMigration entry points refuse execution. |
+| Local object storage | `security/object-storage`, `object_storage.py` | Private RustFS Docker S3, scoped writer, retained versions, retrieval/chain verification and daily-task integration. |
 
 ## Storage boundaries
 
@@ -80,8 +81,12 @@ libraries, and data resources remain available.
 The prepared clone uses loopback/TLS and Windows-bound DPAPI configuration.
 The definer audit routine serializes a private chain head; the client has no
 direct audit/head DML. Daily verified local exports preserve prior snapshots,
-but independent off-host custody is not provisioned. Database administrators can
-rewrite local history and anchors. Source-machine names are telemetry.
+and a separate local RustFS Docker service retains versioned copies for seven
+days. Its writer cannot delete or change retention; exact-version recovery and
+S3 root retention denial were tested. This is same-PC storage, using loopback
+HTTP, not an independent off-host destination. Database/host administrators can
+rewrite local history/anchors or alter the underlying Docker volume.
+Source-machine names are telemetry. See `security/object-storage/README.md`.
 
 Application authorization protects the supported client; its shared direct JDBC
 account cannot attest the human behind arbitrary SQL from a modified client.

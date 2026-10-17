@@ -3,6 +3,7 @@ from pathlib import Path
 import hashlib
 import json
 import zipfile
+import shutil
 
 OUTPUT = Path.home() / 'Downloads/AOOP_Milestone2_Group13'
 ARCHIVE = OUTPUT.parent / 'AOOP_Milestone2_Group13_Portfolio.zip'
@@ -10,6 +11,10 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def main():
+    reviewer=OUTPUT.parent/'MotorPH_Group13_MS2_Validation_Reviewer.pdf'
+    if reviewer.is_file():
+        shutil.copyfile(reviewer,OUTPUT/reviewer.name)
+    current_log=OUTPUT/'outputs/implementation-log/MotorPH_Group13_Implementation_Log.xlsx'
     (OUTPUT / 'START_HERE.md').write_text('''# MotorPH Group 13 Milestone 2
 
 Open MotorPH_Group13_Milestone2_Implementation_Log.pdf to read the expanded
@@ -46,6 +51,9 @@ are deliberately excluded from this archive. Keep the private recovery material
 on the provisioning computer; it is not a group-sharing deliverable.
 ''', encoding='utf-8')
     (OUTPUT / 'SECURITY_RUNBOOK.md').write_bytes((ROOT / 'security/README.md').read_bytes())
+    if current_log.is_file():
+        start=OUTPUT/'START_HERE.md'
+        start.write_text('Current school-template Implementation Log: outputs/implementation-log/MotorPH_Group13_Implementation_Log.xlsx. Use this workbook as the current log. The DOCX/PDF below retain earlier implementation chronology.\n\nLocal Docker S3 archive assurance and scheduled-upload proof are in evidence/local-object-storage-*.json. This storage is on the same PC; independent off-host custody remains incomplete.\n\n'+start.read_text(encoding='utf-8'),encoding='utf-8')
     (OUTPUT / 'CONTROL_ASSESSMENT.md').write_bytes((ROOT / 'security/EXPANDED_CONTROL_PLAN.md').read_bytes())
     primary = [OUTPUT / name for name in [
         'START_HERE.md', 'SECURITY_RUNBOOK.md', 'CONTROL_ASSESSMENT.md',
@@ -67,6 +75,10 @@ on the provisioning computer; it is not a group-sharing deliverable.
                 and (p.suffix in {'.json', '.txt'} or
                      ('ui' in p.relative_to(OUTPUT / 'evidence').parts and p.suffix == '.png'))
                 and 'render' not in p.parts]
+    if current_log.is_file():
+        primary.append(current_log)
+    if reviewer.is_file():
+        primary.append(OUTPUT/reviewer.name)
     files = sorted(set(primary + evidence))
     if not all(p.is_file() for p in files):
         raise ValueError('Missing deliverable')

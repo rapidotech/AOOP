@@ -162,6 +162,13 @@ signed in. Database availability is required; failures produce a nonzero task
 result. Remove only this owned task with `Unregister-ScheduledTask` if retiring
 the lab. Local export does not establish independent off-host custody.
 
+The prepared PC now also runs a private, digest-pinned RustFS1.0.2 Docker service
+on loopback19000/19001. A separate scoped writer uploads versioned audit snapshots,
+retrieves/checks their full chain and SHA256, and verifies seven-day COMPLIANCE
+retention. The daily wrapper uses it when the protected profile exists. Eighteen
+real S3 checks and an actual scheduled invocation passed. This remains same-PC
+custody; see [setup, evidence and limits](object-storage/README.md).
+
 `scripts/verify.ps1 -Integration` is the complete prepared-machine gate. CI's
 source/build checks do not replace its real database tests. Gitleaks with the
 custom low-entropy rule is installed in the local commit hook; install it on
