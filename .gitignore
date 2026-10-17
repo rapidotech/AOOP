@@ -3,6 +3,8 @@
 **/build/
 **/dist/
 out/
+/output/
+/tmp/
 __pycache__/
 .idea/
 *.iml
