@@ -141,8 +141,13 @@ public class frm_EmployeesPayrollPaid extends javax.swing.JFrame implements Work
                 btn_printPayReport.setEnabled(true);
                 break;
             case "HR":
-                // HR can access:
-                //no access
+                // Match the HR-only constructor and data-layer permission matrix.
+                btn_AppPay.setEnabled(true);
+                btn_undoApp.setEnabled(true);
+                btn_werifyPay.setEnabled(true);
+                btn_undoVerify.setEnabled(true);
+                btn_printPayslip.setEnabled(true);
+                btn_printPayReport.setEnabled(true);
                 break;
             case "DEPTHEAD":
                 // Dept-Head can access:
