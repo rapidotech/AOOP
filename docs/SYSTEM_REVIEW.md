@@ -5,7 +5,10 @@ The expanded implementation now includes C1-C5 local mechanisms and supporting
 gates. Recorded source CI passed352 offline assertions; separate prepared-machine
 evidence covers76 backend runtime and15 SQL/chain checks. The later native
 workflow rerun passed38 checks. Local RustFS Docker S3 passed18 checks and an
-actual scheduled upload. Independent off-host custody remains incomplete. See
+actual scheduled upload. The later Cloudflare R2 extension passed20 live checks
+and an actual scheduled upload/recovery path. Off-host copies are verified;
+independent administration is not established. R2 bucket locks are removable by
+administrators, and its free allowance is metered with conservative local limits. See
 `security/EXPANDED_CONTROL_PLAN.md`, `security/object-storage/README.md` and the
 expanded Implementation Log for the current assessment. The sections below
 remain historical baseline notes, including their earlier file-storage limits.

@@ -164,8 +164,8 @@
     {
       "id": "archive",
       "type": "external",
-      "label": "Local Docker S3",
-      "sublabel": "RustFS; 7-day retained versions",
+      "label": "Local archive copies",
+      "sublabel": "Files + RustFS retained versions",
       "pos": [
         1082.9,
         590
@@ -174,7 +174,16 @@
         227.5,
         90
       ],
-      "tag": "C5 OFF-HOST PENDING"
+      "tag": "C5 SAME-PC COPIES"
+    },
+    {
+      "id": "r2",
+      "type": "external",
+      "label": "Cloudflare R2",
+      "sublabel": "7-day lock; admin-removable",
+      "pos": [655.2,590],
+      "size": [227.5,90],
+      "tag": "C5 OFF-HOST COPY"
     }
   ],
   "connections": [
@@ -259,6 +268,14 @@
         1196.65,
         550
       ]
+    },
+    {
+      "id": "edge-r2",
+      "from": "archive",
+      "to": "r2",
+      "label": "HTTPS",
+      "fromSide": "left",
+      "toSide": "right"
     }
   ]
 }

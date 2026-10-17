@@ -156,7 +156,7 @@ are not silently reimported as new workflow requests.
 `archive_audit.py` verifies and exports a consistent snapshot plus SHA256 manifest
 to the private runtime directory. `--verify <file>` checks an existing archive.
 `--destination <existing authorized directory>` explicitly copies/checksums an
-export; no external transfer was performed. The installed task
+export; R2 uses the separate verified transport described below. The installed task
 `MotorPH-M2-Audit-Archive` runs daily23:00 while the provisioning Windows user is
 signed in. Database availability is required; failures produce a nonzero task
 result. Remove only this owned task with `Unregister-ScheduledTask` if retiring
@@ -169,6 +169,17 @@ retention. The daily wrapper uses it when the protected profile exists. Eighteen
 real S3 checks and an actual scheduled invocation passed. This remains same-PC
 custody; see [setup, evidence and limits](object-storage/README.md).
 
+Cloudflare R2 now also stores private off-host copies, verified by 20 live checks
+and an actual successful scheduled invocation. The bucket-scoped writer cannot
+change configuration or access another bucket. Seven-day bucket locks block
+deletion/overwrite while active; a read-only identity checks their configuration.
+The eight-day expiry rule is configured but its future execution is not yet
+observed. R2 locks are administrator-removable, unlike the local service's tested
+COMPLIANCE API semantics. See the [R2 runbook](object-storage/CLOUDFLARE_R2.md)
+for recovery, token expiry, rollback and metered free-tier safeguards. The
+bootstrap credential remains on the PC; independently administered custody and
+a hard zero-cost account guarantee are not established.
+
 `scripts/verify.ps1 -Integration` is the complete prepared-machine gate. CI's
 source/build checks do not replace its real database tests. Gitleaks with the
 custom low-entropy rule is installed in the local commit hook; install it on
@@ -177,8 +188,9 @@ cannot bypass archive/dependency integrity validation. OSV feed unavailability
 or returned advisories fail the dependency gate. Current JAR hashes are in
 security/dependencies/inventory.json. Connector/J9.7.0 replaces vulnerable8.0.33.
 
-The expanded assessment is `security/EXPANDED_CONTROL_PLAN.md`. C5 is partial for
-independent archive custody. A modified desktop client holding the shared JDBC
+The expanded assessment is `security/EXPANDED_CONTROL_PLAN.md`. C5's tested
+transactional audit and local/off-host copies are verified within their stated
+scope. Independent administration is outside that proof. A modified desktop client holding the shared JDBC
 credential can still issue SQL permitted by that account; a trusted server/API
 is needed to enforce human authorization outside this supported client. A DBA
 can rewrite local database history and local anchors. Email and expanded roles

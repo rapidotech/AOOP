@@ -19,6 +19,17 @@ jobs:
         run: |
           python scripts/check-security.py
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Offline R2 safety regressions
+        shell: powershell
+        run: |
+          $r2TestEnvironment = Join-Path $env:RUNNER_TEMP 'motorph-r2-safety'
+          python -m venv $r2TestEnvironment
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $r2TestPython = Join-Path $r2TestEnvironment 'Scripts/python.exe'
+          & $r2TestPython -m pip install --disable-pip-version-check --quiet -r security/object-storage/requirements.txt
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          & $r2TestPython tools/test_cloudflare_r2_unit.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Install checksummed Gitleaks
         shell: powershell
         env:

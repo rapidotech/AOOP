@@ -45,6 +45,7 @@ def main():
     parser.add_argument('--verify', type=Path)
     parser.add_argument('--destination', type=Path, help='Explicit authorized external archive directory; no default external transfer')
     parser.add_argument('--object-storage', action='store_true', help='Upload/retrieve/verify against the owned local Docker object store; not off-host proof')
+    parser.add_argument('--cloudflare-r2', action='store_true', help='Upload/retrieve/verify the separately configured owned Cloudflare R2 bucket')
     args = parser.parse_args()
     if args.verify:
         print('Archive chain verified: ' + str(verify(json.loads(args.verify.read_text(encoding='utf-8')))) + ' events.')
@@ -63,10 +64,20 @@ def main():
     manifest = {'file': archive.name, 'bytes': len(raw), 'sha256': digest,
                 'head': data['head'], 'events': count, 'custody': 'local; not independent off-host proof'}
     archive.with_suffix('.manifest.json').write_text(json.dumps(manifest, indent=2))
-    if args.object_storage:
-        from object_storage import upload_archive
-        upload_archive(archive, manifest)
-        print('Local Docker S3 upload/retrieval and active retention verified. Same-PC custody; independent off-host storage remains unproven.')
+    failed = []
+    # Attempt both requested destinations even if one is unavailable.
+    for selected, module, label, success in [
+        (args.cloudflare_r2, 'cloudflare_r2', 'Cloudflare R2',
+         'Cloudflare R2 off-host upload/retrieval, full chain and bucket lock verified; administrator-removable retention, not COMPLIANCE Object Lock.'),
+        (args.object_storage, 'object_storage', 'Local Docker S3',
+         'Local Docker S3 upload/retrieval and active retention verified. Same-PC custody; independent off-host storage remains unproven.')]:
+        if selected:
+            try:
+                from importlib import import_module
+                import_module(module).upload_archive(archive, manifest)
+                print(success)
+            except Exception:
+                failed.append(label)
     if args.destination:
         destination = args.destination.resolve()
         if not destination.is_dir():
@@ -77,7 +88,9 @@ def main():
         if hashlib.sha256(target.read_bytes()).hexdigest() != digest:
             raise ValueError('External archive checksum mismatch')
         target.with_suffix('.manifest.json').write_text(json.dumps(manifest, indent=2))
-    print('Verified audit snapshot exported: ' + str(count) + ' events. Local custody; off-host effectiveness is not inferred.')
+    if failed:
+        raise RuntimeError('Archive destination verification failed: ' + ', '.join(failed) + '. Verified local export preserved; credential-bearing diagnostics withheld.') from None
+    print('Verified audit snapshot exported: ' + str(count) + ' events. See destination-specific receipts for custody and recovery scope.')
 
 
 if __name__ == '__main__':

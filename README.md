@@ -97,7 +97,11 @@ Private same-PC Docker S3 audit storage, its console/access procedure, retention
 and recovery tests are documented [here](security/object-storage/README.md).
 The current school-template Implementation Log is generated outside Git in the
 coursework portfolio. Its C5 notes distinguish local retained copies from the
-still-incomplete independent off-host requirement.
+actual off-host recovery and the remaining administrator-custody boundary.
+Cloudflare R2 setup, recovery and conservative metered free-tier limits are
+documented [here](security/object-storage/CLOUDFLARE_R2.md). It supplements local
+Docker copies. R2 uses administrator-removable bucket locks; no hard $0 account
+cap or S3 COMPLIANCE semantics are claimed for that provider.
 HR can review the latest100 failure/lockout events in the security activity view.
 Supported-client authorization does not replace a trusted server against a
 modified desktop client holding the shared JDBC credential. Off-host audit

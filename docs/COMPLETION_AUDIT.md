@@ -17,20 +17,21 @@ it does not certify every feature, input, deployment or security guarantee.
 | Assess every broader audit proposal | `security/EXPANDED_CONTROL_PLAN.md`, revised audit workbook | Each proposal has an implemented, superseded, partial or deferred decision. C3/C4 and local C5 mechanisms have recorded assurance; no new organizational roles or policy are invented. |
 | Test controls and preserve actual observations | Original 30-check C1/C2 receipt; later 76 backend and 15 SQL/chain checks; current CI and local storage receipts | Different suites remain separate. Screenshots with synthetic data are not represented as real database evidence. |
 | Self-host storage in Docker Desktop here | `local-object-storage-assurance.json`, scheduler receipt and storage runbook | 18 real checks, including seven AccessDenied/403 cases, recovery/restart and local-copy preservation on outage. Actual task returned 0. Same-PC storage does not establish independent custody. |
-| Updated annotated diagram | Expanded diagram HTML/SVG/PNG/PDF and embedded workbook diagram | Local RustFS storage and pending off-host boundary are labeled. Excel diagram link and reserved image area verified. |
-| Complete Implementation Log and evidence fields | `document-final-verification.json`, native Excel verification | 105 control fields filled, 100 text responses visible in native exports, five dates, 20 dropdowns and native links checked. C5 retains Needs adjustment / Retest. Original supplied template hash unchanged. |
-| Updated documentation and optional reviewer | Current school-template XLSX, 22-page chronological DOCX/PDF and six-page reviewer | Rendered reviewer, changed log pages and control exports checked; earlier 21 log pages retain their historical text. No member contributions or mentor validation are fabricated. |
+| Later authorized Cloudflare R2 off-host copies | `cloudflare-r2-assurance.json`, R2 scheduler receipt and runbook | 20 live checks, eight rejected operations, actual off-host checksum/chain recovery and successful scheduled dual-destination receipts. R2 locks are administrator-removable; independent administration is not proven. Metered free-tier use was explicitly accepted with conservative guards, not a hard $0 account cap. |
+| Updated annotated diagram | Expanded diagram HTML/SVG/PNG/PDF and embedded workbook diagram | Local copies and HTTPS R2 off-host copies are labeled separately. Excel diagram link and reserved image area verified. |
+| Complete Implementation Log and evidence fields | `document-final-verification.json`, native Excel verification | 105 control fields filled, 100 text responses visible in native exports, five dates, 20 dropdowns and native links checked. C5 now documents verified transactional audit and actual off-host copies with explicit administrator limits. Original supplied template hash unchanged. |
+| Updated documentation and optional reviewer | Current school-template XLSX, chronological DOCX/PDF and optional reviewer | Current R2 addendum supplements earlier history. Rendered artifacts and native control exports are reviewed. No member contributions or mentor validation are fabricated. |
 | Clean repository and deliver verified package | `final-revision.json`, source CI receipt and `portfolio-manifest.json` | Pushed source and package hashes recorded. ZIP excludes private backups, credentials and real archived audit objects. |
 | Shared submission and mentor access | No shared workbook URL or independent access confirmation supplied | Incomplete. The group must upload the completed log to its authorized shared location and check mentor access. Google Sheets conversion has not been tested. |
 | Mentor validation | No completed validation record supplied | Incomplete. Each member must participate as required by the mentor; the optional reviewer does not replace validation. |
 
-The broader off-host proposal still needs an authorized independent destination
-and an observed recovery test there. Choosing Docker Desktop on this PC provides
-working local storage and test evidence, but does not satisfy that separate
-requirement. Seven days is a lab retention setting, not an institutional policy.
+The off-host copy proposal is now implemented in R2 and recovery was observed.
+Cloudflare administrators can remove its lock rules, and the bootstrap token
+remains on this PC. Independent administration and host-administrator-resistant
+custody are outside the verified claim. Seven days is a lab retention setting,
+not an institutional policy. Configured eight-day expiry has not yet aged out.
 Shared-root rotation, history rewriting and repository visibility changes remain
 coordinated rollout decisions. None is reported as completed.
 
 The engineering artifacts are prepared. Full milestone submission and assurance
-are not claimed complete while the external access, validation and off-host
-items above lack evidence.
+are not claimed complete while shared access and mentor validation lack evidence.

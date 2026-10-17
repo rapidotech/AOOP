@@ -39,7 +39,8 @@ scoped authorization, transactional audit logging and DB workflow ledgers.
 CONTROL_ASSESSMENT.md records every proposed option and its decision.
 The revised audit workbook is under outputs/all-controls; original source remains intact.
 The original database and shared root account remain unchanged. Deferred controls
-and test limitations are identified in the log; this is local assurance evidence.
+and test limitations are identified in the log. R2 now also has actual off-host
+recovery evidence; it does not establish independently administered custody.
 
 On the prepared computer, run the repository's run.bat to open MotorPH with the
 protected profile. See SECURITY_RUNBOOK.md for private temporary-password retrieval,
@@ -52,13 +53,14 @@ on the provisioning computer; it is not a group-sharing deliverable.
 ''', encoding='utf-8')
     (OUTPUT / 'SECURITY_RUNBOOK.md').write_bytes((ROOT / 'security/README.md').read_bytes())
     (OUTPUT / 'LOCAL_OBJECT_STORAGE.md').write_bytes((ROOT / 'security/object-storage/README.md').read_bytes())
+    (OUTPUT / 'CLOUDFLARE_R2.md').write_bytes((ROOT / 'security/object-storage/CLOUDFLARE_R2.md').read_bytes())
     (OUTPUT / 'COMPLETION_AUDIT.md').write_bytes((ROOT / 'docs/COMPLETION_AUDIT.md').read_bytes())
     if current_log.is_file():
         start=OUTPUT/'START_HERE.md'
-        start.write_text('Current school-template Implementation Log: outputs/implementation-log/MotorPH_Group13_Implementation_Log.xlsx. Use this workbook as the current log. The DOCX/PDF below retain earlier implementation chronology.\n\nLocal Docker S3 archive assurance and scheduled-upload proof are in evidence/local-object-storage-*.json. This storage is on the same PC; independent off-host custody remains incomplete.\n\n'+start.read_text(encoding='utf-8'),encoding='utf-8')
+        start.write_text('Current school-template Implementation Log: outputs/implementation-log/MotorPH_Group13_Implementation_Log.xlsx. Use this workbook as the current log. The DOCX/PDF retain earlier chronology and later Docker/R2 addenda.\n\nCloudflare R2 now provides actual off-host copies; evidence/cloudflare-r2-*.json records live recovery and scheduled uploads. Local Docker proof remains under evidence/local-object-storage-*.json. Independently administered custody and a provider hard $0 spending cap are not claimed. See CLOUDFLARE_R2.md for safeguards and limits.\n\n'+start.read_text(encoding='utf-8'),encoding='utf-8')
     (OUTPUT / 'CONTROL_ASSESSMENT.md').write_bytes((ROOT / 'security/EXPANDED_CONTROL_PLAN.md').read_bytes())
     primary = [OUTPUT / name for name in [
-        'START_HERE.md', 'SECURITY_RUNBOOK.md', 'LOCAL_OBJECT_STORAGE.md', 'CONTROL_ASSESSMENT.md', 'COMPLETION_AUDIT.md',
+        'START_HERE.md', 'SECURITY_RUNBOOK.md', 'LOCAL_OBJECT_STORAGE.md', 'CLOUDFLARE_R2.md', 'CONTROL_ASSESSMENT.md', 'COMPLETION_AUDIT.md',
         'MotorPH_Group13_Milestone2_Implementation_Log.docx',
         'MotorPH_Group13_Milestone2_Implementation_Log.pdf',
         'MotorPH_Updated_Control_Diagram.html',
@@ -91,7 +93,8 @@ on the provisioning computer; it is not a group-sharing deliverable.
     manifest_path.write_text(json.dumps(manifest, indent=2), encoding='utf-8')
     with zipfile.ZipFile(ARCHIVE, 'w', zipfile.ZIP_DEFLATED) as archive:
         for p in files + [manifest_path]:
-            if 'private-backup' in p.parts:
+            if ('private-backup' in p.parts or p.name.endswith(('.r2-receipt.json','.s3-receipt.json','.credential.xml'))
+                    or p.name == 'compose.env' or p.name.startswith('audit-20')):
                 raise ValueError('Private recovery material cannot enter the public package')
             archive.write(p, p.relative_to(OUTPUT))
     with zipfile.ZipFile(ARCHIVE) as archive:

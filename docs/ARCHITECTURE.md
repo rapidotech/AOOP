@@ -84,7 +84,13 @@ direct audit/head DML. Daily verified local exports preserve prior snapshots,
 and a separate local RustFS Docker service retains versioned copies for seven
 days. Its writer cannot delete or change retention; exact-version recovery and
 S3 root retention denial were tested. This is same-PC storage, using loopback
-HTTP, not an independent off-host destination. Database/host administrators can
+HTTP. A separate private Cloudflare R2 bucket now receives HTTPS off-host copies
+from the verified local export. Its scoped object writer and read-only
+configuration token are distinct; seven-day bucket locks are administrator-removable.
+Eight-day expiry and conservative local storage/request limits are configured.
+Actual off-host recovery and the scheduled path were verified. The cloud
+bootstrap token remains on the PC, so independent administration and resistance
+to a compromised host administrator are not established. Database/host administrators can
 rewrite local history/anchors or alter the underlying Docker volume.
 Source-machine names are telemetry. See `security/object-storage/README.md`.
 

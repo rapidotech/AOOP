@@ -5,8 +5,11 @@
 Later authorized extension: self-host private audit object storage in Docker
 Desktop on this PC. Implemented RustFS1.0.2 with scoped credentials, versioning,
 seven-day COMPLIANCE API retention, exact-version recovery and the existing
-daily task. Eighteen real storage checks passed. Same-PC storage does not close
-the independent off-host custody boundary; keep that part incomplete in the log.
+daily task. Eighteen real local storage checks passed. The later authorized
+Cloudflare R2 extension now provides actual off-host copies and20 live assurance
+checks, plus a verified scheduled upload. R2 bucket locks are administrator-removable;
+independent administration is not proven. The user accepted metered free-tier
+use with conservative safeguards, not a guaranteed provider $0 spending cap.
 
 Review the entire MotorPH system and improve it using Astra full mode and
 Impeccable for the Swing UI. Make the code consistent and maintainable, improve
@@ -62,10 +65,10 @@ simple and cover both the cleanup work and the security implementation.
 
 Current completion audit: [COMPLETION_AUDIT.md](COMPLETION_AUDIT.md). The entries
 below preserve earlier delivery stages and their earlier assertion/page counts.
-The current package has the filled school-template workbook, a 22-page
-chronological log with Docker addendum, six-page reviewer, and 352-assertion CI
-evidence. Shared log access, mentor validation and independent off-host custody
-are not recorded as complete.
+The current package has the filled school-template workbook, chronological log
+with Docker/R2 addenda, updated reviewer and source CI evidence. Shared log
+access and mentor validation are not recorded as complete. Off-host storage is
+verified; independently administered custody remains an explicit limitation.
 
 Implementation and verification completed on 17 October 2026. The expanded
 scope is recorded here because the native goal API cannot edit objective text.
