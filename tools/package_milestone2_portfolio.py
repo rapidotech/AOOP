@@ -51,12 +51,13 @@ are deliberately excluded from this archive. Keep the private recovery material
 on the provisioning computer; it is not a group-sharing deliverable.
 ''', encoding='utf-8')
     (OUTPUT / 'SECURITY_RUNBOOK.md').write_bytes((ROOT / 'security/README.md').read_bytes())
+    (OUTPUT / 'LOCAL_OBJECT_STORAGE.md').write_bytes((ROOT / 'security/object-storage/README.md').read_bytes())
     if current_log.is_file():
         start=OUTPUT/'START_HERE.md'
         start.write_text('Current school-template Implementation Log: outputs/implementation-log/MotorPH_Group13_Implementation_Log.xlsx. Use this workbook as the current log. The DOCX/PDF below retain earlier implementation chronology.\n\nLocal Docker S3 archive assurance and scheduled-upload proof are in evidence/local-object-storage-*.json. This storage is on the same PC; independent off-host custody remains incomplete.\n\n'+start.read_text(encoding='utf-8'),encoding='utf-8')
     (OUTPUT / 'CONTROL_ASSESSMENT.md').write_bytes((ROOT / 'security/EXPANDED_CONTROL_PLAN.md').read_bytes())
     primary = [OUTPUT / name for name in [
-        'START_HERE.md', 'SECURITY_RUNBOOK.md', 'CONTROL_ASSESSMENT.md',
+        'START_HERE.md', 'SECURITY_RUNBOOK.md', 'LOCAL_OBJECT_STORAGE.md', 'CONTROL_ASSESSMENT.md',
         'MotorPH_Group13_Milestone2_Implementation_Log.docx',
         'MotorPH_Group13_Milestone2_Implementation_Log.pdf',
         'MotorPH_Updated_Control_Diagram.html',
